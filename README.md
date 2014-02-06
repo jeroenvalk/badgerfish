@@ -14,4 +14,4 @@ Badgerfish CPX is distributed in the hope that it will be useful, but WITHOUT AN
 WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along 
-with Badgerfish CPX. If not, see <http://www.gnu.org/licenses />.
+with Badgerfish CPX. If not, see http://www.gnu.org/licenses/.
