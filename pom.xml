@@ -24,7 +24,20 @@
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
 				<version>0.0.14</version>
+				<configuration>
+					<arguments>--no-color serve</arguments>
+				</configuration>
 				<executions>
+					<execution>
+						<id>grunt clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>--no-color clean</arguments>
+						</configuration>
+					</execution>
 					<execution>
 						<id>install node and npm</id>
 						<phase>initialize</phase>
@@ -42,23 +55,8 @@
 						<goals>
 							<goal>npm</goal>
 						</goals>
-					</execution>
-					<execution>
-						<id>grunt build</id>
-						<goals>
-							<goal>grunt</goal>
-						</goals>
 						<configuration>
-							<arguments>--no-color</arguments>
-						</configuration>
-					</execution>
-					<execution>
-						<id>javascript tests</id>
-						<goals>
-							<goal>karma</goal>
-						</goals>
-						<configuration>
-							<karmaConfPath>src/test/javascript/karma.conf.ci.js</karmaConfPath>
+							<arguments>--no-color install</arguments>
 						</configuration>
 					</execution>
 				</executions>

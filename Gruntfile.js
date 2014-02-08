@@ -15,35 +15,33 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+var spawn = require('child_process').spawn;
+
 module.exports = function(grunt) {
 	require('load-grunt-tasks')(grunt);
 	require('time-grunt')(grunt);
+
+	grunt.registerTask("serve", function() {
+		var done = this.async();
+		var cli = spawn("node/node", [
+				"node_modules/jasmine-node/bin/jasmine-node", "--noColor",
+				"--autotest", "src/spec/" ]);
+		cli.stdout.on("data", function(chunk) {
+			process.stdout.write(chunk);
+		});
+		cli.stderr.on("data", function(chunk) {
+			process.stderr.write(chunk);
+		});
+		cli.on("close", function() {
+			cli.stdin.end();
+			done();
+		});
+	});
 
 	// Define the configuration for all the tasks
 	grunt.initConfig({
 		pkg : grunt.file.readJSON('package.json'),
 
-		connect : {
-			options : {
-				port : 4242,
-				livereload : 35729,
-				// Change this to '0.0.0.0' to access the server from outside
-				hostname : 'localhost'
-			},
-			livereload : {
-				options : {
-					open : true,
-					base : [ '.tmp', '<%= xopusStandalone.dist %>',
-							'<%= xopusStandalone.static %>' ]
-				}
-			},
-			dist : {
-				options : {
-					open : true,
-					base : '<%= xopusStandalone.dist %>',
-					livereload : false
-				}
-			}
-		}
+		clean : [ "dist" ]
 	});
 };
