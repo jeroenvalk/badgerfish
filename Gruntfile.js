@@ -15,17 +15,17 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+var fs = require('fs');
 var spawn = require('child_process').spawn;
 
 module.exports = function(grunt) {
 	require('load-grunt-tasks')(grunt);
 	require('time-grunt')(grunt);
 
-	grunt.registerTask("serve", function() {
+	grunt.registerTask("initialize", function() {
 		var done = this.async();
 		var cli = spawn("node/node", [
-				"node_modules/jasmine-node/bin/jasmine-node", "--noColor",
-				"--autotest", "src/spec/" ]);
+				"node_modules/protractor/bin/webdriver-manager", "update" ]);
 		cli.stdout.on("data", function(chunk) {
 			process.stdout.write(chunk);
 		});
@@ -38,10 +38,82 @@ module.exports = function(grunt) {
 		});
 	});
 
+	grunt
+			.registerTask(
+					"server",
+					function(target) {
+						var done = this.async();
+						switch (target) {
+						case "node":
+							var cli = spawn(
+									"node/node",
+									[
+											"node_modules/jasmine-node/bin/jasmine-node",
+											"src/spec/", "--captureExceptions",
+											"--autotest" ]);
+							cli.stdout.on("data", function(chunk) {
+								process.stdout.write(chunk);
+							});
+							cli.stderr.on("data", function(chunk) {
+								process.stderr.write(chunk);
+							});
+							cli.on("close", function() {
+								cli.stdin.end();
+								done();
+							});
+							break;
+						case "selenium":
+							var selenium = spawn(
+									"node/node",
+									[
+											"node_modules/protractor/bin/webdriver-manager",
+											"start" ]);
+							if (!fs.statSync("target").isDirectory()) {
+								fs.mkdirSync("target");
+							}
+							var writable = fs
+									.createWriteStream("target/selenium.log");
+							selenium.stdout.pipe(writable);
+							selenium.stderr.pipe(writable);
+							var cli = spawn("node/node", [
+									"node_modules/protractor/bin/protractor",
+									"src/test/conf.js" ]);
+							cli.stdout.on("data", function(chunk) {
+								process.stdout.write(chunk);
+							});
+							cli.stderr.on("data", function(chunk) {
+								process.stderr.write(chunk);
+							});
+							cli.on("close", function() {
+								cli.stdin.end();
+								done();
+							});
+							break;
+						default:
+							throw new Error("target '" + target +
+									"' not defined");
+						}
+					});
+
+	grunt.registerTask("serve", [ "connect:test" ]);
+
 	// Define the configuration for all the tasks
 	grunt.initConfig({
 		pkg : grunt.file.readJSON('package.json'),
 
-		clean : [ "dist" ]
+		clean : [ "dist" ],
+
+		connect : {
+			test : {
+				options : {
+					open : true,
+					keepalive : true,
+					port : 8080,
+					base : "src/test/webapp"
+				}
+			}
+		}
 	});
 };
+
+console.log("GUID" + process.pid);
