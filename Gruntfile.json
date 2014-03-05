@@ -1,0 +1,14 @@
+{
+	"clean" : [ "dist" ],
+
+	"connect" : {
+		"test" : {
+			"options" : {
+				"open" : true,
+				"keepalive" : true,
+				"port" : 8080,
+				"base" : "src/test/webapp"
+			}
+		}
+	}
+}
