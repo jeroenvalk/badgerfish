@@ -5,6 +5,7 @@
 	"dependencies":{
 		"wolfy87-eventemitter":"~4.2.0"
 	},
+	"main":"src/main/javascript/main.js",
 	"devDependencies":{
 		"grunt-cli":"~0.1.0",
 		"grunt":"~0.4.1",
@@ -16,6 +17,7 @@
 		"protractor":"~0.18.1",
 		"node-syntaxhighlighter":"~0.8.1",
 		"xpath":"*",
-		"xmldom":"*"
+		"xmldom":"*",
+		"http":"*"
 	}
 }

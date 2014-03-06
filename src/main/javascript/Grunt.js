@@ -42,9 +42,32 @@ function Grunt$Grunt(grunt) {
 			grunt.registerTask(name, this[prop]());
 		}
 	}
-	
+
 	var config = this.getConfig();
 	config.pkg = this.getPackage();
+
+	// defaults
+	if (!config.clean)
+		config.clean = [ 'dist' ];
+
+	if (!config.http)
+		config.http = {};
+
+	if (!config.http.require)
+		config.http.require = {
+			options : {
+				url : "http://requirejs.org/docs/release/2.1.11/comments/require.js"
+			},
+			dest : "dist/lib/require.js"
+		};
+
+	if (!config.http.angular)
+		config.http.angular = {
+			options : {
+				url : "http://code.angularjs.org/1.2.13/angular.js"
+			},
+			dest : "dist/lib/angular.js"
+		};
 
 	grunt.initConfig(config);
 }
