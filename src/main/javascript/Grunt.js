@@ -95,20 +95,30 @@ function Grunt$taskVerify() {
 }
 
 function Grunt$taskInitialize() {
-	return function() {
+	return [];
+}
+
+function Grunt$taskInit() {
+	return function(target) {
 		var done = this.async();
-		var cli = spawn("node/node", [
-				"node_modules/protractor/bin/webdriver-manager", "update" ]);
-		cli.stdout.on("data", function(chunk) {
-			process.stdout.write(chunk);
-		});
-		cli.stderr.on("data", function(chunk) {
-			process.stderr.write(chunk);
-		});
-		cli.on("close", function() {
-			cli.stdin.end();
-			done();
-		});
+		switch (target) {
+		case "selenium":
+			var cli = spawn("node/node", [
+					"node_modules/protractor/bin/webdriver-manager", "update" ]);
+			cli.stdout.on("data", function(chunk) {
+				process.stdout.write(chunk);
+			});
+			cli.stderr.on("data", function(chunk) {
+				process.stderr.write(chunk);
+			});
+			cli.on("close", function() {
+				cli.stdin.end();
+				done();
+			});
+			break;
+		default:
+			throw new Error("target '" + target + "' not defined");
+		}
 	};
 }
 
@@ -169,6 +179,7 @@ Grunt.prototype.getConfig = Grunt$getConfig;
 Grunt.prototype.Grunt = Grunt$Grunt;
 Grunt.prototype.taskVerify = Grunt$taskVerify;
 Grunt.prototype.taskInitialize = Grunt$taskInitialize;
+Grunt.prototype.taskInit = Grunt$taskInit;
 Grunt.prototype.taskServer = Grunt$taskServer;
 Grunt.prototype.taskServe = Grunt$taskServe;
 
