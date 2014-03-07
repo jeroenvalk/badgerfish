@@ -14,6 +14,7 @@
  */
 
 var fs = require('fs');
+var path = require('path');
 var spawn = require('child_process').spawn;
 
 var xpath = require('xpath');
@@ -28,7 +29,8 @@ function Grunt$getPackage() {
 }
 
 function Grunt$getConfig() {
-	return this.grunt.file.readJSON('Gruntfile.json');
+	return this.grunt.file.readJSON(path.resolve(__dirname, "../../..")
+			+ path.sep + 'Gruntfile.json');
 }
 
 function Grunt$Grunt(grunt) {
