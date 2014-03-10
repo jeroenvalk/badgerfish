@@ -99,7 +99,7 @@ function Grunt$taskValidate() {
 }
 
 function Grunt$taskInitialize() {
-	return [ "validate" ];
+	return [ "validate", "http" ];
 }
 
 function Grunt$taskInit() {
