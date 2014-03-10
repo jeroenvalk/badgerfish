@@ -186,7 +186,7 @@ function Grunt$taskServer() {
 }
 
 function Grunt$taskServe() {
-	return [ "initialize", "connect:test" ];
+	return [ "connect:test" ];
 }
 
 Grunt.prototype.getPackage = Grunt$getPackage;
