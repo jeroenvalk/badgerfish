@@ -1,6 +1,6 @@
 {
 	"name":"badgerfish.composix",
-	"version":"0.0.1-SNAPSHOT",
+	"version":"0.1.0-SNAPSHOT",
 	"repository":"http://stash.global.sdl.corp:7990/scm/~jvalk/lucia-node.git",
 	"dependencies":{
 		"wolfy87-eventemitter":"~4.2.0",

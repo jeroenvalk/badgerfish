@@ -20,6 +20,10 @@ var spawn = require('child_process').spawn;
 var xpath = require('xpath');
 var DOMParser = require('xmldom').DOMParser;
 
+function endsWith(str, suffix) {
+	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
 function Grunt() {
 	this.grunt = null;
 }
@@ -74,7 +78,7 @@ function Grunt$Grunt(grunt) {
 	grunt.initConfig(config);
 }
 
-function Grunt$taskVerify() {
+function Grunt$taskValidate() {
 	var grunt = this.grunt;
 	var pkg = this.getPackage();
 	return function() {
@@ -95,7 +99,7 @@ function Grunt$taskVerify() {
 }
 
 function Grunt$taskInitialize() {
-	return [];
+	return [ "validate" ];
 }
 
 function Grunt$taskInit() {
@@ -120,6 +124,17 @@ function Grunt$taskInit() {
 			throw new Error("target '" + target + "' not defined");
 		}
 	};
+}
+
+function Grunt$taskVerify() {
+	var grunt = this.grunt;
+	var pkg = this.getPackage();
+	return function() {
+		if (endsWith(pkg.version, "SNAPSHOT")) {
+			grunt.log.error("SNAPSHOT version of package must not be deployed");
+			return false;
+		}
+	}
 }
 
 function Grunt$taskServer() {
@@ -171,15 +186,16 @@ function Grunt$taskServer() {
 }
 
 function Grunt$taskServe() {
-	return [ "connect:test" ];
+	return [ "initialize", "connect:test" ];
 }
 
 Grunt.prototype.getPackage = Grunt$getPackage;
 Grunt.prototype.getConfig = Grunt$getConfig;
 Grunt.prototype.Grunt = Grunt$Grunt;
-Grunt.prototype.taskVerify = Grunt$taskVerify;
+Grunt.prototype.taskValidate = Grunt$taskValidate;
 Grunt.prototype.taskInitialize = Grunt$taskInitialize;
 Grunt.prototype.taskInit = Grunt$taskInit;
+Grunt.prototype.taskVerify = Grunt$taskVerify;
 Grunt.prototype.taskServer = Grunt$taskServer;
 Grunt.prototype.taskServe = Grunt$taskServe;
 

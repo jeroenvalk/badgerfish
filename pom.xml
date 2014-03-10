@@ -15,7 +15,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>nl.agentsatwork</groupId>
 	<artifactId>badgerfish.composix</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>badgerfish.composix</name>
 	<build>
@@ -67,6 +67,26 @@
 						</goals>
 						<configuration>
 							<arguments>initialize</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>grunt verify</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>verify</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm publish</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>publish</arguments>
 						</configuration>
 					</execution>
 				</executions>
