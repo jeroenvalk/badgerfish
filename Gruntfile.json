@@ -7,7 +7,7 @@
 				"open" : true,
 				"keepalive" : true,
 				"port" : 8080,
-				"base" : ["src/test/webapp", "src/main/webapp", "src/test", "src/main", "dist"]
+				"base" : ["src/test/webapp", "src/main/webapp", "src/test", "src/main", "dist", "node_modules/badgerfish.composix/src/main"]
 			}
 		}
 	}
