@@ -15,7 +15,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>nl.agentsatwork</groupId>
 	<artifactId>badgerfish.composix</artifactId>
-	<version>0.1.2-SNAPSHOT</version>
+	<version>0.1.2</version>
 	<packaging>pom</packaging>
 	<name>badgerfish.composix</name>
 	<build>
