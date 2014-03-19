@@ -20,5 +20,3 @@ var Grunt = require("./src/main/javascript/Grunt");
 module.exports = function(grunt) {
 	(new Grunt()).Grunt(grunt);
 };
-
-console.log("GUID" + process.pid);

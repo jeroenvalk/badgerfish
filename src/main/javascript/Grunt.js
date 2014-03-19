@@ -33,8 +33,8 @@ function Grunt$getPackage() {
 }
 
 function Grunt$getConfig() {
-	return this.grunt.file.readJSON(path.resolve(__dirname, "../../..")
-			+ path.sep + 'Gruntfile.json');
+	return this.grunt.file.readJSON(path.resolve(__dirname, "../../..") +
+			path.sep + 'Gruntfile.json');
 }
 
 function Grunt$Grunt(grunt) {
@@ -82,6 +82,14 @@ function Grunt$taskValidate() {
 	var grunt = this.grunt;
 	var pkg = this.getPackage();
 	return function() {
+		if (fs.existsSync("target/lock.txt")) {
+			grunt.log.error("Grunt build already running at " +
+					fs.readFileSync("target/lock.txt", {
+						encoding : "utf8"
+					}));
+			return false;
+		}
+		fs.writeFileSync("target/lock.txt", process.pid + "\n");
 		var pom = new DOMParser().parseFromString(fs.readFileSync("pom.xml", {
 			encoding : "utf8"
 		}));
@@ -185,8 +193,27 @@ function Grunt$taskServer() {
 	};
 }
 
-function Grunt$taskServe() {
-	return [ "connect:test" ];
+function Grunt$taskStart() {
+	return [ "validate", "connect:test" ];
+}
+
+function Grunt$taskStop() {
+	var grunt = this.grunt;
+	return function() {
+		if (fs.existsSync("target/lock.txt")) {
+			process.kill(parseInt(fs.readFileSync("target/lock.txt", {
+				encoding : "utf8"
+			})));
+			fs.unlinkSync("target/lock.txt");
+		} else {
+			grunt.log.error("nothing to stop");
+			return false;
+		}
+	};
+}
+
+function Grunt$taskRestart() {
+	return [ "stop", "start" ];
 }
 
 Grunt.prototype.getPackage = Grunt$getPackage;
@@ -197,6 +224,8 @@ Grunt.prototype.taskInitialize = Grunt$taskInitialize;
 Grunt.prototype.taskInit = Grunt$taskInit;
 Grunt.prototype.taskVerify = Grunt$taskVerify;
 Grunt.prototype.taskServer = Grunt$taskServer;
-Grunt.prototype.taskServe = Grunt$taskServe;
+Grunt.prototype.taskStart = Grunt$taskStart;
+Grunt.prototype.taskStop = Grunt$taskStop;
+Grunt.prototype.taskRestart = Grunt$taskRestart;
 
 module.exports = Grunt;

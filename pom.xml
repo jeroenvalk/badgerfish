@@ -25,7 +25,7 @@
 				<artifactId>frontend-maven-plugin</artifactId>
 				<version>0.0.14</version>
 				<configuration>
-					<arguments>serve</arguments>
+					<arguments>${targetGrunt}</arguments>
 				</configuration>
 				<executions>
 					<execution>
