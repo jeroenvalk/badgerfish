@@ -14,6 +14,7 @@
  */
 
 var fs = require('fs');
+var url = require('url');
 var path = require('path');
 var spawn = require('child_process').spawn;
 
@@ -32,9 +33,70 @@ function Grunt$getPackage() {
 	return this.grunt.file.readJSON('package.json');
 }
 
+function Grunt$middleware() {
+	return [];
+}
+
 function Grunt$getConfig() {
-	return this.grunt.file.readJSON(path.resolve(__dirname, "../../..") +
+	var config = this.grunt.file.readJSON(path.resolve(__dirname, "../../..") +
 			path.sep + 'Gruntfile.json');
+	var name = this.middleware();
+	var middleware = [];
+	for (var k = 0; k < name.length; ++k) {
+		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() +
+				name[k].substr(1));
+	}
+	config.connect.test.options.middleware = function(connect, options) {
+		var i, result = [ function(req, res, next) {
+			var parsed = url.parse(req.url, true);
+			console.assert(parsed.pathname.charAt(0) === '/');
+			if (parsed.search === "?") {
+				var brush = "js";
+				if (endsWith(parsed.pathname, ".js")) {
+					brush = "js";
+				} else if (endsWith(parsed.pathname, ".java")) {
+					brush = "java";
+				}
+				res.writeHead(200, {
+					'Content-Type' : 'text/xml'
+				});
+				res
+						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="' +
+								brush + '">');
+				var readable = fs.createReadStream(parsed.pathname.substr(1));
+				readable.on("data", function(chunk) {
+					var offset = 0;
+					for (var i = 0; i < chunk.length; ++i) {
+						switch (chunk[i]) {
+						case 60:
+							if (offset < i)
+								res.write(chunk.slice(offset, i - 1));
+							offset = i + 1;
+							res.write("&lt;");
+							break;
+						default:
+							break;
+						}
+					}
+					res.write(chunk.slice(offset));
+				});
+				readable.on("end", function() {
+					res.write("\n</root>\n");
+					res.end();
+				});
+			} else {
+				return next();
+			}
+		} ];
+		for (i = 0; i < options.base.length; ++i) {
+			result.push(connect.static(options.base[i]));
+		}
+		for (i = 0; i < middleware.length; ++i) {
+			result.push(this[middleware[i]](connect, options));
+		}
+		return result;
+	};
+	return config;
 }
 
 function Grunt$Grunt(grunt) {
@@ -82,6 +144,8 @@ function Grunt$taskValidate() {
 	var grunt = this.grunt;
 	var pkg = this.getPackage();
 	return function() {
+		if (!fs.existsSync("target"))
+			fs.mkdirSync("target");
 		if (fs.existsSync("target/lock.txt")) {
 			grunt.log.error("Grunt build already running at " +
 					fs.readFileSync("target/lock.txt", {
@@ -217,6 +281,7 @@ function Grunt$taskRestart() {
 }
 
 Grunt.prototype.getPackage = Grunt$getPackage;
+Grunt.prototype.middleware = Grunt$middleware;
 Grunt.prototype.getConfig = Grunt$getConfig;
 Grunt.prototype.Grunt = Grunt$Grunt;
 Grunt.prototype.taskValidate = Grunt$taskValidate;
