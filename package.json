@@ -16,10 +16,12 @@
 	"devDependencies":{
 		"grunt-cli":"~0.1.0",
 		"grunt":"~0.4.1",
+		"grunt-http":"*",
 		"grunt-contrib-clean":"~0.5.0",
 		"grunt-contrib-connect":"~0.6.0",
 		"jasmine-node":"~1.13.0",
 		"protractor":"~0.18.1",
-		"node-syntaxhighlighter":"~0.8.1"
+		"node-syntaxhighlighter":"~0.8.1",
+		"ez-streams":"*"
 	}
 }

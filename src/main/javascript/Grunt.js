@@ -25,12 +25,16 @@ function endsWith(str, suffix) {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
+var Private = require("./Private");
+var properties = new Private(Grunt);
 function Grunt() {
-	this.grunt = null;
+	properties.setPrivate(this, {
+		grunt : null
+	});
 }
 
 function Grunt$getPackage() {
-	return this.grunt.file.readJSON('package.json');
+	return properties.getPrivate(this).grunt.file.readJSON('package.json');
 }
 
 function Grunt$middleware() {
@@ -38,13 +42,14 @@ function Grunt$middleware() {
 }
 
 function Grunt$getConfig() {
-	var config = this.grunt.file.readJSON(path.resolve(__dirname, "../../..") +
-			path.sep + 'Gruntfile.json');
+	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(
+			__dirname, "../../..")
+			+ path.sep + 'Gruntfile.json');
 	var name = this.middleware();
 	var middleware = [];
-	for (var k = 0; k < name.length; ++k) {
-		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() +
-				name[k].substr(1));
+	for ( var k = 0; k < name.length; ++k) {
+		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase()
+				+ name[k].substr(1));
 	}
 	config.connect.test.options.middleware = function(connect, options) {
 		var i, result = [ function(req, res, next) {
@@ -61,12 +66,12 @@ function Grunt$getConfig() {
 					'Content-Type' : 'text/xml'
 				});
 				res
-						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="' +
-								brush + '">');
+						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="'
+								+ brush + '">');
 				var readable = fs.createReadStream(parsed.pathname.substr(1));
 				readable.on("data", function(chunk) {
 					var offset = 0;
-					for (var i = 0; i < chunk.length; ++i) {
+					for ( var i = 0; i < chunk.length; ++i) {
 						switch (chunk[i]) {
 						case 60:
 							if (offset < i)
@@ -100,7 +105,7 @@ function Grunt$getConfig() {
 }
 
 function Grunt$Grunt(grunt) {
-	this.grunt = grunt;
+	properties.getPrivate(this).grunt = grunt;
 	require('load-grunt-tasks')(grunt);
 	require('time-grunt')(grunt);
 
@@ -141,14 +146,14 @@ function Grunt$Grunt(grunt) {
 }
 
 function Grunt$taskValidate() {
-	var grunt = this.grunt;
+	var grunt = properties.getPrivate(this).grunt;
 	var pkg = this.getPackage();
 	return function() {
 		if (!fs.existsSync("target"))
 			fs.mkdirSync("target");
 		if (fs.existsSync("target/lock.txt")) {
-			grunt.log.error("Grunt build already running at " +
-					fs.readFileSync("target/lock.txt", {
+			grunt.log.error("Grunt build already running at "
+					+ fs.readFileSync("target/lock.txt", {
 						encoding : "utf8"
 					}));
 			return false;
@@ -199,14 +204,14 @@ function Grunt$taskInit() {
 }
 
 function Grunt$taskVerify() {
-	var grunt = this.grunt;
+	var grunt = properties.getPrivate(this).grunt;
 	var pkg = this.getPackage();
 	return function() {
 		if (endsWith(pkg.version, "SNAPSHOT")) {
 			grunt.log.error("SNAPSHOT version of package must not be deployed");
 			return false;
 		}
-	}
+	};
 }
 
 function Grunt$taskServer() {
@@ -215,8 +220,10 @@ function Grunt$taskServer() {
 		switch (target) {
 		case "node":
 			var cli = spawn("node/node", [
-					"node_modules/jasmine-node/bin/jasmine-node", "src/spec/",
-					"--captureExceptions", "--autotest" ]);
+					"node_modules/jasmine-node/bin/jasmine-node",
+					"src/test/javascript/spec/", "--captureExceptions",
+					"--autotest", "--watch", "src/test/javascript",
+					"src/main/javascript" ]);
 			cli.stdout.on("data", function(chunk) {
 				process.stdout.write(chunk);
 			});
@@ -225,8 +232,8 @@ function Grunt$taskServer() {
 			});
 			cli.on("close", function() {
 				cli.stdin.end();
-				done();
 			});
+			done();
 			break;
 		case "selenium":
 			var selenium = spawn("node/node", [
@@ -258,11 +265,11 @@ function Grunt$taskServer() {
 }
 
 function Grunt$taskStart() {
-	return [ "validate", "connect:test" ];
+	return [ "validate", "server:node", "connect:test" ];
 }
 
 function Grunt$taskStop() {
-	var grunt = this.grunt;
+	var grunt = properties.getPrivate(this).grunt;
 	return function() {
 		if (fs.existsSync("target/lock.txt")) {
 			process.kill(parseInt(fs.readFileSync("target/lock.txt", {
