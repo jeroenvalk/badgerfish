@@ -152,11 +152,13 @@ function Grunt$taskValidate() {
 		if (!fs.existsSync("target"))
 			fs.mkdirSync("target");
 		if (fs.existsSync("target/lock.txt")) {
-			grunt.log.error("Grunt build already running at "
-					+ fs.readFileSync("target/lock.txt", {
-						encoding : "utf8"
-					}));
-			return false;
+			var pid = parseInt(fs.readFileSync("target/lock.txt", {
+				encoding : "utf8"
+			}));
+			if (require("is-running")(pid)) {
+				grunt.log.error("Grunt build already running at " + pid);
+				return false;				
+			}
 		}
 		fs.writeFileSync("target/lock.txt", process.pid + "\n");
 		var pom = new DOMParser().parseFromString(fs.readFileSync("pom.xml", {
