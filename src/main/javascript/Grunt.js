@@ -28,9 +28,21 @@ function endsWith(str, suffix) {
 var Private = require("./Private");
 var properties = new Private(Grunt);
 function Grunt() {
-	properties.setPrivate(this, {
-		grunt : null
-	});
+	properties
+			.setPrivate(
+					this,
+					{
+						grunt : null,
+						downloads : {
+							"lib/require.js" : "http://requirejs.org/docs/release/2.1.11/comments/require.js",
+							"lib/angular.js" : "http://code.angularjs.org/1.2.13/angular.js"
+						},
+						unzip : true
+					});
+}
+
+function Grunt$download(target, source) {
+	properties.getPrivate(this).downloads[target] = source;
 }
 
 function Grunt$getPackage() {
@@ -105,16 +117,10 @@ function Grunt$getConfig() {
 }
 
 function Grunt$Grunt(grunt) {
-	properties.getPrivate(this).grunt = grunt;
+	var x = properties.getPrivate(this);
+	x.grunt = grunt;
 	require('load-grunt-tasks')(grunt);
 	require('time-grunt')(grunt);
-
-	for ( var prop in this) {
-		if (prop.substr(0, 4) === "task" && this[prop] instanceof Function) {
-			var name = prop.substr(4, 1).toLowerCase() + prop.substr(5);
-			grunt.registerTask(name, this[prop]());
-		}
-	}
 
 	var config = this.getConfig();
 	config.pkg = this.getPackage();
@@ -123,24 +129,43 @@ function Grunt$Grunt(grunt) {
 	if (!config.clean)
 		config.clean = [ 'dist' ];
 
-	if (!config.http)
-		config.http = {};
+	if (!config.curl)
+		config.curl = {};
 
-	if (!config.http.require)
-		config.http.require = {
-			options : {
-				url : "http://requirejs.org/docs/release/2.1.11/comments/require.js"
-			},
-			dest : "dist/lib/require.js"
-		};
+	if (!config.unzip)
+		config.unzip = {};
 
-	if (!config.http.angular)
-		config.http.angular = {
-			options : {
-				url : "http://code.angularjs.org/1.2.13/angular.js"
-			},
-			dest : "dist/lib/angular.js"
-		};
+	var checkA = true, checkB = true;
+	for ( var target in x.downloads) {
+		if (!fs.existsSync("dist/" + target)) {
+			checkA = false;
+			config.curl[target] = {
+				src : {
+					uri : x.downloads[target]
+				},
+				dest : "dist/" + target
+			};
+			if (endsWith(target, ".zip")) {
+				checkB = false;
+				config.unzip[target] = {
+					src : "dist/" + target,
+					dest : "dist"
+				};
+			}
+		}
+	}
+	if (checkA) {
+		x.unzip = null;
+	} else if (checkB) {
+		x.unzip = false;
+	}
+
+	for ( var prop in this) {
+		if (prop.substr(0, 4) === "task" && this[prop] instanceof Function) {
+			var name = prop.substr(4, 1).toLowerCase() + prop.substr(5);
+			grunt.registerTask(name, this[prop]());
+		}
+	}
 
 	grunt.initConfig(config);
 }
@@ -157,7 +182,7 @@ function Grunt$taskValidate() {
 			}));
 			if (require("is-running")(pid)) {
 				grunt.log.error("Grunt build already running at " + pid);
-				return false;				
+				return false;
 			}
 		}
 		fs.writeFileSync("target/lock.txt", process.pid + "\n");
@@ -178,7 +203,16 @@ function Grunt$taskValidate() {
 }
 
 function Grunt$taskInitialize() {
-	return [ "validate", "http" ];
+	var x = properties.getPrivate(this);
+	if (x.unzip) {
+		return [ "validate", "curl", "unzip" ];
+	} else {
+		if (x.unzip === false) {
+			return [ "validate", "curl" ];
+		} else {
+			return [ "validate" ];
+		}
+	}
 }
 
 function Grunt$taskInit() {
@@ -289,6 +323,7 @@ function Grunt$taskRestart() {
 	return [ "stop", "start" ];
 }
 
+Grunt.prototype.download = Grunt$download;
 Grunt.prototype.getPackage = Grunt$getPackage;
 Grunt.prototype.middleware = Grunt$middleware;
 Grunt.prototype.getConfig = Grunt$getConfig;
