@@ -125,6 +125,10 @@ function Grunt$Grunt(grunt) {
 	var config = this.getConfig();
 	config.pkg = this.getPackage();
 
+	for ( var target in config.pkg.downloads) {
+		x.downloads[target] = config.pkg.downloads[target];
+	}
+
 	// defaults
 	if (!config.clean)
 		config.clean = [ 'dist' ];
