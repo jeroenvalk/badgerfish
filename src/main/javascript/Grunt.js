@@ -153,7 +153,11 @@ function Grunt$Grunt(grunt) {
 				checkB = false;
 				config.unzip[target] = {
 					src : "dist/" + target,
-					dest : "dist"
+					dest : "dist",
+					// fix for zipfile corrupted by the windows slash
+					router : function(filepath) {
+						return filepath.replace(/\\/g, "/");
+					}
 				};
 			}
 		}
