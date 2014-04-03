@@ -28,10 +28,20 @@ function Private$getClass() {
 }
 
 function Private$setPrivate(instance, x) {
-	instance['@'] = function() {
+	console.assert(instance !== properties);
+	var y = properties.getPrivate(this);
+	if (!y.at) {
+		y.at = '@';
+		while (instance[y.at]) {
+			y.at += '@';
+		}
+	}
+	console.assert(!instance[y.at]);
+	console.assert(!(instance instanceof Private) || y.at === '@');
+	instance[y.at] = function() {
 		if (this !== instance) {
-			throw new Error(this.constructor.name
-					+ "['@']: @-function belongs on class "
+			throw new Error(this.constructor.name + "['" + at
+					+ "']: @-function belongs on class "
 					+ instance.constructor.name);
 		}
 		if (check === instance) {
@@ -45,11 +55,12 @@ function Private$setPrivate(instance, x) {
 }
 
 function Private$getPrivate(instance) {
+	var at = properties.getPrivate(this).at;
 	if (check) {
 		throw new Error(check.constructor.name + ": has invalid @-function");
 	}
 	check = instance;
-	instance['@']();
+	instance[at]();
 	if (check) {
 		throw new Error(instance.constructor.name + ": has invalid @-function");
 	}
@@ -60,8 +71,31 @@ Private.prototype.getClass = Private$getClass;
 Private.prototype.setPrivate = Private$setPrivate;
 Private.prototype.getPrivate = Private$getPrivate;
 
-properties.setPrivate(properties, {
-	type : Private
-});
+var x = {
+	type : Private,
+	at : '@'
+};
+properties['@'] = function() {
+	console.assert(this === properties);
+	if (check === properties) {
+		share = x;
+		check = null;
+	} else {
+		throw new Error(this.constructor.name
+				+ ": security violation on @-function");
+	}
+};
+properties.getPrivate = function(instance) {
+	console.assert(instance instanceof Private);
+	if (check) {
+		throw new Error(check.constructor.name + ": has invalid @-function");
+	}
+	check = instance;
+	instance['@']();
+	if (check) {
+		throw new Error(instance.constructor.name + ": has invalid @-function");
+	}
+	return share;
+};
 
 module.exports = Private;
