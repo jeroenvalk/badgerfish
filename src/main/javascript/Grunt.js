@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright ï¿½ 2014 dr. ir. Jeroen M. Valk
  * 
  * This file is part of Badgerfish CPX. Badgerfish CPX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -202,7 +202,11 @@ function Grunt$taskValidate() {
 					.error("ArtifactId in POM does not match 'name' property in package.json");
 			return false;
 		}
-		if (pkg.version !== xpath.select("/project/version/text()", pom)[0].data) {
+		var version = xpath.select("/project/version/text()", pom)[0];
+		if (!version) {
+			version = xpath.select("/project/parent/version/text()", pom)[0];
+		}
+		if (pkg.version !== version.data) {
 			grunt.log
 					.error("Version in POM does not match 'version' property in package.json");
 			return false;
