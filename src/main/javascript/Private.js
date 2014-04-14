@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright ï¿½ 2014 dr. ir. Jeroen M. Valk
  * 
  * This file is part of Badgerfish CPX. Badgerfish CPX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -13,13 +13,35 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+var slf4j = require("binford-slf4j");
+
+var configured = false;
 var share, check = null;
 
 var properties = Object.create(Private.prototype);
 function Private(type) {
+	this.logger = slf4j.getLogger(type.name);
 	properties.setPrivate(this, {
 		type : type
 	});
+}
+
+/**
+ * @param {LoggerFactory} config.LoggerFactory - an slf4j compatible logger factory
+ * @param {Object} config.logging - slf4j logging configuration
+ * @static
+ */
+function Private$configure(config) {
+	if (configured) {
+		throw new Error("already configured");
+	}
+	configured = true;
+	if (config.LoggerFactory) {
+		slf4j.setLoggerFactory(config.LoggerFactory);
+	}
+	if (config.logging) {
+		slf4j.loadConfig(config.logging);
+	}
 }
 
 function Private$getClass() {
@@ -29,6 +51,7 @@ function Private$getClass() {
 
 function Private$setPrivate(instance, x) {
 	console.assert(instance !== properties);
+	x.logger = this.logger;
 	var y = properties.getPrivate(this);
 	if (!y.at) {
 		y.at = '@';
@@ -40,16 +63,16 @@ function Private$setPrivate(instance, x) {
 	console.assert(!(instance instanceof Private) || y.at === '@');
 	instance[y.at] = function() {
 		if (this !== instance) {
-			throw new Error(this.constructor.name + "['" + at
-					+ "']: @-function belongs on class "
-					+ instance.constructor.name);
+			throw new Error(this.constructor.name + "['" + at +
+					"']: @-function belongs on class " +
+					instance.constructor.name);
 		}
 		if (check === instance) {
 			share = x;
 			check = null;
 		} else {
-			throw new Error(this.constructor.name
-					+ ": security violation on @-function");
+			throw new Error(this.constructor.name +
+					": security violation on @-function");
 		}
 	};
 }
@@ -67,6 +90,9 @@ function Private$getPrivate(instance) {
 	return share;
 }
 
+Private.configure = Private$configure;
+Private.prototype.configure = Private$configure;
+
 Private.prototype.getClass = Private$getClass;
 Private.prototype.setPrivate = Private$setPrivate;
 Private.prototype.getPrivate = Private$getPrivate;
@@ -81,8 +107,8 @@ properties['@'] = function() {
 		share = x;
 		check = null;
 	} else {
-		throw new Error(this.constructor.name
-				+ ": security violation on @-function");
+		throw new Error(this.constructor.name +
+				": security violation on @-function");
 	}
 };
 properties.getPrivate = function(instance) {
