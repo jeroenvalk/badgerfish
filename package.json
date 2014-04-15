@@ -9,7 +9,6 @@
 		"xmldom":"~0.1.19",
 		"binford-slf4j":"~0.0.1",
 		"node-syntaxhighlighter":"~0.8.1",
-		"load-grunt-tasks":"~0.2.1",
 		"time-grunt":"~0.2.10",
 		"wolfy87-eventemitter":"~4.2.6",
 		"ez-streams":"~0.1.3"

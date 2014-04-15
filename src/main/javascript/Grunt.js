@@ -55,13 +55,13 @@ function Grunt$middleware() {
 
 function Grunt$getConfig() {
 	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(
-			__dirname, "../../..")
-			+ path.sep + 'Gruntfile.json');
+			__dirname, "../../..") +
+			path.sep + 'Gruntfile.json');
 	var name = this.middleware();
 	var middleware = [];
-	for ( var k = 0; k < name.length; ++k) {
-		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase()
-				+ name[k].substr(1));
+	for (var k = 0; k < name.length; ++k) {
+		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() +
+				name[k].substr(1));
 	}
 	config.connect.test.options.middleware = function(connect, options) {
 		var i, result = [ function(req, res, next) {
@@ -78,12 +78,12 @@ function Grunt$getConfig() {
 					'Content-Type' : 'text/xml'
 				});
 				res
-						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="'
-								+ brush + '">');
+						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="' +
+								brush + '">');
 				var readable = fs.createReadStream(parsed.pathname.substr(1));
 				readable.on("data", function(chunk) {
 					var offset = 0;
-					for ( var i = 0; i < chunk.length; ++i) {
+					for (var i = 0; i < chunk.length; ++i) {
 						switch (chunk[i]) {
 						case 60:
 							if (offset < i)
@@ -119,7 +119,10 @@ function Grunt$getConfig() {
 function Grunt$Grunt(grunt) {
 	var x = properties.getPrivate(this);
 	x.grunt = grunt;
-	require('load-grunt-tasks')(grunt);
+	grunt.loadNpmTasks('grunt-curl');
+	grunt.loadNpmTasks('grunt-zip');
+	grunt.loadNpmTasks('grunt-contrib-clean');
+	grunt.loadNpmTasks('grunt-contrib-connect');
 	require('time-grunt')(grunt);
 
 	var config = this.getConfig();
