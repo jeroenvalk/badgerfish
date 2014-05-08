@@ -316,7 +316,7 @@ function Grunt$taskServer() {
 }
 
 function Grunt$taskStart() {
-	return [ "validate", "server:node", "connect:test" ];
+	return [ "validate", "server:node", "connect" ];
 }
 
 function Grunt$taskStop() {

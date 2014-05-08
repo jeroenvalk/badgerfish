@@ -4,8 +4,9 @@
 	"connect" : {
 		"test" : {
 			"options" : {
-				"open" : true,
+				"open" : "http://localhost:8080",
 				"keepalive" : true,
+				"hostname": "*",
 				"port" : 8080,
 				"base" : ["src/test/webapp", "src/main/webapp", "src/test", "src/main", "dist", "node_modules/badgerfish.composix/src/main"]
 			}
