@@ -5,6 +5,7 @@
 	"main":"src/main/javascript/main.js",
 	"dependencies":{
 		"is-running":"~1.0.5",
+		"glob":"~3.2.9",
 		"xpath":"~0.0.6",
 		"xmldom":"~0.1.19",
 		"binford-slf4j":"~0.0.1",

@@ -18,6 +18,7 @@ var url = require('url');
 var path = require('path');
 var spawn = require('child_process').spawn;
 
+var glob = require("glob");
 var xpath = require('xpath');
 var DOMParser = require('xmldom').DOMParser;
 
@@ -41,6 +42,26 @@ function Grunt() {
 					});
 }
 
+function Grunt$system(done, cmd, args, options) {
+	// if relative directory does not exist then try system path
+	if (cmd.substr(0, 2) === "./"
+			&& !(fs.existsSync(path.dirname(cmd)) && fs.statSync(
+					path.dirname(cmd)).isDirectory())) {
+		cmd = path.basename(cmd);
+	}
+	var cli = spawn(cmd, args, options);
+	cli.stdout.on("data", function(chunk) {
+		process.stdout.write(chunk);
+	});
+	cli.stderr.on("data", function(chunk) {
+		process.stderr.write(chunk);
+	});
+	cli.on("close", function() {
+		cli.stdin.end();
+		done();
+	});
+}
+
 function Grunt$download(target, source) {
 	properties.getPrivate(this).downloads[target] = source;
 }
@@ -55,13 +76,13 @@ function Grunt$middleware() {
 
 function Grunt$getConfig() {
 	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(
-			__dirname, "../../..") +
-			path.sep + 'Gruntfile.json');
+			__dirname, "../../..")
+			+ path.sep + 'Gruntfile.json');
 	var name = this.middleware();
 	var middleware = [];
-	for (var k = 0; k < name.length; ++k) {
-		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() +
-				name[k].substr(1));
+	for ( var k = 0; k < name.length; ++k) {
+		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase()
+				+ name[k].substr(1));
 	}
 	config.connect.test.options.middleware = function(connect, options) {
 		var i, result = [ function(req, res, next) {
@@ -78,12 +99,12 @@ function Grunt$getConfig() {
 					'Content-Type' : 'text/xml'
 				});
 				res
-						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="' +
-								brush + '">');
+						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="'
+								+ brush + '">');
 				var readable = fs.createReadStream(parsed.pathname.substr(1));
 				readable.on("data", function(chunk) {
 					var offset = 0;
-					for (var i = 0; i < chunk.length; ++i) {
+					for ( var i = 0; i < chunk.length; ++i) {
 						switch (chunk[i]) {
 						case 60:
 							if (offset < i)
@@ -126,6 +147,7 @@ function Grunt$Grunt(grunt) {
 	require('time-grunt')(grunt);
 
 	var config = this.getConfig();
+	x.config = config;
 	config.pkg = this.getPackage();
 
 	for ( var target in config.pkg.downloads) {
@@ -231,22 +253,15 @@ function Grunt$taskInitialize() {
 }
 
 function Grunt$taskInit() {
+	var self = this;
 	return function(target) {
 		var done = this.async();
 		switch (target) {
 		case "selenium":
-			var cli = spawn("node/node", [
-					"node_modules/protractor/bin/webdriver-manager", "update" ]);
-			cli.stdout.on("data", function(chunk) {
-				process.stdout.write(chunk);
-			});
-			cli.stderr.on("data", function(chunk) {
-				process.stderr.write(chunk);
-			});
-			cli.on("close", function() {
-				cli.stdin.end();
-				done();
-			});
+			self
+					.system(done, "./node/node", [
+							"node_modules/protractor/bin/webdriver-manager",
+							"update" ]);
 			break;
 		default:
 			throw new Error("target '" + target + "' not defined");
@@ -266,24 +281,16 @@ function Grunt$taskVerify() {
 }
 
 function Grunt$taskServer() {
+	var self = this;
 	return function(target) {
 		var done = this.async();
 		switch (target) {
 		case "node":
-			var cli = spawn("node/node", [
-					"node_modules/jasmine-node/bin/jasmine-node",
+			self.system(function() {
+			}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node",
 					"src/test/javascript/spec/", "--captureExceptions",
 					"--autotest", "--watch", "src/test/javascript",
 					"src/main/javascript" ]);
-			cli.stdout.on("data", function(chunk) {
-				process.stdout.write(chunk);
-			});
-			cli.stderr.on("data", function(chunk) {
-				process.stderr.write(chunk);
-			});
-			cli.on("close", function() {
-				cli.stdin.end();
-			});
 			done();
 			break;
 		case "selenium":
@@ -295,19 +302,9 @@ function Grunt$taskServer() {
 			var writable = fs.createWriteStream("target/selenium.log");
 			selenium.stdout.pipe(writable);
 			selenium.stderr.pipe(writable);
-			var cli = spawn("node/node", [
+			self.system(done, "./node/node", [
 					"node_modules/protractor/bin/protractor",
 					"src/test/conf.js" ]);
-			cli.stdout.on("data", function(chunk) {
-				process.stdout.write(chunk);
-			});
-			cli.stderr.on("data", function(chunk) {
-				process.stderr.write(chunk);
-			});
-			cli.on("close", function() {
-				cli.stdin.end();
-				done();
-			});
 			break;
 		default:
 			throw new Error("target '" + target + "' not defined");
@@ -338,6 +335,40 @@ function Grunt$taskRestart() {
 	return [ "stop", "start" ];
 }
 
+function Grunt$taskWebdav() {
+	var self = this;
+	return function(target) {
+		var done = this.async();
+		var webdav = properties.getPrivate(self).config.webdav;
+		for ( var prop in webdav) {
+			if (webdav.hasOwnProperty(prop) && (!target || prop === target)) {
+				var options = webdav[prop].options;
+				console.log(options.src);
+				glob(options.src, function(err, files) {
+					console.log(files);
+					if (err) {
+						throw err;
+					}
+					for ( var i = 0; i < files.length; ++i) {
+						self.system(done, "curl", [
+								"-T",
+								files[i],
+								"http://"
+										+ (options.domain ? options.domain
+												+ "%5C" : "")
+										+ options.username
+										+ (options.password ? ":"
+												+ options.password : "") + "@"
+										+ options.hostname + ":" + options.port
+										+ options.dest ]);
+					}
+				});
+			}
+		}
+	};
+}
+
+Grunt.prototype.system = Grunt$system;
 Grunt.prototype.download = Grunt$download;
 Grunt.prototype.getPackage = Grunt$getPackage;
 Grunt.prototype.middleware = Grunt$middleware;
@@ -351,5 +382,6 @@ Grunt.prototype.taskServer = Grunt$taskServer;
 Grunt.prototype.taskStart = Grunt$taskStart;
 Grunt.prototype.taskStop = Grunt$taskStop;
 Grunt.prototype.taskRestart = Grunt$taskRestart;
+Grunt.prototype.taskWebdav = Grunt$taskWebdav;
 
 module.exports = Grunt;
