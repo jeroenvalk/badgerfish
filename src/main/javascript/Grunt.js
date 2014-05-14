@@ -62,6 +62,10 @@ function Grunt$system(done, cmd, args, options) {
 	});
 }
 
+function Grunt$curl(done) {
+	this.system(done, "curl", Array.prototype.slice.call(arguments, 1));
+}
+
 function Grunt$download(target, source) {
 	properties.getPrivate(this).downloads[target] = source;
 }
@@ -344,31 +348,38 @@ function Grunt$taskWebdav() {
 			if (webdav.hasOwnProperty(prop) && (!target || prop === target)) {
 				var options = webdav[prop].options;
 				console.log(options.src);
-				glob(options.src, function(err, files) {
-					console.log(files);
-					if (err) {
-						throw err;
-					}
-					for ( var i = 0; i < files.length; ++i) {
-						self.system(done, "curl", [
-								"-T",
-								files[i],
-								"http://"
+				glob(
+						options.src,
+						function(err, files) {
+							console.log(files);
+							if (err) {
+								throw err;
+							}
+							for ( var i = 0; i < files.length; ++i) {
+								var url = "http://"
 										+ (options.domain ? options.domain
 												+ "%5C" : "")
 										+ options.username
 										+ (options.password ? ":"
-												+ options.password : "") + "@"
-										+ options.hostname + ":" + options.port
-										+ options.dest ]);
-					}
-				});
+												+ options.password : "")
+										+ "@"
+										+ options.hostname
+										+ ":"
+										+ options.port
+										+ (options.dest
+												.charAt(options.dest.length - 1) === '/' ? options.dest
+												+ path.basename(options.src)
+												: options.dest);
+								self.curl(done, "-T", files[i], url);
+							}
+						});
 			}
 		}
 	};
 }
 
 Grunt.prototype.system = Grunt$system;
+Grunt.prototype.curl = Grunt$curl;
 Grunt.prototype.download = Grunt$download;
 Grunt.prototype.getPackage = Grunt$getPackage;
 Grunt.prototype.middleware = Grunt$middleware;
