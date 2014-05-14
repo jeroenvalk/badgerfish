@@ -347,11 +347,9 @@ function Grunt$taskWebdav() {
 		for ( var prop in webdav) {
 			if (webdav.hasOwnProperty(prop) && (!target || prop === target)) {
 				var options = webdav[prop].options;
-				console.log(options.src);
 				glob(
 						options.src,
 						function(err, files) {
-							console.log(files);
 							if (err) {
 								throw err;
 							}
@@ -368,7 +366,7 @@ function Grunt$taskWebdav() {
 										+ options.port
 										+ (options.dest
 												.charAt(options.dest.length - 1) === '/' ? options.dest
-												+ path.basename(options.src)
+												+ path.basename(files[i])
 												: options.dest);
 								self.curl(done, "-T", files[i], url);
 							}
