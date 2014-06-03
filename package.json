@@ -21,6 +21,7 @@
 		"grunt-zip":"~0.13.0",
 		"grunt-contrib-clean":"~0.5.0",
 		"grunt-contrib-connect":"~0.6.0",
+		"grunt-bower-task":"~0.3.4",
 		"jasmine-node":"~1.13.1"
 	},
 	"devDependencies":{
@@ -30,6 +31,7 @@
 		"grunt-zip":"~0.13.0",
 		"grunt-contrib-clean":"~0.5.0",
 		"grunt-contrib-connect":"~0.6.0",
+		"grunt-bower-task":"~0.3.4",
 		"jasmine-node":"~1.13.1",
 		"protractor":"~0.18.1"
 	}

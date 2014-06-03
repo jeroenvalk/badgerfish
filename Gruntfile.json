@@ -1,6 +1,14 @@
 {
 	"clean" : [ "dist" ],
 
+	"bower" : {
+		"install" : {
+			"options" : {
+				"targetDir" : "./dist/lib"				
+			}
+		}
+	},
+
 	"connect" : {
 		"test" : {
 			"options" : {

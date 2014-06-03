@@ -36,7 +36,10 @@ function Grunt() {
 						grunt : null,
 						downloads : {
 							"lib/require.js" : "http://requirejs.org/docs/release/2.1.11/comments/require.js",
-							"lib/angular.js" : "http://code.angularjs.org/1.2.13/angular.js"
+							"lib/jquery.js" : "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js",
+							"lib/angular.js" : "http://code.angularjs.org/1.2.13/angular.js",
+							"lib/foundation.js" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
+							"lib/foundation.css" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css"
 						},
 						unzip : true
 					});
@@ -148,6 +151,7 @@ function Grunt$Grunt(grunt) {
 	grunt.loadNpmTasks('grunt-zip');
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-connect');
+	grunt.loadNpmTasks('grunt-bower-task');
 	require('time-grunt')(grunt);
 
 	var config = this.getConfig();
@@ -244,16 +248,22 @@ function Grunt$taskValidate() {
 }
 
 function Grunt$taskInitialize() {
-	var x = properties.getPrivate(this);
+	var result, x = properties.getPrivate(this);
 	if (x.unzip) {
-		return [ "validate", "curl", "unzip" ];
+		result = [ "validate", "curl", "unzip" ];
 	} else {
 		if (x.unzip === false) {
-			return [ "validate", "curl" ];
+			result = [ "validate", "curl" ];
 		} else {
-			return [ "validate" ];
+			result = [ "validate" ];
 		}
 	}
+	if (fs.existsSync("bower.json") && fs.statSync("bower.json").isFile()) {
+		// Problem with Bower? Run the following git command:
+		// git config --global url."https://".insteadOf git://
+		result.push("bower");
+	}
+	return result;
 }
 
 function Grunt$taskInit() {
