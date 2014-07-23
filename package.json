@@ -4,6 +4,7 @@
 	"repository":"https://github.com/jeroenvalk/badgerfish.git",
 	"main":"src/main/javascript/main.js",
 	"dependencies":{
+		"requirejs":"~2.1.14",
 		"is-running":"~1.0.5",
 		"glob":"~3.2.9",
 		"xpath":"~0.0.6",

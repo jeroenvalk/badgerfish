@@ -13,115 +13,113 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-var slf4j = require("binford-slf4j");
+define([ 'binford-slf4j' ], function(slf4js) {
+	var configured = false;
+	var share, check = null;
 
-var configured = false;
-var share, check = null;
-
-var properties = Object.create(Private.prototype);
-function Private(type) {
-	this.logger = slf4j.getLogger(type.name);
-	properties.setPrivate(this, {
-		type : type
-	});
-}
-
-/**
- * @param {LoggerFactory} config.LoggerFactory - an slf4j compatible logger factory
- * @param {Object} config.logging - slf4j logging configuration
- * @static
- */
-function Private$configure(config) {
-	if (configured) {
-		throw new Error("already configured");
+	var properties = Object.create(Private.prototype);
+	function Private(type) {
+		this.logger = slf4js.getLogger(type.name);
+		properties.setPrivate(this, {
+			type : type
+		});
 	}
-	configured = true;
-	if (config.LoggerFactory) {
-		slf4j.setLoggerFactory(config.LoggerFactory);
-	}
-	if (config.logging) {
-		slf4j.loadConfig(config.logging);
-	}
-}
 
-function Private$getClass() {
-	var x = properties.getPrivate(this);
-	return x.type;
-}
-
-function Private$setPrivate(instance, x) {
-	console.assert(instance !== properties);
-	x.logger = this.logger;
-	var y = properties.getPrivate(this);
-	if (!y.at) {
-		y.at = '@';
-		while (instance[y.at]) {
-			y.at += '@';
+	/**
+	 * @param {LoggerFactory}
+	 *            config.LoggerFactory - an slf4j compatible logger factory
+	 * @param {Object}
+	 *            config.logging - slf4j logging configuration
+	 * @static
+	 */
+	function Private$configure(config) {
+		if (configured) {
+			throw new Error("already configured");
+		}
+		configured = true;
+		if (config.LoggerFactory) {
+			slf4js.setLoggerFactory(config.LoggerFactory);
+		}
+		if (config.logging) {
+			slf4js.loadConfig(config.logging);
 		}
 	}
-	console.assert(!instance[y.at]);
-	console.assert(!(instance instanceof Private) || y.at === '@');
-	instance[y.at] = function() {
-		if (this !== instance) {
-			throw new Error(this.constructor.name + "['" + at +
-					"']: @-function belongs on class " +
-					instance.constructor.name);
+
+	function Private$getClass() {
+		var x = properties.getPrivate(this);
+		return x.type;
+	}
+
+	function Private$setPrivate(instance, x) {
+		console.assert(instance !== properties);
+		x.logger = this.logger;
+		var y = properties.getPrivate(this);
+		if (!y.at) {
+			y.at = '@';
+			while (instance[y.at]) {
+				y.at += '@';
+			}
 		}
-		if (check === instance) {
+		console.assert(!instance[y.at]);
+		console.assert(!(instance instanceof Private) || y.at === '@');
+		instance[y.at] = function() {
+			if (this !== instance) {
+				throw new Error(this.constructor.name + "['" + at + "']: @-function belongs on class " + instance.constructor.name);
+			}
+			if (check === instance) {
+				share = x;
+				check = null;
+			} else {
+				throw new Error(this.constructor.name + ": security violation on @-function");
+			}
+		};
+	}
+
+	function Private$getPrivate(instance) {
+		var at = properties.getPrivate(this).at;
+		if (check) {
+			throw new Error(check.constructor.name + ": has invalid @-function");
+		}
+		check = instance;
+		instance[at]();
+		if (check) {
+			throw new Error(instance.constructor.name + ": has invalid @-function");
+		}
+		return share;
+	}
+
+	Private.configure = Private$configure;
+	Private.prototype.configure = Private$configure;
+
+	Private.prototype.getClass = Private$getClass;
+	Private.prototype.setPrivate = Private$setPrivate;
+	Private.prototype.getPrivate = Private$getPrivate;
+
+	var x = {
+		type : Private,
+		at : '@'
+	};
+	properties['@'] = function() {
+		console.assert(this === properties);
+		if (check === properties) {
 			share = x;
 			check = null;
 		} else {
-			throw new Error(this.constructor.name +
-					": security violation on @-function");
+			throw new Error(this.constructor.name + ": security violation on @-function");
 		}
 	};
-}
+	properties.getPrivate = function(instance) {
+		console.assert(instance instanceof Private);
+		if (check) {
+			throw new Error(check.constructor.name + ": has invalid @-function");
+		}
+		check = instance;
+		instance['@']();
+		if (check) {
+			throw new Error(instance.constructor.name + ": has invalid @-function");
+		}
+		return share;
+	};
 
-function Private$getPrivate(instance) {
-	var at = properties.getPrivate(this).at;
-	if (check) {
-		throw new Error(check.constructor.name + ": has invalid @-function");
-	}
-	check = instance;
-	instance[at]();
-	if (check) {
-		throw new Error(instance.constructor.name + ": has invalid @-function");
-	}
-	return share;
-}
-
-Private.configure = Private$configure;
-Private.prototype.configure = Private$configure;
-
-Private.prototype.getClass = Private$getClass;
-Private.prototype.setPrivate = Private$setPrivate;
-Private.prototype.getPrivate = Private$getPrivate;
-
-var x = {
-	type : Private,
-	at : '@'
-};
-properties['@'] = function() {
-	console.assert(this === properties);
-	if (check === properties) {
-		share = x;
-		check = null;
-	} else {
-		throw new Error(this.constructor.name +
-				": security violation on @-function");
-	}
-};
-properties.getPrivate = function(instance) {
-	console.assert(instance instanceof Private);
-	if (check) {
-		throw new Error(check.constructor.name + ": has invalid @-function");
-	}
-	check = instance;
-	instance['@']();
-	if (check) {
-		throw new Error(instance.constructor.name + ": has invalid @-function");
-	}
-	return share;
-};
-
-module.exports = Private;
+	return Private;
+});

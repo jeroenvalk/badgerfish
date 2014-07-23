@@ -1,10 +1,7 @@
-var Point = require("../../examples/point/Point");
-var AbstractPointTest = require("../AbstractPointTest");
-
-function PointTest() {
-	AbstractPointTest.call(this, Point);
-}
-
-require("util").inherits(PointTest, AbstractPointTest);
-
-module.exports = PointTest;
+define(["../AbstractPointTest", "../../examples/point/Point"], function(AbstractPointTest, Point) {
+	function PointTest() {
+		AbstractPointTest.call(this, Point);
+	}
+	require("util").inherits(PointTest, AbstractPointTest);	
+	return PointTest;
+});

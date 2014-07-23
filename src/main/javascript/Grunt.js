@@ -18,38 +18,38 @@ var url = require('url');
 var path = require('path');
 var spawn = require('child_process').spawn;
 
+var requirejs = require('requirejs');
 var glob = require("glob");
 var xpath = require('xpath');
 var DOMParser = require('xmldom').DOMParser;
+
+requirejs.config({
+	baseUrl : __dirname
+});
 
 function endsWith(str, suffix) {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
-var Private = require("./Private");
+var Private = requirejs("./Private");
 var properties = new Private(Grunt);
 function Grunt() {
-	properties
-			.setPrivate(
-					this,
-					{
-						grunt : null,
-						downloads : {
-							"lib/require.js" : "http://requirejs.org/docs/release/2.1.11/comments/require.js",
-							"lib/jquery.js" : "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js",
-							"lib/angular.js" : "http://code.angularjs.org/1.2.13/angular.js",
-							"lib/foundation.js" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
-							"lib/foundation.css" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css"
-						},
-						unzip : true
-					});
+	properties.setPrivate(this, {
+		grunt : null,
+		downloads : {
+			"lib/require.js" : "http://requirejs.org/docs/release/2.1.11/comments/require.js",
+			"lib/jquery.js" : "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js",
+			"lib/angular.js" : "http://code.angularjs.org/1.2.13/angular.js",
+			"lib/foundation.js" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
+			"lib/foundation.css" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css"
+		},
+		unzip : true
+	});
 }
 
 function Grunt$system(done, cmd, args, options) {
 	// if relative directory does not exist then try system path
-	if (cmd.substr(0, 2) === "./"
-			&& !(fs.existsSync(path.dirname(cmd)) && fs.statSync(
-					path.dirname(cmd)).isDirectory())) {
+	if (cmd.substr(0, 2) === "./" && !(fs.existsSync(path.dirname(cmd)) && fs.statSync(path.dirname(cmd)).isDirectory())) {
 		cmd = path.basename(cmd);
 	}
 	var cli = spawn(cmd, args, options);
@@ -82,14 +82,11 @@ function Grunt$middleware() {
 }
 
 function Grunt$getConfig() {
-	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(
-			__dirname, "../../..")
-			+ path.sep + 'Gruntfile.json');
+	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(__dirname, "../../..") + path.sep + 'Gruntfile.json');
 	var name = this.middleware();
 	var middleware = [];
 	for ( var k = 0; k < name.length; ++k) {
-		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase()
-				+ name[k].substr(1));
+		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() + name[k].substr(1));
 	}
 	config.connect.test.options.middleware = function(connect, options) {
 		var i, result = [ function(req, res, next) {
@@ -105,22 +102,21 @@ function Grunt$getConfig() {
 				res.writeHead(200, {
 					'Content-Type' : 'text/xml'
 				});
-				res
-						.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="'
-								+ brush + '">');
+				res.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="'
+						+ brush + '">');
 				var readable = fs.createReadStream(parsed.pathname.substr(1));
 				readable.on("data", function(chunk) {
 					var offset = 0;
 					for ( var i = 0; i < chunk.length; ++i) {
 						switch (chunk[i]) {
-						case 60:
-							if (offset < i)
-								res.write(chunk.slice(offset, i - 1));
-							offset = i + 1;
-							res.write("&lt;");
-							break;
-						default:
-							break;
+							case 60:
+								if (offset < i)
+									res.write(chunk.slice(offset, i - 1));
+								offset = i + 1;
+								res.write("&lt;");
+								break;
+							default:
+								break;
 						}
 					}
 					res.write(chunk.slice(offset));
@@ -231,8 +227,7 @@ function Grunt$taskValidate() {
 			encoding : "utf8"
 		}));
 		if (pkg.name !== xpath.select("/project/artifactId/text()", pom)[0].data) {
-			grunt.log
-					.error("ArtifactId in POM does not match 'name' property in package.json");
+			grunt.log.error("ArtifactId in POM does not match 'name' property in package.json");
 			return false;
 		}
 		var version = xpath.select("/project/version/text()", pom)[0];
@@ -240,8 +235,7 @@ function Grunt$taskValidate() {
 			version = xpath.select("/project/parent/version/text()", pom)[0];
 		}
 		if (pkg.version !== version.data) {
-			grunt.log
-					.error("Version in POM does not match 'version' property in package.json");
+			grunt.log.error("Version in POM does not match 'version' property in package.json");
 			return false;
 		}
 	};
@@ -271,14 +265,11 @@ function Grunt$taskInit() {
 	return function(target) {
 		var done = this.async();
 		switch (target) {
-		case "selenium":
-			self
-					.system(done, "./node/node", [
-							"node_modules/protractor/bin/webdriver-manager",
-							"update" ]);
-			break;
-		default:
-			throw new Error("target '" + target + "' not defined");
+			case "selenium":
+				self.system(done, "./node/node", [ "node_modules/protractor/bin/webdriver-manager", "update" ]);
+				break;
+			default:
+				throw new Error("target '" + target + "' not defined");
 		}
 	};
 }
@@ -299,29 +290,24 @@ function Grunt$taskServer() {
 	return function(target) {
 		var done = this.async();
 		switch (target) {
-		case "node":
-			self.system(function() {
-			}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node",
-					"src/test/javascript/spec/", "--captureExceptions",
-					"--autotest", "--watch", "src/test/javascript",
-					"src/main/javascript" ]);
-			done();
-			break;
-		case "selenium":
-			var selenium = spawn("node/node", [
-					"node_modules/protractor/bin/webdriver-manager", "start" ]);
-			if (!fs.statSync("target").isDirectory()) {
-				fs.mkdirSync("target");
-			}
-			var writable = fs.createWriteStream("target/selenium.log");
-			selenium.stdout.pipe(writable);
-			selenium.stderr.pipe(writable);
-			self.system(done, "./node/node", [
-					"node_modules/protractor/bin/protractor",
-					"src/test/conf.js" ]);
-			break;
-		default:
-			throw new Error("target '" + target + "' not defined");
+			case "node":
+				self.system(function() {
+				}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", "src/test/javascript/spec/", "--runWithRequireJs", "--captureExceptions", "--autotest", "--watch",
+						"src/test/javascript", "src/main/javascript" ]);
+				done();
+				break;
+			case "selenium":
+				var selenium = spawn("node/node", [ "node_modules/protractor/bin/webdriver-manager", "start" ]);
+				if (!fs.statSync("target").isDirectory()) {
+					fs.mkdirSync("target");
+				}
+				var writable = fs.createWriteStream("target/selenium.log");
+				selenium.stdout.pipe(writable);
+				selenium.stderr.pipe(writable);
+				self.system(done, "./node/node", [ "node_modules/protractor/bin/protractor", "src/test/conf.js" ]);
+				break;
+			default:
+				throw new Error("target '" + target + "' not defined");
 		}
 	};
 }
@@ -357,30 +343,17 @@ function Grunt$taskWebdav() {
 		for ( var prop in webdav) {
 			if (webdav.hasOwnProperty(prop) && (!target || prop === target)) {
 				var options = webdav[prop].options;
-				glob(
-						options.src,
-						function(err, files) {
-							if (err) {
-								throw err;
-							}
-							for ( var i = 0; i < files.length; ++i) {
-								var url = "http://"
-										+ (options.domain ? options.domain
-												+ "%5C" : "")
-										+ options.username
-										+ (options.password ? ":"
-												+ options.password : "")
-										+ "@"
-										+ options.hostname
-										+ ":"
-										+ options.port
-										+ (options.dest
-												.charAt(options.dest.length - 1) === '/' ? options.dest
-												+ path.basename(files[i])
-												: options.dest);
-								self.curl(done, "-T", files[i], url);
-							}
-						});
+				glob(options.src, function(err, files) {
+					if (err) {
+						throw err;
+					}
+					for ( var i = 0; i < files.length; ++i) {
+						var url = "http://" + (options.domain ? options.domain + "%5C" : "") + options.username
+								+ (options.password ? ":" + options.password : "") + "@" + options.hostname + ":" + options.port
+								+ (options.dest.charAt(options.dest.length - 1) === '/' ? options.dest + path.basename(files[i]) : options.dest);
+						self.curl(done, "-T", files[i], url);
+					}
+				});
 			}
 		}
 	};
