@@ -13,7 +13,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-define([ 'binford-slf4j' ], function(slf4js) {
+define([ './slf4js' ], function(slf4js) {
 	var configured = false;
 	var share, check = null;
 
