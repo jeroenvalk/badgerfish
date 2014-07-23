@@ -13,7 +13,11 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+var requirejs = require('requirejs');
+requirejs.config({
+	baseUrl: __dirname
+});
 module.exports = {
 	Grunt : require("./Grunt"),
-	Private : require("./Private")
+	Private : requirejs("./Private")
 };

@@ -211,6 +211,9 @@ function Grunt$taskValidate() {
 	var grunt = properties.getPrivate(this).grunt;
 	var pkg = this.getPackage();
 	return function() {
+		var select = xpath.useNamespaces({
+			pom : "http://maven.apache.org/POM/4.0.0"
+		});
 		if (!fs.existsSync("target"))
 			fs.mkdirSync("target");
 		if (fs.existsSync("target/lock.txt")) {
@@ -226,13 +229,13 @@ function Grunt$taskValidate() {
 		var pom = new DOMParser().parseFromString(fs.readFileSync("pom.xml", {
 			encoding : "utf8"
 		}));
-		if (pkg.name !== xpath.select("/project/artifactId/text()", pom)[0].data) {
+		if (pkg.name !== select("/pom:project/pom:artifactId/text()", pom)[0].data) {
 			grunt.log.error("ArtifactId in POM does not match 'name' property in package.json");
 			return false;
 		}
-		var version = xpath.select("/project/version/text()", pom)[0];
+		var version = select("/pom:project/pom:version/text()", pom)[0];
 		if (!version) {
-			version = xpath.select("/project/parent/version/text()", pom)[0];
+			version = select("/pom:project/pom:parent/pom:version/text()", pom)[0];
 		}
 		if (pkg.version !== version.data) {
 			grunt.log.error("Version in POM does not match 'version' property in package.json");
@@ -292,8 +295,8 @@ function Grunt$taskServer() {
 		switch (target) {
 			case "node":
 				self.system(function() {
-				}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", "src/test/javascript/spec/", "--runWithRequireJs", "--captureExceptions", "--autotest", "--watch",
-						"src/test/javascript", "src/main/javascript" ]);
+				}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", "src/test/javascript/spec/", "--runWithRequireJs", "--captureExceptions",
+						"--autotest", "--watch", "src/test/javascript", "src/main/javascript" ]);
 				done();
 				break;
 			case "selenium":

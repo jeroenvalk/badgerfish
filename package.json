@@ -7,7 +7,7 @@
 		"requirejs":"~2.1.14",
 		"is-running":"~1.0.5",
 		"glob":"~3.2.9",
-		"xpath":"~0.0.6",
+		"xpath":"~0.0.7",
 		"xmldom":"~0.1.19",
 		"binford-slf4j":"~0.0.1",
 		"node-syntaxhighlighter":"~0.8.1",
