@@ -294,9 +294,13 @@ function Grunt$taskServer() {
 		var done = this.async();
 		switch (target) {
 			case "node":
+				var spec = "src/test/javascript/jasmine.spec.js";
+				if (!fs.statSync(spec).isFile()) {
+					spec = "node_modules/badgerfish.composix/" + spec;
+				}
 				self.system(function() {
-				}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", "src/test/javascript/spec/", "--runWithRequireJs", "--captureExceptions",
-						"--autotest", "--watch", "src/test/javascript", "src/main/javascript" ]);
+				}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", spec, "--captureExceptions", "--autotest", "--watch", "src/test/javascript",
+						"src/main/javascript" ]);
 				done();
 				break;
 			case "selenium":

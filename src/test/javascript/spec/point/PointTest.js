@@ -2,6 +2,8 @@ define(["../AbstractPointTest", "../../examples/point/Point"], function(Abstract
 	function PointTest() {
 		AbstractPointTest.call(this, Point);
 	}
+	PointTest.isTestCase = true;
+	
 	require("util").inherits(PointTest, AbstractPointTest);	
 	return PointTest;
 });

@@ -33,7 +33,9 @@ define([ './Private' ], function(Private) {
 	 * @returns {boolean}
 	 */
 	function Serializable$equals(serializable) {
-		return areEqualObjects(properties.getPrivate(this), properties.getPrivate(serializable));
+		return areEqualObjects(properties.getPrivate(this), properties.getPrivate(serializable), {
+			logger : true
+		});
 	}
 
 	/**
@@ -69,22 +71,24 @@ define([ './Private' ], function(Private) {
 	Serializable.prototype.fromJSON = Serializable$fromJSON;
 	Serializable.prototype.toJSON = Serializable$toJSON;
 
+	var areEqual =
 	/**
 	 * @private
 	 * @static
 	 */
 	function Serializable$areEqual(a, b) {
-		if (a[prop] instanceof Array) {
-			if (!(b[prop] instanceof Array) || !Serializable$areEqualArrays(a[prop], b[prop]))
+		if (a instanceof Array) {
+			if (!(b instanceof Array) || !areEqualArrays(a, b))
 				return false;
-		} else if (a[prop] instanceof Object) {
-			if (!(b[prop] instanceof Object) || !Serializable$areEqualObjects(a[prop], b[prop]))
+		} else if (a instanceof Object) {
+			if (!(b instanceof Object) || !areEqualObjects(a, b))
 				return false;
 		} else {
-			return JSON.stringify(a[prop]) === JSON.stringify(b[prop]);
+			return JSON.stringify(a) === JSON.stringify(b);
 		}
-	}
+	};
 
+	var areEqualArrays =
 	/**
 	 * @private
 	 * @static
@@ -97,26 +101,29 @@ define([ './Private' ], function(Private) {
 				return false;
 		}
 		return true;
-	}
+	};
 
+	var areEqualObjects =
 	/**
 	 * @private
 	 * @static
 	 */
-	function Serializable$areEqualObjects(a, b) {
+	function Serializable$areEqualObjects(a, b, skip) {
 		var prop = undefined;
+		if (!skip)
+			skip = {};
 		for (prop in b)
 			if (!a.hasOwnProperty(prop) && b.hasOwnProperty(prop))
 				return false;
 		for (prop in a) {
-			if (a.hasOwnProperty(prop)) {
+			if (!skip[prop] && a.hasOwnProperty(prop)) {
 				if (!areEqual(a[prop], b[prop])) {
 					return false;
 				}
 			}
 		}
 		return true;
-	}
-	
+	};
+
 	return Serializable;
 });
