@@ -1,0 +1,18 @@
+<badgerfish>
+	<alice>bob</alice>
+	<alice>
+		<bob>charlie</bob>
+		<david>edgar</david>
+	</alice>
+	<alice>
+		<bob>charlie</bob>
+		<bob>david</bob>
+	</alice>
+	<alice charlie="david">bob</alice>
+	<alice xmlns="http://some-namespace">bob</alice>
+	<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace">bob</alice>
+	<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace">
+		<bob>david</bob>
+		<charlie:edgar>frank</charlie:edgar>
+	</alice>
+</badgerfish>
