@@ -70,13 +70,13 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>grunt verify</id>
-						<phase>verify</phase>
+						<id>grunt deploy</id>
+						<phase>deploy</phase>
 						<goals>
 							<goal>grunt</goal>
 						</goals>
 						<configuration>
-							<arguments>verify</arguments>
+							<arguments>deploy</arguments>
 						</configuration>
 					</execution>
 					<execution>

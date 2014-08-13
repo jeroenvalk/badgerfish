@@ -1,7 +1,8 @@
-define([ "javascript/Private" ], function(Private) {
+define([ "./Private" ], function(Private) {
 	var properties = new Private(Path);
 
 	function Path(path) {
+		properties.setPrivate(this, {});
 		var part = path.split("/");
 		var result = [];
 		for ( var i = 0; i < part.length; ++i) {
@@ -117,10 +118,10 @@ define([ "javascript/Private" ], function(Private) {
 	Path.PARENT = -19;
 	Path.PRECEDING = -20;
 	Path.PRECEDING_SIBLING = -21;
-	PATH.SELF = -22;
+	Path.SELF = -22;
 
 	// formats
-	PATH.XPATH = -100;
+	Path.XPATH = -100;
 
 	return Path;
 });

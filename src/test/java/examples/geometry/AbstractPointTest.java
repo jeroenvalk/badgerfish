@@ -1,9 +1,7 @@
-package spec;
+package examples.geometry;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import examples.IPoint;
 
 abstract public class AbstractPointTest {
 	protected IPoint origin;

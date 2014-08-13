@@ -277,7 +277,7 @@ function Grunt$taskInit() {
 	};
 }
 
-function Grunt$taskVerify() {
+function Grunt$taskDeploy() {
 	var grunt = properties.getPrivate(this).grunt;
 	var pkg = this.getPackage();
 	return function() {
@@ -376,7 +376,7 @@ Grunt.prototype.Grunt = Grunt$Grunt;
 Grunt.prototype.taskValidate = Grunt$taskValidate;
 Grunt.prototype.taskInitialize = Grunt$taskInitialize;
 Grunt.prototype.taskInit = Grunt$taskInit;
-Grunt.prototype.taskVerify = Grunt$taskVerify;
+Grunt.prototype.taskDeploy = Grunt$taskDeploy;
 Grunt.prototype.taskServer = Grunt$taskServer;
 Grunt.prototype.taskStart = Grunt$taskStart;
 Grunt.prototype.taskStop = Grunt$taskStop;

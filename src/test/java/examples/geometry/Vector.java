@@ -2,8 +2,6 @@ package examples.geometry;
 
 import java.util.Arrays;
 
-import examples.IPoint;
-
 /**
  * A vector is a geometric quantify having a magnitude and direction. They are
  * expressed as tuples of numbers, which can be passed as arguments to the

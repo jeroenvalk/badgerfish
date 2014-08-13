@@ -1,4 +1,4 @@
-package examples;
+package examples.geometry;
 
 public interface IPoint {
 

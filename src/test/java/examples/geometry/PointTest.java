@@ -1,10 +1,6 @@
-package spec.geometry;
+package examples.geometry;
 
 import org.junit.Before;
-
-import spec.AbstractPointTest;
-import examples.IPoint;
-import examples.geometry.Point;
 
 public class PointTest extends AbstractPointTest {
 

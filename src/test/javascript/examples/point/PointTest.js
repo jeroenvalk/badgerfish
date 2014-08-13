@@ -1,4 +1,4 @@
-define(["../AbstractPointTest", "../../examples/point/Point"], function(AbstractPointTest, Point) {
+define(["../geometry/AbstractPointTest", "./Point"], function(AbstractPointTest, Point) {
 	function PointTest() {
 		AbstractPointTest.call(this, Point);
 	}

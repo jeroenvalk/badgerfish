@@ -1,4 +1,4 @@
-define([ "../../../main/javascript/Private" ], function(Private) {
+define([ "../../../../main/javascript/Private" ], function(Private) {
 	var properties = new Private(AbstractPointTest);
 
 	function AbstractPointTest(Point) {

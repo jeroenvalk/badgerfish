@@ -29,19 +29,28 @@ function execute(testcase, method) {
 for ( var prop in test) {
 	if (test.hasOwnProperty(prop)) {
 		check = false;
-		describe(prop, function() {
-			check = true;
-			var testcase = new test[prop]();
-			beforeEach(function() {
-				testcase.setup();
-			});
-			for ( var method in testcase) {
-				if (typeof testcase[method] === "function" && method.substr(0, 4) === "test") {
-					it(method + "()", execute(testcase, testcase[method]));
+		var testcase = new test[prop]();
+		var method = [];
+		for ( var prop in testcase) {
+			if (typeof testcase[prop] === "function" && prop.substr(0, 4) === "test") {
+				method.push(prop);
+			}
+		}
+		if (method.length > 0) {
+			describe(prop, function() {
+				check = true;
+				beforeEach(function() {
+					if (testcase.setup)
+						testcase.setup();
+				});
+				for ( var i = 0; i < method.length; ++i) {
+					it(method[i] + "()", execute(testcase, testcase[method[i]]));
 					expect(check).toBe(true);
 				}
-			}
-		});
-		expect(check).toBe(true);
+			});
+			expect(check).toBe(true);
+		} else {
+			throw new Error(prop + ": no tests defined");
+		}
 	}
 }

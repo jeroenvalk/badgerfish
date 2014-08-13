@@ -1,6 +1,6 @@
 package examples.point;
 
-import examples.IPoint;
+import examples.geometry.IPoint;
 
 public class Point implements IPoint {
 	private double x, y;
