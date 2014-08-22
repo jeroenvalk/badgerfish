@@ -8,7 +8,7 @@ define([ "../../main/javascript/Private", "../../main/javascript/Path" ], functi
 
 	PathTest.prototype.setup = function PathTest$setup() {
 		var x = properties.getPrivate(this);
-		x.content = {
+		x.json = {
 			"store" : {
 				"book" : [ {
 					"category" : "reference",
@@ -42,87 +42,159 @@ define([ "../../main/javascript/Private", "../../main/javascript/Path" ], functi
 	};
 
 	PathTest.prototype.testJSONPathA = function PathTest$testJSONPathA() {
-		new Path("$.store.book[*].author");
-		new Path("$.store.book.author");
+		var path = new Path("$.store.book[*].author");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[0].author, books[1].author, books[2].author, books[3].author ];
+		var result = path.selectStrings();
+		assert.deepEqual(expected, result);
+		
+		path = new Path("$.store.book.author");
+		result = path.selectStrings();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathB = function PathTest$testJSONPathB() {
-		new Path("$..author");
+		var path = new Path("$..author");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[0].author, books[1].author, books[2].author, books[3].author ];
+		var result = path.selectStrings();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathC = function PathTest$testJSONPathC() {
-		new Path("$.store.*");
+		var path = new Path("$.store.*");
+		var x = properties.getPrivate(this);
+		var expected = [ x.json.store.book, x.json.store.bicycle ];
+		var result = path.selectJSON();
+		assert.deepEqual(expected, result);
+		
+		expected = x.json.store.book.concat([x.json.store.bicycle]);
+		result = path.selectObjects();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathD = function PathTest$testJSONPathD() {
-		new Path("$.store..price");
+		var path = new Path("$.store..price");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[0].price, books[1].price, books[2].price, books[3].price, x.json.store.bicycle.price ];
+		var result = path.selectNumbers();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathE = function PathTest$testJSONPathE() {
-		new Path("$..book[2]");
+		var path = new Path("$..book[2]");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[2] ];
+		var result = path.selectObjects();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathF = function PathTest$testJSONPathF() {
-		new Path("$..book[(@.length-1)]");
-		new Path("$..book[-1:]");
+		var path = new Path("$..book[(@.length-1)]");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[3] ];
+		var result = path.selectObjects();
+		test.deepEqual(expected, result);
+
+		path = new Path("$..book[-1:]");
+		result = path.selectObjects();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathG = function PathTest$testJSONPathG() {
-		new Path("$..book[0,1]");
-		new Path("$..book[:2]");
+		var path = new Path("$..book[0,1]");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[0], books[1] ];
+		var result = path.selectObjects();
+		test.deepEqual(expected, result);
+
+		var path = new Path("$..book[:2]");
+		result = path.selectObjects();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathH = function PathTest$testJSONPathH() {
-		new Path("$..book[?(@.isbn)]");
+		var path = new Path("$..book[?(@.isbn)]");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[2], books[3] ];
+		var result = path.selectObjects();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathI = function PathTest$testJSONPathI() {
-		new Path("$..book[?(@.price<10)]");
+		var path = new Path("$..book[?(@.price<10)]");
+		var x = properties.getPrivate(this);
+		var books = x.json.store.book;
+		var expected = [ books[0], books[2] ];
+		var result = path.selectObjects();
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testJSONPathJ = function PathTest$testJSONPathJ() {
-		new Path("$..*");
+		var path = new Path("$..*");
+		var x = properties.getPrivate(this);
+		var expected = [ x.json.store, x.json.store.book, x.json.store.bicycle, ];
+		x.json.store.book.forEach(function(book) {
+			expected.push(book);
+		});
+		x.json.store.book.forEach(function(book) {
+			Object.keys(book).forEach(function(p) {
+				expected.push(book[p]);
+			});
+		});
+		expected.push(x.json.store.bicycle.color);
+		expected.push(x.json.store.bicycle.price);
+
+		var result = path.selectAll;
+		assert.deepEqual(expected, result);
 	};
 
 	PathTest.prototype.testXPathA = function PathTest$testXPathA() {
 		new Path("/store/book/author");
 	};
-	
+
 	PathTest.prototype.testXPathB = function PathTest$testXPathB() {
 		new Path("//author");
 	};
-	
+
 	PathTest.prototype.testXPathC = function PathTest$testXPathC() {
 		new Path("/store/*");
 	};
-	
+
 	PathTest.prototype.testXPathD = function PathTest$testXPathD() {
 		new Path("/store//price");
 	};
-	
+
 	PathTest.prototype.testXPathE = function PathTest$testXPathE() {
 		new Path("//book[3]");
 	};
-	
+
 	PathTest.prototype.testXPathF = function PathTest$testXPathF() {
 		new Path("//book[last()]");
 	};
-	
+
 	PathTest.prototype.testXPathG = function PathTest$testXPathG() {
 		new Path("//book[position()<3]");
 	};
-	
+
 	PathTest.prototype.testXPathH = function PathTest$testXPathH() {
 		new Path("//book[isbn]");
 	};
-	
+
 	PathTest.prototype.testXPathI = function PathTest$testXPathI() {
 		new Path("//book[price<10]");
 	};
-	
+
 	PathTest.prototype.testXPathJ = function PathTest$testXPathJ() {
 		new Path("//*");
 	};
-	
+
 	return PathTest;
 });
