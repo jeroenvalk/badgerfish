@@ -1,9 +1,8 @@
-define([ "./Private", "JSONPath" ], function(Private, JSONPath) {
-	var properties = new Private(Path);
-	var jsonpath = JSONPath.eval;
+define([ "./Private", "./Argv" ], function(Private, Argv) {
+	var properties;
 
 	// conversions
-	
+
 	var parseXPath = function Path$parseXPath(path) {
 		var result = [];
 		for ( var i = 0; i < part.length; ++i) {
@@ -96,254 +95,101 @@ define([ "./Private", "JSONPath" ], function(Private, JSONPath) {
 		return result;
 	};
 
-	/**
-	 * @param {string} [path]
-	 * @param {Context} [context] 
-	 * @constructor
-	 */
-	function Path(path) {
-		var argv = Argv.getInstance(arguments);
-		var path = argv.getArgumentByType("string");
-		var context = argv.getArgumentByType("Context");
-		properties.setPrivate(this, {});
-		var part = path.split("/");
-		var x = properties.getPrivate(this);
-		x.path = result;
-	}
-
-	/**
-	 * @param {number} format - format as defined by constants below
-	 */
-	function Path$toString(format) {
-		
-	}
-	
-	// utils (see NodeJS path http://nodejs.org/api/path.html)
-	
 	var noJSONPath = function Path$noJSONPath(path) {
 		if (path.indexOf("$.") === 0) {
 			throw new Error("function does not support JSON Path format");
 		}
 	};
-	
-	/**
-	 * @param {string|Path} path
-	 * @return {Path} normalized path
-	 */
-	Path.normalize = function Path$normalize(path) {
-		noJSONPath(path);
-		return new Path(pathNodeJS.normalize(path));
-	};
-	
-	/**
-	 * Normalize this path, taking care of '..' (parent-axis) and '.' (child-axis) parts.
-	 * 
-	 * @return {Path} normalized path
-	 */
-	Path.prototype.normalize = function Path$normalize() {
-		var path = this.toString()
-	};
-	
-	/**
-	 * Join all arguments together and normalize the resulting path.
-	 * 
-	 * @param {...Path|string}
-	 * 
-	 * @return {Path} joined path
-	 */
-	Path.join;
-	Path.prototype.join;
-	
-	
-	Path.prototype.resolve;
-	Path.prototype.relative;
-	Path.prototype.dirname;
-	Path.prototype.basename;
-	Path.prototype.extname;
-	
-	// XPath
 
-	Path.prototype.selectSingleNode = function Path$selectSingleNode(entity) {
-
-	};
-
-	Path.prototype.selectNodes = function Path$selectNodes(entity) {
-
-	};
-
-	// JSONPath
-
-	Path.prototype.selectJSON =
-	/**
-	 * @param {number}
-	 *            amount
-	 * @return {Array}
-	 */
-	function Path$selectJSON(entity, amount) {
-		var type = typeof entity;
-		if (type === "object") {
-			type = /\[object ([^\]]+)\]/.exec(toString.call(entity))[1];
+	return Argv.define([ "string", "Context" ], function(argv) {
+		properties = new Private(Path);
+		/**
+		 * @param {string}
+		 *            [path]
+		 * @param {Context}
+		 *            [context]
+		 * @constructor
+		 */
+		function Path(path, context) {
+			argv.arrange(arguments);
+			properties.setPrivate(this, {});
+			var x = properties.getPrivate(this);
+			x.path = path.split("/");
 		}
-		var result = null;
-		switch (type) {
-			case "Object":
-			case "Array":
-				result = jsonPath(entity, this.toJSONPath());
-				break;
-			default:
-				throw new Error("path selector on invalid type: " + type);
+
+		argv.define([ "number" ],
+		/**
+		 * 
+		 */
+		function Path$toString(format) {
+
+		});
+
+		// utils (see NodeJS path http://nodejs.org/api/path.html)
+		argv.define([ "string|Path" ],
+		/**
+		 * @param {string|Path}
+		 *            path
+		 * @return {Path} normalized path
+		 */
+		function static_Path$normalize(path) {
+			noJSONPath(path);
+			return new Path(pathNodeJS.normalize(path));
+		});
+
+		argv.define([],
+		/**
+		 * Normalize this path, taking care of '..' (parent-axis) and '.'
+		 * (child-axis) parts.
+		 * 
+		 * @return {Path} normalized path
+		 */
+		function Path$normalize() {
+			var path = this.toString();
+		});
+
+		Argv.define([],
+		/**
+		 * Join all arguments together and normalize the resulting path.
+		 * 
+		 * @param {...Path|string}
+		 * 
+		 * @return {Path} joined path
+		 */
+		function Path$join() {
+
+		});
+
+		function Path$resolve() {
 		}
-		return result.slice(0, amount);
-	};
-
-	Path.prototype.selectOne =
-	/**
-	 * @param entity
-	 * @param {string}
-	 *            type
-	 * @return {type}
-	 */
-	function Path$selectOne(entity, type) {
-
-	};
-
-	Path.prototype.selectAll =
-	/**
-	 * @param entity
-	 * @param {string}
-	 *            type
-	 * @return {type[]}
-	 */
-	function Path$selectAll(entity, type) {
-
-	};
-
-	Path.prototype.selectSingleObject =
-	/**
-	 * @param entity
-	 * @return {object}
-	 */
-	function Path$selectSingleObject(entity) {
-		return this.selectOne(entity, "object");
-	};
-
-	Path.prototype.selectObjects =
-	/**
-	 * @param entity
-	 * @return {object[]}
-	 */
-	function Path$selectObjects(entity) {
-		return this.selectAll(entity, "object");
-	};
-
-	Path.prototype.selectSingleValue =
-	/**
-	 * @param entity
-	 * @param {String}
-	 *            type
-	 * @return {boolean|number|string}
-	 */
-	function Path$selectSingleValue(entity, type) {
-		if (!(type in {
-			boolean : 1,
-			number : 1,
-			string : 1
-		})) {
-			throw new Error("type must be boolean, number or string");
+		function Path$relative() {
 		}
-		return this.selectOne(type);
-	};
-
-	Path.prototype.selectValues =
-	/**
-	 * @param entity
-	 * @param {String}
-	 *            type
-	 * @return {boolean[]|number[]|string[]}
-	 */
-	function Path$selectValues(entity, type) {
-		if (!(type in {
-			boolean : 1,
-			number : 1,
-			string : 1
-		})) {
-			throw new Error("type must be boolean, number or string");
+		function Path$dirname() {
 		}
-		return this.selectAll(entity, type);
-	};
+		function Path$basename() {
+		}
+		function Path$extname() {
+		}
 
-	Path.prototype.selectSingleBoolean =
-	/**
-	 * @param entity
-	 * @return {boolean}
-	 */
-	function Path$selectSingleBoolean(entity) {
-		return this.selectOne(entity, "boolean");
-	};
+		// axes
+		Path.ANCESTOR = -10;
+		Path.ANCESTOR_OR_SELF = -11;
+		Path.ATTRIBUTE = -12;
+		Path.CHILD = -13;
+		Path.DESCENDANT = -14;
+		Path.DESCENDANT_OR_SELF = -15;
+		Path.FOLLOWING = -16;
+		Path.FOLLOWING_SIBLING = -17;
+		Path.NAMESPACE = -18;
+		Path.PARENT = -19;
+		Path.PRECEDING = -20;
+		Path.PRECEDING_SIBLING = -21;
+		Path.SELF = -22;
 
-	Path.prototype.selectBooleans =
-	/**
-	 * @param entity
-	 * @return {boolean[]}
-	 */
-	function Path$selectBooleans(entity) {
-		return this.selectAll(entity, "boolean");
-	};
+		// formats
+		Path.XPATH = -100;
+		Path.JSONPATH = -101;
 
-	Path.prototype.selectSingleNumber =
-	/**
-	 * @param entity
-	 * @return {number}
-	 */
-	function Path$selectSingleNumber(entity) {
-		return this.selectOne(entity, "number");
-	};
-
-	Path.prototype.selectNumbers =
-	/**
-	 * @param entity
-	 * @return {number[]}
-	 */
-	function Path$selectNumbers(entity) {
-		return this.selectAll(entity, "number");
-	};
-
-	Path.prototype.selectSingleString =
-	/**
-	 * @param entity
-	 * @return {string}
-	 */
-	function Path$selectSingleString(entity) {
-		return this.selectOne(entity, "string");
-	};
-
-	Path.prototype.selectStrings =
-	/**
-	 * @param entity
-	 * @return {string[])
-	 */
-	function Path$selectStrings(entity) {
-		return this.selectAll(entity, "string");
-	};
-
-	// axes
-	Path.ANCESTOR = -10;
-	Path.ANCESTOR_OR_SELF = -11;
-	Path.ATTRIBUTE = -12;
-	Path.CHILD = -13;
-	Path.DESCENDANT = -14;
-	Path.DESCENDANT_OR_SELF = -15;
-	Path.FOLLOWING = -16;
-	Path.FOLLOWING_SIBLING = -17;
-	Path.NAMESPACE = -18;
-	Path.PARENT = -19;
-	Path.PRECEDING = -20;
-	Path.PRECEDING_SIBLING = -21;
-	Path.SELF = -22;
-
-	// formats
-	Path.XPATH = -100;
-	Path.JSONPATH = -101;
-
-	return Path;
+		return Path;
+	}).getModule();
 });

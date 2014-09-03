@@ -76,6 +76,9 @@ define([ './slf4js' ], function(slf4js) {
 	}
 
 	function Private$getPrivate(instance) {
+		if (!instance) {
+			throw new Error("illegal argument");
+		}
 		var at = properties.getPrivate(this).at;
 		if (check) {
 			throw new Error(check.constructor.name + ": has invalid @-function");
