@@ -23,16 +23,16 @@ define([ "../../main/javascript/Private", "../../main/javascript/Path" ], functi
 		path = new Path("$..book[?(@.isbn)]");
 		path = new Path("$..book[?(@.price<10)]");
 		path = new Path("$..*");
-		path = new Path("/store/book/author");
-		path = new Path("//author");
-		path = new Path("/store/*");
-		path = new Path("/store//price");
-		path = new Path("//book[3]");
-		path = new Path("//book[last()]");
-		path = new Path("//book[position()<3]");
-		path = new Path("//book[isbn]");
-		path = new Path("//book[price<10]");
-		path = new Path("//*");
+		path = new Path("#/store/book/author");
+		path = new Path("#//author");
+		path = new Path("#/store/*");
+		path = new Path("#/store//price");
+		path = new Path("#//book[3]");
+		path = new Path("#//book[last()]");
+		path = new Path("#//book[position()<3]");
+		path = new Path("#//book[isbn]");
+		path = new Path("#//book[price<10]");
+		path = new Path("#//*");
 
 	};
 

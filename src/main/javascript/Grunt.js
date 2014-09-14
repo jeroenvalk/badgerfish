@@ -22,6 +22,7 @@ var requirejs = require('requirejs');
 var glob = require("glob");
 var xpath = require('xpath');
 var DOMParser = require('xmldom').DOMParser;
+var Generator = require('jison').Generator;
 
 requirejs.config({
 	baseUrl : __dirname
@@ -366,6 +367,18 @@ function Grunt$taskWebdav() {
 	};
 }
 
+function Grunt$taskJison() {
+	var self = this;
+	return function(target) {
+		if (target) {
+			var parser = new Generator(fs.readFileSync("src/main/resources/"+target+".jison", {encoding: "utf8"}), {moduleType: 'amd'});
+			fs.writeFileSync("dist/"+target+".js", parser.generate());
+		} else {
+			throw new Error("Specify name of .jison file (without extension)");
+		}
+	}
+}
+
 Grunt.prototype.system = Grunt$system;
 Grunt.prototype.curl = Grunt$curl;
 Grunt.prototype.download = Grunt$download;
@@ -382,5 +395,6 @@ Grunt.prototype.taskStart = Grunt$taskStart;
 Grunt.prototype.taskStop = Grunt$taskStop;
 Grunt.prototype.taskRestart = Grunt$taskRestart;
 Grunt.prototype.taskWebdav = Grunt$taskWebdav;
+Grunt.prototype.taskJison = Grunt$taskJison;
 
 module.exports = Grunt;
