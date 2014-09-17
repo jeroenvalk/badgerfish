@@ -242,6 +242,7 @@ function Grunt$taskValidate() {
 			grunt.log.error("Version in POM does not match 'version' property in package.json");
 			return false;
 		}
+		fs.writeFileSync("target/grunt.properties", "grunt.cwd=" + process.cwd().replace(/\\/g, "/") + "\n");
 	};
 }
 
@@ -371,8 +372,12 @@ function Grunt$taskJison() {
 	var self = this;
 	return function(target) {
 		if (target) {
-			var parser = new Generator(fs.readFileSync("src/main/resources/"+target+".jison", {encoding: "utf8"}), {moduleType: 'amd'});
-			fs.writeFileSync("dist/"+target+".js", parser.generate());
+			var parser = new Generator(fs.readFileSync("src/main/resources/" + target + ".jison", {
+				encoding : "utf8"
+			}), {
+				moduleType : 'amd'
+			});
+			fs.writeFileSync("dist/" + target + ".js", parser.generate());
 		} else {
 			throw new Error("Specify name of .jison file (without extension)");
 		}
