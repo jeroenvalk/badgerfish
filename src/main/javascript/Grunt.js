@@ -322,7 +322,7 @@ function Grunt$taskServer() {
 }
 
 function Grunt$taskStart() {
-	return [ "validate", "server:node", "connect" ];
+	return [ "validate", "jison", "server:node", "connect" ];
 }
 
 function Grunt$taskStop() {
@@ -370,7 +370,7 @@ function Grunt$taskWebdav() {
 
 function Grunt$taskJison() {
 	var self = this;
-	return function(target) {
+	function Grunt$taskJison$execute(target) {
 		if (target) {
 			var parser = new Generator(fs.readFileSync("src/main/resources/" + target + ".jison", {
 				encoding : "utf8"
@@ -379,9 +379,16 @@ function Grunt$taskJison() {
 			});
 			fs.writeFileSync("dist/" + target + ".js", parser.generate());
 		} else {
-			throw new Error("Specify name of .jison file (without extension)");
+			var files = fs.readdirSync("src/main/resources");
+			files.forEach(function(file) {
+				var size = file.length - 6;
+				if (file.indexOf(".jison", size) !== -1) {
+					Grunt$taskJison$execute(file.substr(0, size));
+				}
+			});
 		}
 	}
+	return Grunt$taskJison$execute;
 }
 
 Grunt.prototype.system = Grunt$system;
