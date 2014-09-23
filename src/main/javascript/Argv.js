@@ -37,8 +37,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 
 	var maskOf =
 	/**
-	 * @param {!Object|!Array}
-	 *            value
+	 * @param {!Object|!Array} value
 	 * @static
 	 */
 	function Argv$maskOf(value) {
@@ -76,8 +75,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 
 	var properties = new Private(Argv);
 	/**
-	 * @param {number[]}
-	 *            types
+	 * @param {number[]} types
 	 * @constructor
 	 */
 	function Argv(types) {
@@ -93,7 +91,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 			}
 			for (type = 0; type < 15; ++type) {
 				count = 0;
-				for (var i = 0; i < types.length; ++i) {
+				for ( var i = 0; i < types.length; ++i) {
 					if (type && types[i]) {
 						indices[type][count++] = i;
 					}
@@ -113,10 +111,8 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 
 	Argv.define = Argv.prototype.define =
 	/**
-	 * @param {Array}
-	 *            types
-	 * @param {Function}
-	 *            definition
+	 * @param {Array} types
+	 * @param {Function} definition
 	 */
 	function Argv$define(types, definition) {
 		var argv = this;
@@ -168,8 +164,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 
 	Argv.prototype.getModule =
 	/**
-	 * @param {string}
-	 *            [classname] -
+	 * @param {string} [classname] -
 	 */
 	function Argv$getModule(classname) {
 		var x = properties.getPrivate(this).classes;
@@ -205,8 +200,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 	/**
 	 * Gets the type code of a given value
 	 * 
-	 * @param {*}
-	 *            value
+	 * @param {*} value
 	 * @return {Number}
 	 * @static
 	 */
@@ -228,8 +222,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 	/**
 	 * Arrange arguments according to their types
 	 * 
-	 * @param {Arguments}
-	 *            argv
+	 * @param {Arguments} argv
 	 */
 	function Argv$arrange(argv) {
 		var x = properties.getPrivate(this);
@@ -238,7 +231,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 			throw new Error("function call exceeds maximum of 30 arguments");
 		}
 		var ok = 0, shift = 0, count = 0;
-		for (var i = 0; i < size; ++i) {
+		for ( var i = 0; i < size; ++i) {
 			var type = this.getType(argv[i]);
 			var typebit = 1 << type;
 			var k, kbit;

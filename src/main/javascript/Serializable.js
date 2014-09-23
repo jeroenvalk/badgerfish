@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright ï¿½ 2014 dr. ir. Jeroen M. Valk
  * 
  * This file is part of Badgerfish CPX. Badgerfish CPX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -17,8 +17,7 @@ define([ './Private' ], function(Private) {
 	var properties = new Private(Serializable);
 
 	/**
-	 * @param {Object}
-	 *            x - (private) properties object to be (de)serialized
+	 * @param {Object} x - (private) properties object to be (de)serialized
 	 * @constructor
 	 */
 	function Serializable(x) {
@@ -28,8 +27,7 @@ define([ './Private' ], function(Private) {
 	/**
 	 * Deep check whether to instances are equal regarding their properties.
 	 * 
-	 * @param {Serializable}
-	 *            serializable - instance to compare with
+	 * @param {Serializable} serializable - instance to compare with
 	 * @returns {boolean}
 	 */
 	function Serializable$equals(serializable) {
@@ -41,8 +39,7 @@ define([ './Private' ], function(Private) {
 	/**
 	 * Reads the properties from a JSON string.
 	 * 
-	 * @param {string}
-	 *            string - JSON string
+	 * @param {string} string - JSON string
 	 */
 	function Serializable$fromJSON(string) {
 		var x = properties.getPrivate(this);

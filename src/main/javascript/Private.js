@@ -26,10 +26,9 @@ define([ './slf4js' ], function(slf4js) {
 	}
 
 	/**
-	 * @param {LoggerFactory}
-	 *            config.LoggerFactory - an slf4j compatible logger factory
-	 * @param {Object}
-	 *            config.logging - slf4j logging configuration
+	 * @param {LoggerFactory} config.LoggerFactory - an slf4j compatible logger
+	 *            factory
+	 * @param {Object} config.logging - slf4j logging configuration
 	 * @static
 	 */
 	function Private$configure(config) {

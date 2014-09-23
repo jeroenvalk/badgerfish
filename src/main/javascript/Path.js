@@ -1,46 +1,44 @@
 define([ "./Private", "./Argv", "dist/path" ], function(Private, Argv, parser) {
 	var properties;
-	
+
 	var type = {
-		GLOB_ABSOLUTE: 0,
-		GLOB_RELATIVE: 1,
-		XPATH_ABSOLUTE: 2,
-		XPATH_RELATIVE: 3,
-		JPATH_ABSOLUTE: 4,
-		JPATH_RELATIVE: 5
-	};
-		
-	var axis = {
-		ANCESTOR: -10,
-		ANCESTOR_OR_SELF: -11,
-		ATTRIBUTE: -12,
-		CHILD: -13,
-		DESCENDANT: -14,
-		DESCENDANT_OR_SELF: -15,
-		FOLLOWING: -16,
-		FOLLOWING_SIBLING: -17,
-		NAMESPACE: -18,
-		PARENT: -19,
-		PRECEDING: -20,
-		PRECEDING_SIBLING: -21,
-		SELF: -22
+		GLOB_ABSOLUTE : 0,
+		GLOB_RELATIVE : 1,
+		XPATH_ABSOLUTE : 2,
+		XPATH_RELATIVE : 3,
+		JPATH_ABSOLUTE : 4,
+		JPATH_RELATIVE : 5
 	};
 
-	parser.yy = {parseError: function Path$parseError(str) {
+	var axis = {
+		ANCESTOR : -10,
+		ANCESTOR_OR_SELF : -11,
+		ATTRIBUTE : -12,
+		CHILD : -13,
+		DESCENDANT : -14,
+		DESCENDANT_OR_SELF : -15,
+		FOLLOWING : -16,
+		FOLLOWING_SIBLING : -17,
+		NAMESPACE : -18,
+		PARENT : -19,
+		PRECEDING : -20,
+		PRECEDING_SIBLING : -21,
+		SELF : -22
+	};
+
+	parser.yy = {
+		parseError : function Path$parseError(str) {
 			throw new Error(str);
 		},
-		Type: type,
-		Axis: axis
+		Type : type,
+		Axis : axis
 	};
-	
-	
+
 	return Argv.define([ "string", "Context" ], function(argv) {
 		properties = new Private(Path);
 		/**
-		 * @param {string}
-		 *            [path]
-		 * @param {Context}
-		 *            [context]
+		 * @param {string} [path]
+		 * @param {Context} [context]
 		 * @constructor
 		 */
 		function Path(path, context) {
@@ -60,8 +58,7 @@ define([ "./Private", "./Argv", "dist/path" ], function(Private, Argv, parser) {
 		// utils (see NodeJS path http://nodejs.org/api/path.html)
 		argv.define([ "string|Path" ],
 		/**
-		 * @param {string|Path}
-		 *            path
+		 * @param {string|Path} path
 		 * @return {Path} normalized path
 		 */
 		function static_Path$normalize(path) {

@@ -110,14 +110,14 @@ function Grunt$getConfig() {
 					var offset = 0;
 					for ( var i = 0; i < chunk.length; ++i) {
 						switch (chunk[i]) {
-							case 60:
-								if (offset < i)
-									res.write(chunk.slice(offset, i - 1));
-								offset = i + 1;
-								res.write("&lt;");
-								break;
-							default:
-								break;
+						case 60:
+							if (offset < i)
+								res.write(chunk.slice(offset, i - 1));
+							offset = i + 1;
+							res.write("&lt;");
+							break;
+						default:
+							break;
 						}
 					}
 					res.write(chunk.slice(offset));
@@ -269,11 +269,11 @@ function Grunt$taskInit() {
 	return function(target) {
 		var done = this.async();
 		switch (target) {
-			case "selenium":
-				self.system(done, "./node/node", [ "node_modules/protractor/bin/webdriver-manager", "update" ]);
-				break;
-			default:
-				throw new Error("target '" + target + "' not defined");
+		case "selenium":
+			self.system(done, "./node/node", [ "node_modules/protractor/bin/webdriver-manager", "update" ]);
+			break;
+		default:
+			throw new Error("target '" + target + "' not defined");
 		}
 	};
 }
@@ -294,28 +294,28 @@ function Grunt$taskServer() {
 	return function(target) {
 		var done = this.async();
 		switch (target) {
-			case "node":
-				var spec = "src/test/javascript/jasmine.spec.js";
-				if (!fs.statSync(spec).isFile()) {
-					spec = "node_modules/badgerfish.composix/" + spec;
-				}
-				self.system(function() {
-				}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", spec, "--captureExceptions", "--autotest", "--watch", "src/test/javascript",
-						"src/main/javascript" ]);
-				done();
-				break;
-			case "selenium":
-				var selenium = spawn("node/node", [ "node_modules/protractor/bin/webdriver-manager", "start" ]);
-				if (!fs.statSync("target").isDirectory()) {
-					fs.mkdirSync("target");
-				}
-				var writable = fs.createWriteStream("target/selenium.log");
-				selenium.stdout.pipe(writable);
-				selenium.stderr.pipe(writable);
-				self.system(done, "./node/node", [ "node_modules/protractor/bin/protractor", "src/test/conf.js" ]);
-				break;
-			default:
-				throw new Error("target '" + target + "' not defined");
+		case "node":
+			var spec = "src/test/javascript/jasmine.spec.js";
+			if (!fs.statSync(spec).isFile()) {
+				spec = "node_modules/badgerfish.composix/" + spec;
+			}
+			self.system(function() {
+			}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", spec, "--captureExceptions", "--autotest", "--watch", "src/test/javascript",
+					"src/main/javascript" ]);
+			done();
+			break;
+		case "selenium":
+			var selenium = spawn("node/node", [ "node_modules/protractor/bin/webdriver-manager", "start" ]);
+			if (!fs.statSync("target").isDirectory()) {
+				fs.mkdirSync("target");
+			}
+			var writable = fs.createWriteStream("target/selenium.log");
+			selenium.stdout.pipe(writable);
+			selenium.stderr.pipe(writable);
+			self.system(done, "./node/node", [ "node_modules/protractor/bin/protractor", "src/test/conf.js" ]);
+			break;
+		default:
+			throw new Error("target '" + target + "' not defined");
 		}
 	};
 }
@@ -371,8 +371,12 @@ function Grunt$taskJison() {
 	var self = this;
 	return function(target) {
 		if (target) {
-			var parser = new Generator(fs.readFileSync("src/main/resources/"+target+".jison", {encoding: "utf8"}), {moduleType: 'amd'});
-			fs.writeFileSync("dist/"+target+".js", parser.generate());
+			var parser = new Generator(fs.readFileSync("src/main/resources/" + target + ".jison", {
+				encoding : "utf8"
+			}), {
+				moduleType : 'amd'
+			});
+			fs.writeFileSync("dist/" + target + ".js", parser.generate());
 		} else {
 			throw new Error("Specify name of .jison file (without extension)");
 		}

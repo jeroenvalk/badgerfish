@@ -22,8 +22,7 @@ define(function() {
 	/**
 	 * Creates the instance() method on the class that is being initialized.
 	 * 
-	 * @param {object}
-	 *            instance - singleton instance for this class
+	 * @param {object} instance - singleton instance for this class
 	 */
 	function Singleton$initialize(instance) {
 		var constructor = this;

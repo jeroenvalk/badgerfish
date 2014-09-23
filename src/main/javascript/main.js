@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright ï¿½ 2014 dr. ir. Jeroen M. Valk
  * 
  * This file is part of Badgerfish CPX. Badgerfish CPX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -15,7 +15,7 @@
 
 var requirejs = require('requirejs');
 requirejs.config({
-	baseUrl: __dirname
+	baseUrl : __dirname
 });
 module.exports = {
 	Grunt : require("./Grunt"),

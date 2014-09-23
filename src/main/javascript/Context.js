@@ -1,4 +1,4 @@
-define(["JSONPath"], function(JSONPath) {
+define([ "JSONPath" ], function(JSONPath) {
 	var xpath = require('xpath');
 	var DOMParser = require('xmldom').DOMParser;
 	var jsonpath = JSONPath.eval;
@@ -6,12 +6,13 @@ define(["JSONPath"], function(JSONPath) {
 	/**
 	 * @param {string} directory - project root directory
 	 * 
-	 * Extends Path where the context of the path is the parent and its own context is where its path methods will work on.
+	 * Extends Path where the context of the path is the parent and its own
+	 * context is where its path methods will work on.
 	 * 
 	 * @constructor
 	 */
 	function ProjectPath(directory) {
-		
+
 	}
 
 	// XPath
@@ -28,8 +29,7 @@ define(["JSONPath"], function(JSONPath) {
 
 	Path.prototype.selectJSON =
 	/**
-	 * @param {number}
-	 *            amount
+	 * @param {number} amount
 	 * @return {Array}
 	 */
 	function Path$selectJSON(entity, amount) {
@@ -39,12 +39,12 @@ define(["JSONPath"], function(JSONPath) {
 		}
 		var result = null;
 		switch (type) {
-			case "Object":
-			case "Array":
-				result = jsonPath(entity, this.toJSONPath());
-				break;
-			default:
-				throw new Error("path selector on invalid type: " + type);
+		case "Object":
+		case "Array":
+			result = jsonPath(entity, this.toJSONPath());
+			break;
+		default:
+			throw new Error("path selector on invalid type: " + type);
 		}
 		return result.slice(0, amount);
 	};
@@ -52,8 +52,7 @@ define(["JSONPath"], function(JSONPath) {
 	Path.prototype.selectOne =
 	/**
 	 * @param entity
-	 * @param {string}
-	 *            type
+	 * @param {string} type
 	 * @return {type}
 	 */
 	function Path$selectOne(entity, type) {
@@ -63,8 +62,7 @@ define(["JSONPath"], function(JSONPath) {
 	Path.prototype.selectAll =
 	/**
 	 * @param entity
-	 * @param {string}
-	 *            type
+	 * @param {string} type
 	 * @return {type[]}
 	 */
 	function Path$selectAll(entity, type) {
@@ -92,8 +90,7 @@ define(["JSONPath"], function(JSONPath) {
 	Path.prototype.selectSingleValue =
 	/**
 	 * @param entity
-	 * @param {String}
-	 *            type
+	 * @param {String} type
 	 * @return {boolean|number|string}
 	 */
 	function Path$selectSingleValue(entity, type) {
@@ -110,8 +107,7 @@ define(["JSONPath"], function(JSONPath) {
 	Path.prototype.selectValues =
 	/**
 	 * @param entity
-	 * @param {String}
-	 *            type
+	 * @param {String} type
 	 * @return {boolean[]|number[]|string[]}
 	 */
 	function Path$selectValues(entity, type) {

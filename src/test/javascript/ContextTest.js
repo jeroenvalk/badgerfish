@@ -48,7 +48,7 @@ define([ "../../main/javascript/Private", "../../main/javascript/Path" ], functi
 		var expected = [ books[0].author, books[1].author, books[2].author, books[3].author ];
 		var result = path.selectStrings();
 		assert.deepEqual(expected, result);
-		
+
 		path = new Path("$.store.book.author");
 		result = path.selectStrings();
 		assert.deepEqual(expected, result);
@@ -69,8 +69,8 @@ define([ "../../main/javascript/Private", "../../main/javascript/Path" ], functi
 		var expected = [ x.json.store.book, x.json.store.bicycle ];
 		var result = path.selectJSON();
 		assert.deepEqual(expected, result);
-		
-		expected = x.json.store.book.concat([x.json.store.bicycle]);
+
+		expected = x.json.store.book.concat([ x.json.store.bicycle ]);
 		result = path.selectObjects();
 		assert.deepEqual(expected, result);
 	};

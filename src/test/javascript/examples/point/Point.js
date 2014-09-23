@@ -62,6 +62,6 @@ define([ "../../../../main/javascript/Serializable", "../../../../main/javascrip
 	Point.prototype.add = Point$add;
 	Point.prototype.clear = Point$clear;
 	Point.prototype.distance = Point$distance;
-	
+
 	return Point;
 });
