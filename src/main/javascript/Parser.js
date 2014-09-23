@@ -12,7 +12,7 @@ var parsePredicateXPATH =
 	 * @return {Array}
 	 */
 	function Path$parsePredicateXPATH(tokens) {
-	}
+	};
 	
 	var parsePartGLOB =
 	/**
@@ -334,7 +334,7 @@ var parsePredicateXPATH =
 		}
 		var fragment = [];
 		var type = Path.Type.GLOB_ABSOLUTE;
-		fragment.push(parseFragment(type, tokens);
+		fragment.push(parseFragment(type, tokens));
 		while (tokens.length > 0) {
 			var token = tokens.shift();
 			expect && expect(token).toBe('#');
@@ -355,7 +355,7 @@ var parsePredicateXPATH =
 			} else {
 				type = Path.Type.XPATH_RELATIVE;
 			}
-			fragment.push(parseFragment(type, tokens);
+			fragment.push(parseFragment(type, tokens));
 		}
 		return fragment;
 	};

@@ -28,7 +28,7 @@ define(function() {
 	function Singleton$initialize(instance) {
 		var constructor = this;
 		function Singleton$initialize$instance() {
-			constructor.apply(instance, Array.prototype.slice(arguments));
+			constructor.apply(instance, Array.prototype.slice.call(arguments));
 		}
 		this.instance = Singleton$initialize$instance;
 	}

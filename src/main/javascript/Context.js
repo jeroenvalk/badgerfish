@@ -35,7 +35,7 @@ define(["JSONPath"], function(JSONPath) {
 	function Path$selectJSON(entity, amount) {
 		var type = typeof entity;
 		if (type === "object") {
-			type = /\[object ([^\]]+)\]/.exec(toString.call(entity))[1];
+			type = /\[object ([^\]]+)\]/.exec(Object.prototype.toString.call(entity))[1];
 		}
 		var result = null;
 		switch (type) {

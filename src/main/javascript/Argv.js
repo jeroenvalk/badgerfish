@@ -26,7 +26,6 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 	var typeMap = {
 		Null : 0,
 		Object : 1,
-		Function : 2,
 		Boolean : 3,
 		Number : 4,
 		String : 5,
