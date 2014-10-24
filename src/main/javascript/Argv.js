@@ -135,6 +135,9 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 		var classname = match[2];
 		var methodname = match[3];
 		switch (keyword) {
+		case "static":
+			keyword = "Static";
+			break;
 		case "public":
 			keyword = "Public";
 			break;
@@ -181,17 +184,31 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 				}
 			}
 		}
-		if (x[classname]["Public"].$) {
-			module = x[classname]["Public"].$;
-		} else if (x[classname]["Private"].$) {
-			module = new Function('return function ' + classname + '() {throw new Error("cannot call private constructor");}')();
+		var result = x[classname]["Public"].$, proto;
+		if (result) {
+			proto = result.prototype;
 		} else {
-			throw new Error("constructor for classname '" + classname + "' not defined");
+			result = x[classname]["Private"].$;
+			if (result) {
+				proto = result.prototype;
+				result = new Function('return function ' + classname + '() {throw new Error("cannot call private constructor");}')();
+			} else {
+				throw new Error("constructor for classname '" + classname + "' not defined");
+			}
 		}
-		for ( var methodname in x[classname]["Public"]) {
-			module.prototype[methodname] = x[classname]["Public"][methodname];
+
+		var methods = x[classname]["Static"];
+		for ( var methodname in methods) {
+			if (methods.hasOwnProperty(methodname)) {
+				result[methodname] = methods[methodname];
+				proto[methodname] = methods[methodname];
+			}
 		}
-		return module;
+		methods = x[classname]["Public"];
+		for ( var methodname in methods) {
+			proto[methodname] = methods[methodname];
+		}
+		return result;
 	};
 
 	Argv.maskOf = Argv.prototype.maskOf = maskOf;

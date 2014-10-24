@@ -11,28 +11,28 @@ define([ "../../main/javascript/Private", "../../main/javascript/Path" ], functi
 	};
 
 	PathTest.prototype.testToString = function PathTest$testToString() {
-		path = new Path("$.store.book[*].author");
-		path = new Path("$..author");
-		path = new Path("$.store.*");
-		path = new Path("$.store..price");
-		path = new Path("$..book[2]");
-		path = new Path("$..book[(@.length-1)]");
-		path = new Path("$..book[-1:]");
-		path = new Path("$..book[0,1]");
-		path = new Path("$..book[:2]");
-		path = new Path("$..book[?(@.isbn)]");
-		path = new Path("$..book[?(@.price<10)]");
-		path = new Path("$..*");
-		path = new Path("#/store/book/author");
-		path = new Path("#//author");
-		path = new Path("#/store/*");
-		path = new Path("#/store//price");
-		path = new Path("#//book[3]");
-		path = new Path("#//book[last()]");
-		path = new Path("#//book[position()<3]");
-		path = new Path("#//book[isbn]");
-		path = new Path("#//book[price<10]");
-		path = new Path("#//*");
+		path = Path.normalize("$.store.book[*].author");
+		path = Path.normalize("$..author");
+		path = Path.normalize("$.store.*");
+		path = Path.normalize("$.store..price");
+		path = Path.normalize("$..book[2]");
+		path = Path.normalize("$..book[(@.length-1)]");
+		path = Path.normalize("$..book[-1:]");
+		path = Path.normalize("$..book[0,1]");
+		path = Path.normalize("$..book[:2]");
+		path = Path.normalize("$..book[?(@.isbn)]");
+		path = Path.normalize("$..book[?(@.price<10)]");
+		path = Path.normalize("$..*");
+		path = Path.normalize("#/store/book/author");
+		path = Path.normalize("#//author");
+		path = Path.normalize("#/store/*");
+		path = Path.normalize("#/store//price");
+		path = Path.normalize("#//book[3]");
+		path = Path.normalize("#//book[last()]");
+		path = Path.normalize("#//book[position()<3]");
+		path = Path.normalize("#//book[isbn]");
+		path = Path.normalize("#//book[price<10]");
+		path = Path.normalize("#//*");
 
 	};
 

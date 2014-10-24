@@ -35,17 +35,18 @@ define([ "./Private", "./Argv", "dist/path" ], function(Private, Argv, parser) {
 	};
 
 	return Argv.define([ "string", "Context" ], function(argv) {
-		properties = new Private(Path);
+		var Path =
 		/**
 		 * @param {string} [path]
 		 * @param {Context} [context]
 		 * @constructor
 		 */
-		function Path(path, context) {
+		function private_Path(path, context) {
 			argv.arrange(arguments);
 			properties.setPrivate(this, {});
 			parser.parse(path);
 		}
+		properties = new Private(Path);
 
 		argv.define([ "number" ],
 		/**
@@ -62,8 +63,7 @@ define([ "./Private", "./Argv", "dist/path" ], function(Private, Argv, parser) {
 		 * @return {Path} normalized path
 		 */
 		function static_Path$normalize(path) {
-			noJSONPath(path);
-			return new Path(pathNodeJS.normalize(path));
+			return new Path(path).normalize();
 		});
 
 		argv.define([],
@@ -74,7 +74,7 @@ define([ "./Private", "./Argv", "dist/path" ], function(Private, Argv, parser) {
 		 * @return {Path} normalized path
 		 */
 		function Path$normalize() {
-			var path = this.toString();
+			return this;
 		});
 
 		Argv.define([],
