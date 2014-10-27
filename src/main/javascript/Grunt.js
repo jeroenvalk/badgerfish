@@ -79,62 +79,95 @@ function Grunt$getPackage() {
 }
 
 function Grunt$middleware() {
-	return [];
+	return [ "syntaxHighlighter", "proxy" ];
+}
+
+function Grunt$middlewareSyntaxHighlighter(connect, options) {
+	function Grunt$middlewareSyntaxHighlighter$serve(req, res, next) {
+		var parsed = url.parse(req.url, true);
+		console.assert(parsed.pathname.charAt(0) === '/');
+		if (parsed.search === "?") {
+			var brush = "js";
+			if (endsWith(parsed.pathname, ".js")) {
+				brush = "js";
+			} else if (endsWith(parsed.pathname, ".java")) {
+				brush = "java";
+			}
+			res.writeHead(200, {
+				'Content-Type' : 'text/xml'
+			});
+			res.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="'
+					+ brush + '">');
+			var readable = fs.createReadStream(parsed.pathname.substr(1));
+			readable.on("data", function(chunk) {
+				var offset = 0;
+				for ( var i = 0; i < chunk.length; ++i) {
+					switch (chunk[i]) {
+					case 60:
+						if (offset < i)
+							res.write(chunk.slice(offset, i - 1));
+						offset = i + 1;
+						res.write("&lt;");
+						break;
+					default:
+						break;
+					}
+				}
+				res.write(chunk.slice(offset));
+			});
+			readable.on("end", function() {
+				res.write("\n</root>\n");
+				res.end();
+			});
+		} else {
+			return next();
+		}
+	}
+	return Grunt$middlewareSyntaxHighlighter$serve;
+}
+
+function Grunt$middlewareProxy(connect, options) {
+	function Grunt$middlewareProxy$serve(req, res, next) {
+		console.log(req.url);
+		next();
+	}
+	return Grunt$middlewareProxy$serve;
+}
+
+function Grunt$getProjectDirs() {
+	return [ path.resolve(__dirname, "../../..") ];
+}
+
+function Grunt$readConfig() {
+	var grunt = properties.getPrivate(this).grunt;
+	var directories = this.getProjectDirs();
+	var config = null;
+	for ( var i = 0; i < directories.length; ++i) {
+		console.log(path.resolve(directories[i], 'Gruntfile.json'));
+		var content = grunt.file.readJSON(path.resolve(directories[i], 'Gruntfile.json'));
+		console.log(content);
+		config = Object.create(config, content);
+	}
+	return config;
 }
 
 function Grunt$getConfig() {
-	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(__dirname, "../../..") + path.sep + 'Gruntfile.json');
-	var name = this.middleware();
+	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(path.resolve(__dirname, "../../.."), 'Gruntfile.json'));
+	// var config = this.readConfig();
+	console.log(config);
+	var self = this;
+	var name = self.middleware();
 	var middleware = [];
 	for ( var k = 0; k < name.length; ++k) {
 		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() + name[k].substr(1));
 	}
 	config.connect.test.options.middleware = function(connect, options) {
-		var i, result = [ function(req, res, next) {
-			var parsed = url.parse(req.url, true);
-			console.assert(parsed.pathname.charAt(0) === '/');
-			if (parsed.search === "?") {
-				var brush = "js";
-				if (endsWith(parsed.pathname, ".js")) {
-					brush = "js";
-				} else if (endsWith(parsed.pathname, ".java")) {
-					brush = "java";
-				}
-				res.writeHead(200, {
-					'Content-Type' : 'text/xml'
-				});
-				res.write('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/templates/syntaxhighlighter.xsl"?>\n<root brush="'
-						+ brush + '">');
-				var readable = fs.createReadStream(parsed.pathname.substr(1));
-				readable.on("data", function(chunk) {
-					var offset = 0;
-					for ( var i = 0; i < chunk.length; ++i) {
-						switch (chunk[i]) {
-						case 60:
-							if (offset < i)
-								res.write(chunk.slice(offset, i - 1));
-							offset = i + 1;
-							res.write("&lt;");
-							break;
-						default:
-							break;
-						}
-					}
-					res.write(chunk.slice(offset));
-				});
-				readable.on("end", function() {
-					res.write("\n</root>\n");
-					res.end();
-				});
-			} else {
-				return next();
-			}
-		} ];
+		var i, result = [];
+		for (i = 0; i < middleware.length; ++i) {
+			result.push(self[middleware[i]](connect, options));
+		}
 		for (i = 0; i < options.base.length; ++i) {
 			result.push(connect.static(options.base[i]));
-		}
-		for (i = 0; i < middleware.length; ++i) {
-			result.push(this[middleware[i]](connect, options));
 		}
 		return result;
 	};
@@ -379,13 +412,15 @@ function Grunt$taskJison() {
 			});
 			fs.writeFileSync("dist/" + target + ".js", parser.generate());
 		} else {
-			var files = fs.readdirSync("src/main/resources");
-			files.forEach(function(file) {
-				var size = file.length - 6;
-				if (file.indexOf(".jison", size) !== -1) {
-					Grunt$taskJison$execute(file.substr(0, size));
-				}
-			});
+			if (fs.existsSync("src/main/resources")) {
+				var files = fs.readdirSync("src/main/resources");
+				files.forEach(function(file) {
+					var size = file.length - 6;
+					if (file.indexOf(".jison", size) !== -1) {
+						Grunt$taskJison$execute(file.substr(0, size));
+					}
+				});
+			}
 		}
 	}
 	return Grunt$taskJison$execute;
@@ -396,6 +431,10 @@ Grunt.prototype.curl = Grunt$curl;
 Grunt.prototype.download = Grunt$download;
 Grunt.prototype.getPackage = Grunt$getPackage;
 Grunt.prototype.middleware = Grunt$middleware;
+Grunt.prototype.middlewareSyntaxHighlighter = Grunt$middlewareSyntaxHighlighter;
+Grunt.prototype.middlewareProxy = Grunt$middlewareProxy;
+Grunt.prototype.getProjectDirs = Grunt$getProjectDirs;
+Grunt.prototype.readConfig = Grunt$readConfig;
 Grunt.prototype.getConfig = Grunt$getConfig;
 Grunt.prototype.Grunt = Grunt$Grunt;
 Grunt.prototype.taskValidate = Grunt$taskValidate;
