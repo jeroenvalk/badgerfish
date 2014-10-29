@@ -1,19 +1,109 @@
-define([ "JSONPath" ], function(JSONPath) {
-	var xpath = require('xpath');
-	var DOMParser = require('xmldom').DOMParser;
-	var jsonpath = JSONPath.eval;
+define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPath) {
+	// var xpath = require('xpath');
+	// var DOMParser = require('xmldom').DOMParser;
+	// var jsonpath = JSONPath.eval;
 
-	/**
-	 * @param {string} directory - project root directory
-	 * 
-	 * Extends Path where the context of the path is the parent and its own
-	 * context is where its path methods will work on.
-	 * 
-	 * @constructor
-	 */
-	function ProjectPath(directory) {
+	var properties;
+	return Argv.define([ "string", "Context" ], function(argv) {
+		var Context =
+		/**
+		 * Extends Path where the context of the path is the parent and its own
+		 * context is where its path methods will work on.
+		 * 
+		 * @constructor
+		 */
+		function private_Context(path, context) {
+			argv.arrange(arguments);
+			var x = {};
+			properties.setPrivate(this, x);
+			if (path) {
+				// TODO: HACK the parsing for now
+				// Path.callBase(this, null, path, context);
+				x.path = path;
+			} else {
+				console.assert(context.ownerDocument instanceof Document)
+				x.node = context;
+			}
+		};
+		Path.extendedBy(Context);
+		properties = new Private(Context);
+		var context = new Context(undefined, document.documentElement);
 
-	}
+		argv.define([], function static_Context$getHTMLDocument() {
+			return context;
+		});
+
+		argv.define([], function static_Context$requireAll(array, callback) {
+			require(array.map(function(context) {
+				return "text!" + context.toString();
+			}), function() {
+				var args = Array.prototype.slice.call(arguments);
+				array.forEach(function(context, i) {
+					argv.Context.initialize.call(context, args[i]);
+				});
+				callback();
+			});
+		});
+
+		argv.define([ "string" ],
+		/**
+		 * Initializes a context after it has been loaded.
+		 * 
+		 * @param {string} content
+		 */
+		function private_Context$initialize(content) {
+			var x = properties.getPrivate(this);
+			var xmlDoc;
+			if (window.DOMParser) {
+				var parser = new DOMParser();
+				xmlDoc = parser.parseFromString(content, "text/xml");
+			} else {
+				xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+				xmlDoc.async = false;
+				xmlDoc.loadXML(content);
+			}
+			x.node = xmlDoc.documentElement;
+		});
+
+		argv.define([], function Context$toString() {
+			return properties.getPrivate(this).path;
+		});
+
+		argv.define([], function Context$toNode() {
+			return properties.getPrivate(this).node;
+		});
+
+		argv.define([ "Context" ], function Context$transform(context) {
+			var x = properties.getPrivate(this);
+			var y = properties.getPrivate(context);
+			var result;
+			if (window.ActiveXObject) {
+				result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
+			}
+			// code for Chrome, Firefox, Opera, etc.
+			else if (document.implementation && document.implementation.createDocument) {
+				var xsltProcessor = new XSLTProcessor();
+				xsltProcessor.importStylesheet(y.node.ownerDocument);
+				result = xsltProcessor.transformToFragment(x.node.ownerDocument, document);
+			}
+			console.assert(result.childElementCount === 1);
+			debugger;
+			return new Context(undefined, result.firstElementChild);
+		});
+
+		argv.define([ "string|Path" ],
+		/**
+		 * @static
+		 * @param {string|Path} path
+		 * @return {Context} context at the specified path
+		 */
+		function static_Context$normalize(path) {
+			// path = Path.normalize(path);
+			return new Context(path);
+		});
+
+		return Context;
+	}).getModule();
 
 	// XPath
 

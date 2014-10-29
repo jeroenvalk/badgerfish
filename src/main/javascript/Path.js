@@ -1,4 +1,4 @@
-define([ "./Private", "./Argv", "dist/path" ], function(Private, Argv, parser) {
+define([ "./Private", "./Argv", "path" ], function(Private, Argv, parser) {
 	var properties;
 
 	var type = {
@@ -59,6 +59,7 @@ define([ "./Private", "./Argv", "dist/path" ], function(Private, Argv, parser) {
 		// utils (see NodeJS path http://nodejs.org/api/path.html)
 		argv.define([ "string|Path" ],
 		/**
+		 * @static
 		 * @param {string|Path} path
 		 * @return {Path} normalized path
 		 */

@@ -14,6 +14,17 @@
  */
 
 define([ "./EXPECT", "./Private" ], function(expect, Private) {
+	var __extends = function Argv$extends(d, b) {
+		for ( var p in b)
+			if (b.hasOwnProperty(p))
+				d[p] = b[p];
+		function __() {
+			this.constructor = d;
+		}
+		__.prototype = b.prototype;
+		d.prototype = new __();
+	};
+
 	var typeofMap = {
 		o : 1,
 		f : 2,
@@ -53,6 +64,56 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 				}
 			}
 		}
+	};
+
+	var getModuleForEntity =
+	/**
+	 * @param {string} classname
+	 * @param {Object} entity
+	 * @param {Object} entity.Private - private methods on the entity
+	 * @param {Function} entity.Private.$ - constructor of the module if it is
+	 *            private
+	 * @param {Object} entity.Public - public methods on the entity
+	 * @param {Function} entity.Public.$ - constructor of the module if it is
+	 *            public
+	 * @param {Object} entity.Static - static methods on the entity
+	 */
+	function Argv$getModuleForEntity(classname, entity) {
+		/**
+		 * 
+		 */
+		function Argv$getModuleForEntity$extendedBy(subclass) {
+			__extends(subclass, entity.Private.$);
+		}
+		;
+
+		var result = entity["Public"].$, proto;
+		if (result) {
+			proto = result.prototype;
+		} else {
+			result = entity["Private"].$;
+			if (result) {
+				proto = result.prototype;
+				result = new Function('return function ' + classname + '() {throw new Error("cannot call private constructor");}')();
+				result.extendedBy = Argv$getModuleForEntity$extendedBy;
+			} else {
+				throw new Error("constructor for classname '" + classname + "' not defined");
+			}
+		}
+
+		var methods = entity["Static"];
+		for ( var methodname in methods) {
+			if (methods.hasOwnProperty(methodname)) {
+				result[methodname] = methods[methodname];
+				proto[methodname] = methods[methodname];
+			}
+		}
+		methods = entity["Public"];
+		for ( var methodname in methods) {
+			proto[methodname] = methods[methodname];
+		}
+
+		return result;
 	};
 
 	var mask = maskOf({
@@ -154,10 +215,14 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 		if (!x[classname]) {
 			x[classname] = {};
 		}
+		if (!argv[classname]) {
+			argv[classname] = {};
+		}
 		if (!x[classname][keyword]) {
 			x[classname][keyword] = {};
 		}
 		if (methodname) {
+			argv[classname][methodname] = method;
 			x[classname][keyword][methodname] = method;
 		} else {
 			x[classname][keyword].$ = method;
@@ -171,6 +236,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 	 */
 	function Argv$getModule(classname) {
 		var x = properties.getPrivate(this).classes;
+
 		if (classname) {
 			if (x[classname])
 				throw new Error("class '" + classname + "' not defined");
@@ -184,31 +250,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 				}
 			}
 		}
-		var result = x[classname]["Public"].$, proto;
-		if (result) {
-			proto = result.prototype;
-		} else {
-			result = x[classname]["Private"].$;
-			if (result) {
-				proto = result.prototype;
-				result = new Function('return function ' + classname + '() {throw new Error("cannot call private constructor");}')();
-			} else {
-				throw new Error("constructor for classname '" + classname + "' not defined");
-			}
-		}
-
-		var methods = x[classname]["Static"];
-		for ( var methodname in methods) {
-			if (methods.hasOwnProperty(methodname)) {
-				result[methodname] = methods[methodname];
-				proto[methodname] = methods[methodname];
-			}
-		}
-		methods = x[classname]["Public"];
-		for ( var methodname in methods) {
-			proto[methodname] = methods[methodname];
-		}
-		return result;
+		return getModuleForEntity(classname, x[classname]);
 	};
 
 	Argv.maskOf = Argv.prototype.maskOf = maskOf;

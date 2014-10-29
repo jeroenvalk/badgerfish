@@ -169,6 +169,8 @@ function Grunt$getConfig() {
 		for (i = 0; i < options.base.length; ++i) {
 			result.push(connect.static(options.base[i]));
 		}
+		// TODO: HACK to get the text module working
+		result.push(connect.static("node_modules/text"));
 		return result;
 	};
 	return config;

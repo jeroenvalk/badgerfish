@@ -7,7 +7,10 @@ var files = glob.sync("**/*Test.js", {
 });
 var requirejs = require("requirejs");
 requirejs.config({
-	baseUrl : process.cwd()
+	baseUrl : process.cwd(),
+	paths: {
+		path: "dist/path"
+	}
 });
 
 var test = {};

@@ -1,12 +1,16 @@
-<!doctype html>
-<html lang="en" ng-app>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:cpx="http://www.agentsatwork.nl/2014/cpx"
+	xmlns:xi="http://www.w3.org/2001/XInclude" lang="en" ng-app>
 <head>
+<meta http-equiv="Content-Type" content="text/xhtml; charset=UTF-8" />
 <title>test page</title>
-<meta charset="utf-8">
-<base href=".">
-<script
-	src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
+<script data-main="badgerfish.js" src="lib/require.js"></script>
 </head>
 <body>
+	<cpx:transform>
+		<xi:include href="templates/cdcatalog.xml"></xi:include>
+		<xi:include href="templates/cdcatalog.xsl"></xi:include>
+	</cpx:transform>
 </body>
 </html>
