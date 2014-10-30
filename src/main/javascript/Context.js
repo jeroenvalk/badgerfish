@@ -88,7 +88,7 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				else if (document.implementation && document.implementation.createDocument) {
 					var xsltProcessor = new XSLTProcessor();
 					xsltProcessor.importStylesheet(y.node.ownerDocument);
-					result = xsltProcessor.transformToFragment(x.node.ownerDocument, document);
+					result = xsltProcessor.transformToDocument(x.node.ownerDocument);
 				}
 				console.assert(result.childElementCount === 1);
 				callback.call(this, argv.Context.initialize.call(new Context(), result.firstElementChild));
@@ -129,9 +129,10 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 			var x = properties.getPrivate(this);
 			var nodes = x.node.ownerDocument.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
 			console.assert(x.includes.length === nodes.length);
-			for ( var i = 0; i < nodes.length; ++i) {
-				nodes[i].parentNode.replaceChild(x.includes[i].toNode(), nodes[i]);
+			for ( var i = 0; i < x.includes.length; ++i) {
+				nodes[0].parentNode.replaceChild(x.includes[i].toNode(), nodes[0]);
 			}
+			console.assert(nodes.length === 0);
 		});
 
 		argv.Context.initialize.call(context, document.documentElement);
