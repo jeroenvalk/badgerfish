@@ -13,21 +13,18 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 		 * @constructor
 		 */
 		function private_Context(path, context) {
+			// argv.Path.call(this, path, context);
+			// TODO: super should handle evrything, but HACK the parsing for now
 			argv.arrange(arguments);
-			var x = {};
-			properties.setPrivate(this, x);
-			if (path) {
-				// TODO: HACK the parsing for now
-				// Path.callBase(this, null, path, context);
-				x.path = path;
-			} else {
-				console.assert(context.ownerDocument instanceof Document)
-				x.node = context;
-			}
+			properties.setPrivate(this, {
+				path : path,
+				context : context
+			});
 		};
+
 		Path.extendedBy(Context);
 		properties = new Private(Context);
-		var context = new Context(undefined, document.documentElement);
+		var context = new Context();
 
 		argv.define([], function static_Context$getHTMLDocument() {
 			return context;
@@ -49,20 +46,25 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 		/**
 		 * Initializes a context after it has been loaded.
 		 * 
-		 * @param {string} content
+		 * @param {string|Node} content
 		 */
 		function private_Context$initialize(content) {
 			var x = properties.getPrivate(this);
-			var xmlDoc;
-			if (window.DOMParser) {
-				var parser = new DOMParser();
-				xmlDoc = parser.parseFromString(content, "text/xml");
+			if (content.ownerDocument instanceof Document) {
+				x.node = content;
 			} else {
-				xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
-				xmlDoc.async = false;
-				xmlDoc.loadXML(content);
+				var xmlDoc;
+				if (window.DOMParser) {
+					var parser = new DOMParser();
+					xmlDoc = parser.parseFromString(content, "text/xml");
+				} else {
+					xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+					xmlDoc.async = false;
+					xmlDoc.loadXML(content);
+				}
+				x.node = xmlDoc.documentElement;
 			}
-			x.node = xmlDoc.documentElement;
+			return this;
 		});
 
 		argv.define([], function Context$toString() {
@@ -73,22 +75,24 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 			return properties.getPrivate(this).node;
 		});
 
-		argv.define([ "Context" ], function Context$transform(context) {
-			argv.Context.resolveXIncludes.call(this);
-			var x = properties.getPrivate(this);
-			var y = properties.getPrivate(context);
-			var result;
-			if (window.ActiveXObject) {
-				result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
-			}
-			// code for Chrome, Firefox, Opera, etc.
-			else if (document.implementation && document.implementation.createDocument) {
-				var xsltProcessor = new XSLTProcessor();
-				xsltProcessor.importStylesheet(y.node.ownerDocument);
-				result = xsltProcessor.transformToFragment(x.node.ownerDocument, document);
-			}
-			console.assert(result.childElementCount === 1);
-			return new Context(undefined, result.firstElementChild);
+		argv.define([ "Context" ], function Context$transform(context, callback) {
+			argv.Context.requireXIncludes.call(this, function() {
+				argv.Context.resolveXIncludes.call(this);
+				var x = properties.getPrivate(this);
+				var y = properties.getPrivate(context);
+				var result;
+				if (window.ActiveXObject) {
+					result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
+				}
+				// code for Chrome, Firefox, Opera, etc.
+				else if (document.implementation && document.implementation.createDocument) {
+					var xsltProcessor = new XSLTProcessor();
+					xsltProcessor.importStylesheet(y.node.ownerDocument);
+					result = xsltProcessor.transformToFragment(x.node.ownerDocument, document);
+				}
+				console.assert(result.childElementCount === 1);
+				callback.call(this, argv.Context.initialize.call(new Context(), result.firstElementChild));
+			});
 		});
 
 		argv.define([ "string|Path" ],
@@ -102,30 +106,36 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 			return new Context(path);
 		});
 
-		argv.define([], function private_Context$requireXIncludes() {
-			var x = properties.getPrivate(this);
-			var nodes = x.node.ownerDocument.getElementsByTagnameNS("http://www.w3.org/2001/XInclude", "include");
+		argv.define([], function private_Context$requireXIncludes(callback) {
+			var self = this;
+			var x = properties.getPrivate(self);
+			var nodes = x.node.ownerDocument.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
+			var modules = [];
+			for ( var i = 0; i < nodes.length; ++i) {
+				modules.push("text!" + nodes[i].getAttribute("href"));
+			}
 			x.includes = [];
-			require(nodes.map(function(node) {
-				return "text!" + node.getAttribute("href");
-			}), function() {
+			require(modules, function() {
 				for ( var i = 0; i < arguments.length; ++i) {
 					var context = new Context();
-					context.initialize(arguments[i]);
+					argv.Context.initialize.call(context, arguments[i]);
 					x.includes.push(context);
 				}
+				callback.call(self);
 			});
 		});
-		
+
 		argv.define([], function private_Context$resolveXIncludes() {
 			var x = properties.getPrivate(this);
-			var nodes = x.node.ownerDocument.getElementsByTagnameNS("http://www.w3.org/2001/XInclude", "include");
+			var nodes = x.node.ownerDocument.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
 			console.assert(x.includes.length === nodes.length);
-			for (var i =0; i<nodes.length; ++i) {
+			for ( var i = 0; i < nodes.length; ++i) {
 				nodes[i].parentNode.replaceChild(x.includes[i].toNode(), nodes[i]);
 			}
 		});
-		
+
+		argv.Context.initialize.call(context, document.documentElement);
+
 		return Context;
 	}).getModule();
 

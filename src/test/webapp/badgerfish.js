@@ -1,6 +1,16 @@
 require([ 'javascript/Context' ], function(Context) {
 	var html = Context.getHTMLDocument().toNode();
 
+	function transform(context, pipeline, callback) {
+		if (pipeline.length === 0) {
+			callback(context);
+		} else {
+			context.transform(pipeline.shift(), function(result) {
+				transform(result, pipeline, callback);
+			});
+		}
+	}
+
 	function executeCPX(prefixes, cpx, xi) {
 		var nodes = html.getElementsByTagName(prefix + ":transform");
 
@@ -13,12 +23,11 @@ require([ 'javascript/Context' ], function(Context) {
 					pipeline.push(Context.normalize(child.getAttribute("href")));
 				}
 			}
-			var context = pipeline[0];
 			Context.requireAll(pipeline, function() {
-				for ( var j = 1; j < pipeline.length; ++j) {
-					context = context.transform(pipeline[j]);
-				}
-				node.parentNode.replaceChild(context.toNode(), node);
+				var context = pipeline.shift();
+				transform(context, pipeline, function(result) {
+					node.parentNode.replaceChild(result.toNode(), node);					
+				});
 			});
 		}
 
