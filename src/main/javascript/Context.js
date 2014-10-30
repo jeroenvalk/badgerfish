@@ -74,6 +74,7 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 		});
 
 		argv.define([ "Context" ], function Context$transform(context) {
+			argv.Context.resolveXIncludes.call(this);
 			var x = properties.getPrivate(this);
 			var y = properties.getPrivate(context);
 			var result;
@@ -87,7 +88,6 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				result = xsltProcessor.transformToFragment(x.node.ownerDocument, document);
 			}
 			console.assert(result.childElementCount === 1);
-			debugger;
 			return new Context(undefined, result.firstElementChild);
 		});
 
@@ -102,6 +102,30 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 			return new Context(path);
 		});
 
+		argv.define([], function private_Context$requireXIncludes() {
+			var x = properties.getPrivate(this);
+			var nodes = x.node.ownerDocument.getElementsByTagnameNS("http://www.w3.org/2001/XInclude", "include");
+			x.includes = [];
+			require(nodes.map(function(node) {
+				return "text!" + node.getAttribute("href");
+			}), function() {
+				for ( var i = 0; i < arguments.length; ++i) {
+					var context = new Context();
+					context.initialize(arguments[i]);
+					x.includes.push(context);
+				}
+			});
+		});
+		
+		argv.define([], function private_Context$resolveXIncludes() {
+			var x = properties.getPrivate(this);
+			var nodes = x.node.ownerDocument.getElementsByTagnameNS("http://www.w3.org/2001/XInclude", "include");
+			console.assert(x.includes.length === nodes.length);
+			for (var i =0; i<nodes.length; ++i) {
+				nodes[i].parentNode.replaceChild(x.includes[i].toNode(), nodes[i]);
+			}
+		});
+		
 		return Context;
 	}).getModule();
 
