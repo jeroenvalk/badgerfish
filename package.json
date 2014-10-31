@@ -10,7 +10,6 @@
 		"xpath":"~0.0.7",
 		"JSONPath":"*",
 		"xmldom":"~0.1.19",
-		"binford-slf4j":"~0.0.1",
 		"node-syntaxhighlighter":"~0.8.1",
 		"time-grunt":"~0.2.10",
 		"wolfy87-eventemitter":"~4.2.6",
@@ -27,7 +26,8 @@
 		"grunt-contrib-clean":"~0.5.0",
 		"grunt-contrib-connect":"~0.6.0",
 		"grunt-bower-task":"~0.3.4",
-		"jasmine-node":"~1.13.1"
+		"jasmine-node":"~1.13.1",
+		"binford-slf4j":"~0.0.1"
 	},
 	"devDependencies":{
 		"grunt-cli":"~0.1.13",
