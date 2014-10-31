@@ -4,11 +4,9 @@
 	"repository":"https://github.com/jeroenvalk/badgerfish.git",
 	"main":"src/main/javascript/main.js",
 	"dependencies":{
-		"requirejs":"~2.1.14",
 		"is-running":"~1.0.5",
 		"glob":"~3.2.9",
 		"xpath":"~0.0.7",
-		"text":"git+https://github.com/requirejs/text.git",
 		"JSONPath":"*",
 		"xmldom":"~0.1.19",
 		"binford-slf4j":"~0.0.1",
@@ -19,6 +17,8 @@
 		"jison":"~0.4.15"
 	},
 	"peerDependencies":{
+		"requirejs":"~2.1.14",
+		"text":"git+https://github.com/requirejs/text.git",
 		"grunt-cli":"~0.1.13",
 		"grunt":"~0.4.4",
 		"grunt-curl":"~1.4.0",

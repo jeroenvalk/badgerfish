@@ -1,3 +1,10 @@
+requirejs.config({
+	baseUrl: "/",
+	paths: {
+		grammar_path: "../grammar_path"
+	}
+});
+
 require([ 'javascript/Context' ], function(Context) {
 	var html = Context.getHTMLDocument().toNode();
 
