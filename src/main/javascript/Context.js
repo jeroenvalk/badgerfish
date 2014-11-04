@@ -75,7 +75,7 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 			return properties.getPrivate(this).node;
 		});
 
-		argv.define([ "Context" ], function Context$transform(context, callback) {
+		argv.define([ "Context", "Function", "Context" ], function Context$transform(context, callback, target) {
 			argv.Context.requireXIncludes.call(this, function() {
 				argv.Context.resolveXIncludes.call(this);
 				var x = properties.getPrivate(this);
@@ -88,7 +88,11 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				else if (document.implementation && document.implementation.createDocument) {
 					var xsltProcessor = new XSLTProcessor();
 					xsltProcessor.importStylesheet(y.node.ownerDocument);
-					result = xsltProcessor.transformToDocument(x.node.ownerDocument);
+					if (target) {
+						result = xsltProcessor.transformToFragment(x.node.ownerDocument, target.toNode().ownerDocument);
+					} else {
+						result = xsltProcessor.transformToDocument(x.node.ownerDocument);
+					}
 				}
 				console.assert(result.childElementCount === 1);
 				callback.call(this, argv.Context.initialize.call(new Context(), result.firstElementChild));

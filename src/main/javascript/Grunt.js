@@ -23,6 +23,7 @@ var glob = require("glob");
 var xpath = require('xpath');
 var DOMParser = require('xmldom').DOMParser;
 var Generator = require('jison').Generator;
+var rewriteModule = require('http-rewrite-middleware');
 
 requirejs.config({
 	baseUrl : __dirname
@@ -76,6 +77,14 @@ function Grunt$download(target, source) {
 
 function Grunt$getPackage() {
 	return properties.getPrivate(this).grunt.file.readJSON('package.json');
+}
+
+function Grunt$connectSearchPathMiddleware(path) {
+	return path;
+}
+
+function Grunt$connectRewriteMiddleware() {
+	return [];
 }
 
 function Grunt$middleware() {
@@ -161,8 +170,9 @@ function Grunt$getConfig() {
 	for ( var k = 0; k < name.length; ++k) {
 		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() + name[k].substr(1));
 	}
+	config.connect.test.options.base = self.connectSearchPathMiddleware(config.connect.test.options.base);
 	config.connect.test.options.middleware = function(connect, options) {
-		var i, result = [];
+		var i, result = [rewriteModule.getMiddleware(self.connectRewriteMiddleware())];
 		for (i = 0; i < middleware.length; ++i) {
 			result.push(self[middleware[i]](connect, options));
 		}
@@ -432,6 +442,8 @@ Grunt.prototype.system = Grunt$system;
 Grunt.prototype.curl = Grunt$curl;
 Grunt.prototype.download = Grunt$download;
 Grunt.prototype.getPackage = Grunt$getPackage;
+Grunt.prototype.connectSearchPathMiddleware = Grunt$connectSearchPathMiddleware;
+Grunt.prototype.connectRewriteMiddleware = Grunt$connectRewriteMiddleware;
 Grunt.prototype.middleware = Grunt$middleware;
 Grunt.prototype.middlewareSyntaxHighlighter = Grunt$middlewareSyntaxHighlighter;
 Grunt.prototype.middlewareProxy = Grunt$middlewareProxy;

@@ -25,6 +25,7 @@
 		"grunt-zip":"~0.13.0",
 		"grunt-contrib-clean":"~0.5.0",
 		"grunt-contrib-connect":"~0.6.0",
+		"http-rewrite-middleware":"~0.1.6",
 		"grunt-bower-task":"~0.3.4",
 		"jasmine-node":"~1.13.1",
 		"binford-slf4j":"~0.0.1"
@@ -36,6 +37,7 @@
 		"grunt-zip":"~0.13.0",
 		"grunt-contrib-clean":"~0.5.0",
 		"grunt-contrib-connect":"~0.6.0",
+		"http-rewrite-middleware":"~0.1.6",
 		"grunt-bower-task":"~0.3.4",
 		"jasmine-node":"~1.13.1",
 		"chai":"*",

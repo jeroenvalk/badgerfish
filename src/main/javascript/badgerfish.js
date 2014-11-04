@@ -1,7 +1,7 @@
 requirejs.config({
-	baseUrl: "/",
-	paths: {
-		grammar_path: "../grammar_path"
+	baseUrl : "/",
+	paths : {
+		grammar_path : "../grammar_path"
 	}
 });
 
@@ -10,7 +10,13 @@ require([ 'javascript/Context' ], function(Context) {
 
 	function transform(context, pipeline, callback) {
 		if (pipeline.length === 0) {
-			callback(context);
+			throw new Error("cannot transform an empty pipeline");
+		}
+		if (pipeline.length === 1) {
+			context.transform(pipeline.shift(), function(result) {
+				console.assert(pipeline.length === 0);
+				callback(result);
+			}, Context.getHTMLDocument());
 		} else {
 			context.transform(pipeline.shift(), function(result) {
 				transform(result, pipeline, callback);
@@ -33,7 +39,7 @@ require([ 'javascript/Context' ], function(Context) {
 			Context.requireAll(pipeline, function() {
 				var context = pipeline.shift();
 				transform(context, pipeline, function(result) {
-					node.parentNode.replaceChild(result.toNode(), node);					
+					node.parentNode.replaceChild(result.toNode(), node);
 				});
 			});
 		}
