@@ -172,30 +172,66 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 
 	Argv.define = Argv.prototype.define =
 	/**
-	 * @param {Array} types
+	 * @param {Array} [types]
 	 * @param {Function} definition
 	 */
 	function Argv$define(types, definition) {
 		var argv = this;
-		if (argv === Argv) {
-			argv = new Argv();
+
+		// check the arguments
+		if (!definition) {
+			if (types instanceof Array) {
+				throw new Error("something must be defined");
+			} else {
+				if (typeof types === "function") {
+					definition = types;
+					types = null;
+				} else {
+					throw new Error("something must be defined");
+				}
+			}
 		}
-		var method = definition;
-		if (method.name === "") {
-			method = definition(argv);
-		}
-		if (!method) {
-			throw new Error("something must be defined");
-		}
-		var x = properties.getPrivate(argv).classes;
-		var match = /^([a-z]*)_*([A-Z][_A-Za-z0-9]*)\$?([a-z][_A-Za-z0-9]*)?$/.exec(method.name);
+
+		var match = /^([a-z]*)_*([A-Z][_A-Za-z0-9]*)\$?([a-z][_A-Za-z0-9]*)?$/.exec(definition.name);
 		if (!match) {
 			throw new Error("function name must be of the form: [<keyword>_]<Classname>[$<methodname>]");
 		}
 		var keyword = match[1];
 		var classname = match[2];
 		var methodname = match[3];
+		if (!classname) {
+			throw new Error("function name must include classname: e.g., Class$initialize");
+		}
 		switch (keyword) {
+		case "class":
+			if (this !== Argv) {
+				throw new Error("nested classes not supported");
+			}
+			if (methodname) {
+				throw new Error("class definitions must be of the form: function class_<Classname>() { ... }");
+			}
+			argv = new Argv();
+			var x = properties.getPrivate(argv);
+			if (x.classes[classname] || argv[classname]) {
+				throw new Error("class '" + classname + "' already defined");
+			}
+			x.classes[classname] = {};
+			argv[classname] = {};
+			x.currentKeyword = keyword;
+			x.currentClassname = classname;
+			x.currentClass = definition;
+			if (types) {
+				definition = definition(argv);
+				// constructor is returned to be processed
+				if (definition.name !== classname) {
+					// TODO: implement this later
+					// throw new Error("only default keywords allowed on
+					// returned constructor");
+				}
+				return argv.define(types, definition);
+			} else {
+				return argv;
+			}
 		case "static":
 			keyword = "Static";
 			break;
@@ -209,25 +245,98 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 			keyword = "Public";
 			break;
 		}
-		if (!classname) {
-			throw new Error("function name must include classname: e.g., Class$initialize");
+
+		if (this === Argv) {
+			throw new Error("classes can only be defined statically: use 'Argv.define(signature, function class_MyClass() { ... });'");
 		}
-		if (!x[classname]) {
-			x[classname] = {};
+		var x = properties.getPrivate(argv);
+		x.currentKeyword = keyword;
+		if (classname !== x.currentClassname) {
+			throw new Error("current class '" + classname + "' does not match method '" + definition.name + "'");
 		}
-		if (!argv[classname]) {
-			argv[classname] = {};
+		x.currentMethodname = methodname;
+		x.currentMethod = definition;
+		// constructor must extend the base
+		if (!methodname) {
+			var base = x.classes[classname].base;
+			var props = x.classes[classname].properties;
+			if (base) {
+				props.initialize(definition);
+				base.extendedBy(definition, props);
+			}
 		}
-		if (!x[classname][keyword]) {
-			x[classname][keyword] = {};
-		}
-		if (methodname) {
-			argv[classname][methodname] = method;
-			x[classname][keyword][methodname] = method;
+		if (types) {
+			// return argv.signature(types);
+			var method = x.currentMethod;
+			var classes = x.classes;
+			var keyword = x.currentKeyword;
+			console.assert(keyword !== "class");
+			var classname = x.currentClassname;
+			var methodname = x.currentMethodname;
+			if (!classname) {
+				throw new Error("function name must include classname: e.g., Class$initialize");
+			}
+			if (!classes[classname][keyword]) {
+				classes[classname][keyword] = {};
+			}
+			if (methodname) {
+				argv[classname][methodname] = method;
+				classes[classname][keyword][methodname] = method;
+			} else {
+				classes[classname][keyword].$ = method;
+			}
+			return argv;
 		} else {
-			x[classname][keyword].$ = method;
+			return argv;
 		}
-		return argv;
+	}
+
+	Argv.prototype.extends =
+	/**
+	 * @param {Function} base - base class to be extended
+	 */
+	function Argv$extends(Base) {
+		var x = properties.getPrivate(this);
+		if (x.currentKeyword !== "class") {
+			throw new Error("class definition not active");
+		}
+		var c = x.classes[x.currentClassname];
+		c.ready = false;
+		c.base = Base;
+		c.properties = new Private();
+		c.methods = {};
+		c.signatures = {};
+		var result = x.currentClass.call(this, c.methods, this, c.properties);
+		if (result !== undefined) {
+			throw new Error("class definition should not return a result");
+		}
+		if (!c.ready) {
+			this.bootstrap();
+		}
+		return this.getModule();
+	}
+
+	Argv.prototype.bootstrap = function Argv$bootstrap() {
+		var x = properties.getPrivate(this);
+		var c = x.classes[x.currentClassname];
+		if (c.ready) {
+			throw new Error("rebooting not supported for class '" + x.currentClassname + "'");
+		}
+		for ( var methodname in c.methods) {
+			if (c.methods.hasOwnProperty(methodname)) {
+				var def = c.methods[methodname];
+				var sig = [];
+				if (def instanceof Array) {
+					sig = def;
+					def = sig.pop();
+					c.methods[methodname] = def;
+					c.signatures[methodname] = sig;
+				}
+				console.assert(typeof def === "function");
+				this.define(sig, def);
+			}
+		}
+		c.ready = true;
 	};
 
 	Argv.prototype.getModule =

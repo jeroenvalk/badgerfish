@@ -34,7 +34,7 @@ define([ "./Private", "./Argv", "path" ], function(Private, Argv, parser) {
 		Axis : axis
 	};
 
-	return Argv.define([ "string", "Context" ], function(argv) {
+	return Argv.define([ "string", "Context" ], function class_Path(argv) {
 		var Path =
 		/**
 		 * @param {string} [path]
@@ -78,7 +78,7 @@ define([ "./Private", "./Argv", "path" ], function(Private, Argv, parser) {
 			return this;
 		});
 
-		Argv.define([],
+		argv.define([],
 		/**
 		 * Join all arguments together and normalize the resulting path.
 		 * 

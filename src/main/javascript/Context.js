@@ -1,11 +1,11 @@
-define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPath) {
+define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	// var xpath = require('xpath');
 	// var DOMParser = require('xmldom').DOMParser;
 	// var jsonpath = JSONPath.eval;
 
-	var properties;
-	return Argv.define([ "string", "Context" ], function(argv) {
-		var Context =
+	function class_Context($, argv, properties) {
+		var context;
+		var Context = $.Context =
 		/**
 		 * Extends Path where the context of the path is the parent and its own
 		 * context is where its path methods will work on.
@@ -21,16 +21,13 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				context : context
 			});
 		};
+		$.Context = [ "string", "Context", Context ];
 
-		Path.extendedBy(Context);
-		properties = new Private(Context);
-		var context = new Context();
-
-		argv.define([], function static_Context$getHTMLDocument() {
+		$.getHTMLDocument = function static_Context$getHTMLDocument() {
 			return context;
-		});
+		};
 
-		argv.define([], function static_Context$requireAll(array, callback) {
+		$.requireAll = function static_Context$requireAll(array, callback) {
 			require(array.map(function(context) {
 				return "text!" + context.toString();
 			}), function() {
@@ -40,15 +37,15 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				});
 				callback();
 			});
-		});
+		};
 
-		argv.define([ "string" ],
+		$.initialize =
 		/**
 		 * Initializes a context after it has been loaded.
 		 * 
 		 * @param {string|Node} content
 		 */
-		function private_Context$initialize(content) {
+		[ "string", function private_Context$initialize(content) {
 			var x = properties.getPrivate(this);
 			if (content.ownerDocument instanceof Document) {
 				x.node = content;
@@ -65,17 +62,17 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				x.node = xmlDoc.documentElement;
 			}
 			return this;
-		});
+		} ];
 
-		argv.define([], function Context$toString() {
+		$.toString = function Context$toString() {
 			return properties.getPrivate(this).path;
-		});
+		};
 
-		argv.define([], function Context$toNode() {
+		$.toNode = function Context$toNode() {
 			return properties.getPrivate(this).node;
-		});
+		};
 
-		argv.define([ "Context", "Function", "Context" ], function Context$transform(context, callback, target) {
+		$.transform = [ "Context", "Function", "Context", function Context$transform(context, callback, target) {
 			argv.Context.requireXIncludes.call(this, function() {
 				argv.Context.resolveXIncludes.call(this);
 				var x = properties.getPrivate(this);
@@ -97,20 +94,20 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				console.assert(result.childElementCount === 1);
 				callback.call(this, argv.Context.initialize.call(new Context(), result.firstElementChild));
 			});
-		});
+		} ];
 
-		argv.define([ "string|Path" ],
+		$.normalize =
 		/**
 		 * @static
 		 * @param {string|Path} path
 		 * @return {Context} context at the specified path
 		 */
-		function static_Context$normalize(path) {
+		[ "string|Path", function static_Context$normalize(path) {
 			// path = Path.normalize(path);
 			return new Context(path);
-		});
+		} ];
 
-		argv.define([], function private_Context$requireXIncludes(callback) {
+		$.requireXIncludes = function private_Context$requireXIncludes(callback) {
 			var self = this;
 			var x = properties.getPrivate(self);
 			var nodes = x.node.ownerDocument.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
@@ -127,9 +124,9 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				}
 				callback.call(self);
 			});
-		});
+		};
 
-		argv.define([], function private_Context$resolveXIncludes() {
+		$.resolveXIncludes = function private_Context$resolveXIncludes() {
 			var x = properties.getPrivate(this);
 			var nodes = x.node.ownerDocument.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
 			console.assert(x.includes.length === nodes.length);
@@ -137,12 +134,13 @@ define([ "./Private", "./Argv", "./Path" ], function(Private, Argv, Path, JSONPa
 				nodes[0].parentNode.replaceChild(x.includes[i].toNode(), nodes[0]);
 			}
 			console.assert(nodes.length === 0);
-		});
+		};
 
-		argv.Context.initialize.call(context, document.documentElement);
-
-		return Context;
-	}).getModule();
+		this.bootstrap();
+		context = new Context();
+		$.initialize.call(context, document.documentElement);
+	}
+	return Argv.define(class_Context).extends(Path);
 
 	// XPath
 

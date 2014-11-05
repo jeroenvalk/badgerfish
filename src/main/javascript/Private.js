@@ -16,13 +16,19 @@
 define([ './slf4js' ], function(slf4js) {
 	var configured = false;
 	var share, check = null;
-
 	var properties = Object.create(Private.prototype);
+
 	function Private(type) {
+		properties.setPrivate(this, {});
+		if (type) {
+			this.initialize(type);
+		}
+	}
+
+	function Private$initialize(type) {
 		this.logger = slf4js.getLogger(type.name);
-		properties.setPrivate(this, {
-			type : type
-		});
+		var x = properties.getPrivate(this);
+		x.type = type;
 	}
 
 	/**
@@ -93,6 +99,7 @@ define([ './slf4js' ], function(slf4js) {
 	Private.configure = Private$configure;
 	Private.prototype.configure = Private$configure;
 
+	Private.prototype.initialize = Private$initialize;
 	Private.prototype.getClass = Private$getClass;
 	Private.prototype.setPrivate = Private$setPrivate;
 	Private.prototype.getPrivate = Private$getPrivate;
