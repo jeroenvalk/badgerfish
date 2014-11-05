@@ -13,6 +13,10 @@
 				</tr>
 				<xsl:for-each select="catalog/cd">
 					<tr>
+						<xsl:if test="@require">
+							<xsl:attribute name="require"><xsl:value-of
+								select="@require" /></xsl:attribute>
+						</xsl:if>
 						<td>
 							<xsl:value-of select="title" />
 						</td>

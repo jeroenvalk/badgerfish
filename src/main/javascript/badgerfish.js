@@ -1,11 +1,12 @@
 requirejs.config({
 	baseUrl : "/",
 	paths : {
+		jquery : "lib/jquery",
 		grammar_path : "../grammar_path"
 	}
 });
 
-require([ 'javascript/Context' ], function(Context) {
+require([ 'jquery', 'javascript/Context' ], function(jQuery, Context) {
 	var html = Context.getHTMLDocument().toNode();
 
 	function transform(context, pipeline, callback) {
@@ -40,6 +41,16 @@ require([ 'javascript/Context' ], function(Context) {
 				var context = pipeline.shift();
 				transform(context, pipeline, function(result) {
 					node.parentNode.replaceChild(result.toNode(), node);
+					var elements = jQuery("*[require]", result.toNode());
+					var resources = [];
+					for ( var i = 0; i < elements.length; ++i) {
+						resources.push(elements[i].getAttribute("require"));
+					}
+					require(resources, function() {
+						for ( var i = 0; i < arguments.length; ++i) {
+							arguments[i].create(elements[i]);
+						}
+					});
 				});
 			});
 		}

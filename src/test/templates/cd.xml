@@ -1,4 +1,4 @@
-<cd>
+<cd require="javascript/Control">
 	<title>Cold fact</title>
 	<artist>Sixto Rodriguez</artist>
 	<country>USA</country>
