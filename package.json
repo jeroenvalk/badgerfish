@@ -31,6 +31,7 @@
 		"binford-slf4j":"~0.0.1"
 	},
 	"devDependencies":{
+		"requirejs":"~2.1.14",
 		"grunt-cli":"~0.1.13",
 		"grunt":"~0.4.4",
 		"grunt-curl":"~1.4.0",
@@ -40,6 +41,7 @@
 		"http-rewrite-middleware":"~0.1.6",
 		"grunt-bower-task":"~0.3.4",
 		"jasmine-node":"~1.13.1",
+		"binford-slf4j":"~0.0.1",
 		"chai":"*",
 		"protractor":"~0.18.1"
 	}
