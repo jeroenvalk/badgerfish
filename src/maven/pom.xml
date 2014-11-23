@@ -29,16 +29,6 @@
 				</configuration>
 				<executions>
 					<execution>
-						<id>grunt clean</id>
-						<phase>clean</phase>
-						<goals>
-							<goal>grunt</goal>
-						</goals>
-						<configuration>
-							<arguments>clean</arguments>
-						</configuration>
-					</execution>
-					<execution>
 						<id>install node and npm</id>
 						<phase>initialize</phase>
 						<goals>
@@ -60,7 +50,7 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>grunt initialize</id>
+						<id>initialize</id>
 						<phase>initialize</phase>
 						<goals>
 							<goal>grunt</goal>
@@ -69,14 +59,246 @@
 							<arguments>initialize</arguments>
 						</configuration>
 					</execution>
+					<!-- clean lifecycle -->
 					<execution>
-						<id>grunt deploy</id>
+						<id>pre-clean</id>
+						<phase>pre-clean</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>pre-clean:pre-clean</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>clean:clean</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>post-clean</id>
+						<phase>post-clean</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>post-clean:post-clean</arguments>
+						</configuration>
+					</execution>
+					<!-- default lifecycle -->
+					<execution>
+						<id>generate-sources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>generate-sources:generate-sources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>process-sources</id>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>process-sources:process-sources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-resources</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>generate-resources:generate-resources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>process-resources</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>process-resources:process-resources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>compile:compile</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>process-classes</id>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>process-classes:process-classes</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-test-sources</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>generate-test-sources:generate-test-sources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>process-test-sources</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>process-test-resources:process-test-resources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-test-resources</id>
+						<phase>generate-test-resources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>generate-test-resources:generate-test-resources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>process-test-resources</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>process-test-resources:process-test-resources</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>test-compile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>test-compile:test-compile</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>process-test-classes</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>process-test-classes:process-test-classes</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>testtest</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>prepare-package</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>prepare-package:prepare-package</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>package</id>
+						<phase>package</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>package:package</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>pre-integration-test</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>pre-integration-test:pre-integration-test</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>integration-test</id>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>integration-test:integration-test</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>post-integration-test</id>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>post-integration-test:post-integration-test</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>verify</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>verify:verify</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>install</id>
+						<phase>install</phase>
+						<goals>
+							<goal>grunt</goal>
+						</goals>
+						<configuration>
+							<arguments>install:install</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<id>deploy</id>
 						<phase>deploy</phase>
 						<goals>
 							<goal>grunt</goal>
 						</goals>
 						<configuration>
-							<arguments>deploy</arguments>
+							<arguments>deploy:deploy</arguments>
 						</configuration>
 					</execution>
 					<execution>

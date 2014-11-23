@@ -3,7 +3,7 @@ Badgerfish CPX
 
 ## License
 
-Copyright (c) 2014 dr. ir. Jeroen M. Valk
+Copyright © 2014 dr. ir. Jeroen M. Valk
 
 This file is part of Badgerfish CPX. Badgerfish CPX is free software: 
 you can redistribute it and/or modify it under the terms of the GNU Lesser 

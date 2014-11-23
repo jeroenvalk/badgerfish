@@ -1,5 +1,5 @@
 /**
- * Copyright � 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014 dr. ir. Jeroen M. Valk
  * 
  * This file is part of Badgerfish CPX. Badgerfish CPX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -33,6 +33,126 @@ function endsWith(str, suffix) {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
+var lifecycle = {
+	"pre-clean" : {},
+	"clean" : {
+		depends : "pre-clean"
+	},
+	"validate" : {},
+	"initialize" : {
+		depends : "validate"
+	},
+	"generate-sources" : {
+		depends : "initialize"
+	},
+	"process-sources" : {
+		depends : "generate-sources"
+	},
+	"generate-resources" : {
+		depends : "process-sources"
+	},
+	"process-resources" : {
+		depends : "generate-resources"
+	},
+	"compile" : {
+		depends : "process-resources"
+	},
+	"process-classes" : {
+		depends : "compile"
+	},
+	"generate-test-sources" : {
+		depends : "process-classes"
+	},
+	"process-test-sources" : {
+		depends : "generate-test-sources"
+	},
+	"generate-test-resources" : {
+		depends : "process-test-sources"
+	},
+	"process-test-resources" : {
+		depends : "generate-test-resources"
+	},
+	"test-compile" : {
+		depends : "process-test-resources"
+	},
+	"process-test-classes" : {
+		depends : "test-compile"
+	},
+	"test" : {
+		depends : "process-test-classes"
+	},
+	"prepare-package" : {
+		depends : "test"
+	},
+	"package" : {
+		depends : "prepare-package"
+	},
+	"pre-integration-test" : {
+		depends : "package"
+	},
+	"integration-test" : {
+		depends : "pre-integration-test"
+	},
+	"post-integration-test" : {
+		depends : "integration-test"
+	},
+	"verify" : {
+		depends : "post-integration-test"
+	},
+	"install" : {
+		depends : "verify"
+	},
+	"deploy" : {
+		depends : "install"
+	},
+	"start" : {
+		depends : "process-test-classes"
+	},
+	"stop" : {},
+	"restart" : {
+		depends : "stop",
+		invoke : "start"
+	}
+};
+
+var digraph = {
+	getPostOrderTreeWalk : function(node) {
+		var lifecycle = [ "validate", "initialize", "generate-sources", "process-sources", "generate-resources", "process-resources", "compile",
+				"process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources", "process-test-resources", "test-compile",
+				"process-test-classes", "test", "prepare-package", "package", "pre-integration-test", "integration-test", "post-integration-test", "install",
+				"deploy" ];
+		switch (node) {
+		case "pre-clean":
+			return [ "pre-clean" ];
+		case "clean":
+			return [ "pre-clean", "clean" ];
+		case "start":
+			return lifecycle.slice(0, lifecycle.indexOf("test")).concat([ "start" ]);
+		case "stop":
+			return [ "stop" ];
+		case "restart":
+			return [ "stop" ].concat(lifecycle.slice(0, lifecycle.indexOf("test")), [ "start" ]);
+		default:
+			return lifecycle.slice(0, lifecycle.indexOf(node) + 1);
+		}
+	}
+};
+
+function Grunt$phase(grunt, names, tasks) {
+	function Grunt$phase$closure(target) {
+		if (target) {
+			console.assert(names.slice(-1).pop() === target);
+			grunt.task.run(tasks);
+		} else {
+			console.assert(names instanceof Array);
+			grunt.task.run(names.map(function(name) {
+				return [ name, name ].join(":");
+			}));
+		}
+	}
+	return Grunt$phase$closure;
+}
+
 var Private = requirejs("./Private");
 var properties = new Private(Grunt);
 function Grunt() {
@@ -45,8 +165,27 @@ function Grunt() {
 			"lib/foundation.js" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
 			"lib/foundation.css" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css"
 		},
+		executions : {
+			"clean" : [ "clean" ],
+			"validate" : [ "validate" ],
+			"initialize" : [ "initialize" ],
+			"generate-sources" : [ "jison" ],
+			"start" : [ "server:node", "server:karma", "connect" ],
+			"stop" : [ "stop" ]
+		},
 		unzip : true
 	});
+}
+
+function Grunt$exists(name, local) {
+	var grunt = properties.getPrivate(this).grunt;
+	var localName = "task" + name.substr(0, 1).toUpperCase() + name.substr(1);
+	if (this[localName]) {
+		console.assert(grunt.task.exists(localName));
+		return true;
+	} else {
+		return !local && grunt.task.exists(name);
+	}
 }
 
 function Grunt$system(done, cmd, args, options) {
@@ -172,7 +311,7 @@ function Grunt$getConfig() {
 	}
 	config.connect.test.options.base = self.connectSearchPathMiddleware(config.connect.test.options.base);
 	config.connect.test.options.middleware = function(connect, options) {
-		var i, result = [rewriteModule.getMiddleware(self.connectRewriteMiddleware())];
+		var i, result = [ rewriteModule.getMiddleware(self.connectRewriteMiddleware()) ];
 		for (i = 0; i < middleware.length; ++i) {
 			result.push(self[middleware[i]](connect, options));
 		}
@@ -187,13 +326,14 @@ function Grunt$getConfig() {
 }
 
 function Grunt$Grunt(grunt) {
+	var self = this;
 	var x = properties.getPrivate(this);
 	x.grunt = grunt;
 	grunt.loadNpmTasks('grunt-curl');
 	grunt.loadNpmTasks('grunt-zip');
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-connect');
-	grunt.loadNpmTasks('grunt-bower-task');
+	//grunt.loadNpmTasks('grunt-bower-task');
 	require('time-grunt')(grunt);
 
 	var config = this.getConfig();
@@ -246,8 +386,47 @@ function Grunt$Grunt(grunt) {
 	for ( var prop in this) {
 		if (prop.substr(0, 4) === "task" && this[prop] instanceof Function) {
 			var name = prop.substr(4, 1).toLowerCase() + prop.substr(5);
-			grunt.registerTask(name, this[prop]());
+			grunt.registerTask(prop, this[prop]());
 		}
+	}
+
+	for ( var phase in lifecycle) {
+		var tasks = x.executions[phase];
+		if (tasks) {
+			tasks = tasks.map(function(name) {
+				return name.split(":");
+			});
+		} else {
+			tasks = [];
+		}
+
+		grunt.registerTask(phase, Grunt$phase(grunt, digraph.getPostOrderTreeWalk(phase), tasks.map(function(task) {
+			if (lifecycle[task[0]]) {
+				var localTask = "task" + task[0].substr(0, 1).toUpperCase() + task[0].substr(1);
+				if (!self.exists(task[0], true)) {
+					if (self.exists(task[0])) {
+						console.assert(!grunt.task.exists(localTask));
+						console.assert(!config[localTask]);
+						grunt.log.ok("task '" + task[0] + "' has been redefined as '" + localTask + "' (local task)");
+						config[localTask] = config[task[0]];
+						delete config[task[0]];
+						grunt.task.renameTask(task[0], localTask);
+					} else {
+						grunt.log.error("task '" + task[0] + "' not defined");
+					}
+				}
+				return [ localTask ].concat(task.splice(1)).join(":");
+			} else {
+				if (self.exists(task[0], true)) {
+					return [ "task" + task[0].substr(0, 1).toUpperCase() + task[0].substr(1) ].concat(task.splice(1)).join(":");
+				} else {
+					if (self.exists(task[0])) {
+						return task.join(":");
+					}
+					grunt.log.error("task '" + task[0] + "' not defined");
+				}
+			}
+		})));
 	}
 
 	grunt.initConfig(config);
@@ -294,12 +473,12 @@ function Grunt$taskValidate() {
 function Grunt$taskInitialize() {
 	var result, x = properties.getPrivate(this);
 	if (x.unzip) {
-		result = [ "validate", "curl", "unzip" ];
+		result = [ "curl", "unzip" ];
 	} else {
 		if (x.unzip === false) {
-			result = [ "validate", "curl" ];
+			result = [ "curl" ];
 		} else {
-			result = [ "validate" ];
+			result = [];
 		}
 	}
 	if (fs.existsSync("bower.json") && fs.statSync("bower.json").isFile()) {
@@ -336,18 +515,32 @@ function Grunt$taskDeploy() {
 }
 
 function Grunt$taskServer() {
+	var grunt = properties.getPrivate(this).grunt;
 	var self = this;
 	return function(target) {
 		var done = this.async();
 		switch (target) {
 		case "node":
-			var spec = "src/test/javascript/jasmine.spec.js";
+			var spec = "src/main/jasmine-node/jasmine.spec.js";
 			if (!fs.statSync(spec).isFile()) {
 				spec = "node_modules/badgerfish.composix/" + spec;
 			}
 			self.system(function() {
 			}, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", spec, "--captureExceptions", "--autotest", "--watch", "src/test/javascript",
 					"src/main/javascript" ]);
+			done();
+			break;
+		case "karma":
+			grunt.log.write("Starting Karma server...");
+			var options = {};
+		    if (fs.existsSync('./karma.conf.js')) {
+		        options.configFile = path.resolve('./karma.conf.js');
+		      } else if (fs.existsSync('./karma.conf.coffee')) {
+		        options.configFile = path.resolve('./karma.conf.coffee');
+		      }
+			require("karma").server.start(options, function(exitCode) {
+				grunt.log.write("Karma has exited with " + exitCode);
+			});
 			done();
 			break;
 		case "selenium":
@@ -366,10 +559,6 @@ function Grunt$taskServer() {
 	};
 }
 
-function Grunt$taskStart() {
-	return [ "validate", "jison", "server:node", "connect" ];
-}
-
 function Grunt$taskStop() {
 	var grunt = properties.getPrivate(this).grunt;
 	return function() {
@@ -383,10 +572,6 @@ function Grunt$taskStop() {
 			return false;
 		}
 	};
-}
-
-function Grunt$taskRestart() {
-	return [ "stop", "start" ];
 }
 
 function Grunt$taskWebdav() {
@@ -438,6 +623,11 @@ function Grunt$taskJison() {
 	return Grunt$taskJison$execute;
 }
 
+process.on("exit", function() {
+	console.log("EXIT");
+});
+
+Grunt.prototype.exists = Grunt$exists;
 Grunt.prototype.system = Grunt$system;
 Grunt.prototype.curl = Grunt$curl;
 Grunt.prototype.download = Grunt$download;
@@ -456,9 +646,7 @@ Grunt.prototype.taskInitialize = Grunt$taskInitialize;
 Grunt.prototype.taskInit = Grunt$taskInit;
 Grunt.prototype.taskDeploy = Grunt$taskDeploy;
 Grunt.prototype.taskServer = Grunt$taskServer;
-Grunt.prototype.taskStart = Grunt$taskStart;
 Grunt.prototype.taskStop = Grunt$taskStop;
-Grunt.prototype.taskRestart = Grunt$taskRestart;
 Grunt.prototype.taskWebdav = Grunt$taskWebdav;
 Grunt.prototype.taskJison = Grunt$taskJison;
 

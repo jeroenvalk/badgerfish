@@ -1,22 +1,39 @@
 {
-	"clean" : [ "dist" ],
+	"clean": 
+	[
+		"dist"
+	],
 
-	"bower" : {
-		"install" : {
-			"options" : {
-				"targetDir" : "./dist/lib"				
+	"bower": 
+	{
+		"install": 
+		{
+			"options": 
+			{
+				"targetDir": "./dist/lib"
 			}
 		}
 	},
 
-	"connect" : {
-		"test" : {
-			"options" : {
-				"open" : "http://localhost:8080",
-				"keepalive" : true,
+	"connect": 
+	{
+		"test": 
+		{
+			"options": 
+			{
+				"open": "http://localhost:8080",
+				"keepalive": true,
 				"hostname": "*",
-				"port" : 8080,
-				"base" : ["src/test/webapp", "src/main/webapp", "src/test", "src/main", "dist", "node_modules/badgerfish.composix/src/main"]
+				"port": 8080,
+				"base": 
+				[
+					"src/test/webapp",
+					"src/main/webapp",
+					"src/test",
+					"src/main",
+					"dist",
+					"node_modules/badgerfish.composix/src/main"
+				]
 			}
 		}
 	}
