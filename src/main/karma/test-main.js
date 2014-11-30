@@ -23,10 +23,10 @@ require.config({
 
 	// we have to kickoff jasmine, as it is asynchronous
 	callback : function() {
-		require([ "/base/src/main/javascript/nl/agentsatwork/globals/Definition.js" ], function(Definition) {
-			window.DEBUG = true;
-			window.Definition = Definition;
-			window.__karma__.start();
-		});
+		window.definition.configure();
+		var DefinitionTest = window.definition.classOf("nl.agentsatwork.globals.DefinitionTest");
+		new DefinitionTest();
+		window.DEBUG = true;
+		window.__karma__.start();
 	}
 });

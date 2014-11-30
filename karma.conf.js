@@ -13,15 +13,11 @@ module.exports = function(config) {
 		frameworks : [ 'jasmine', 'requirejs' ],
 
 		// list of files / patterns to load in the browser
-		files : [ 'src/main/karma/test-main.js', {
-			pattern : 'src/test/javascript/**/*.spec.js',
-			included : false
-		}, {
-			pattern : 'src/main/javascript/**/*.js',
-			included : false
-		} ],
+		files : [ 'src/main/javascript/nl/agentsatwork/globals/Definition.js', 'src/main/karma/test-main.js', 'src/test/javascript/nl/agentsatwork/**/*.js',
+				'src/main/javascript/nl/agentsatwork/**/*.js' ],
 
 		proxies : {
+			'/javascript/' : 'http://localhost:8080/javascript/',
 			'/resources/' : 'http://localhost:8080/resources/'
 		},
 
