@@ -174,6 +174,7 @@ function Grunt() {
 			"initialize" : [ "initialize" ],
 			"generate-sources" : [ "jison" ],
 			"compile" : [ "uglify" ],
+			"package" : [ "compress" ],
 			"start" : [ "server:node", "server:karma", "connect" ],
 			"stop" : [ "stop" ]
 		},
@@ -338,6 +339,7 @@ function Grunt$Grunt(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-connect');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-compress');
 	// grunt.loadNpmTasks('grunt-bower-task');
 	require('time-grunt')(grunt);
 
