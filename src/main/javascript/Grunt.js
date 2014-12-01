@@ -1,16 +1,18 @@
 /**
  * Copyright © 2014 dr. ir. Jeroen M. Valk
  * 
- * This file is part of Badgerfish CPX. Badgerfish CPX is free software: you can
+ * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
  * Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version. Badgerfish CPX is
- * distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details. You should have received a copy of the GNU Lesser General Public
- * License along with Badgerfish CPX. If not, see
- * <http://www.gnu.org/licenses/>.
+ * of the License, or (at your option) any later version.
+ * 
+ * ComPosiX is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
 var fs = require('fs');
@@ -23,6 +25,7 @@ var glob = require("glob");
 var xpath = require('xpath');
 var DOMParser = require('xmldom').DOMParser;
 var Generator = require('jison').Generator;
+var extend = require('node.extend');
 var rewriteModule = require('http-rewrite-middleware');
 
 requirejs.config({
@@ -170,6 +173,7 @@ function Grunt() {
 			"validate" : [ "validate" ],
 			"initialize" : [ "initialize" ],
 			"generate-sources" : [ "jison" ],
+			"compile" : [ "uglify" ],
 			"start" : [ "server:node", "server:karma", "connect" ],
 			"stop" : [ "stop" ]
 		},
@@ -249,7 +253,7 @@ function Grunt$middlewareSyntaxHighlighter(connect, options) {
 			var readable = fs.createReadStream(parsed.pathname.substr(1));
 			readable.on("data", function(chunk) {
 				var offset = 0;
-				for ( var i = 0; i < chunk.length; ++i) {
+				for (var i = 0; i < chunk.length; ++i) {
 					switch (chunk[i]) {
 					case 60:
 						if (offset < i)
@@ -288,25 +292,25 @@ function Grunt$getProjectDirs() {
 
 function Grunt$readConfig() {
 	var grunt = properties.getPrivate(this).grunt;
-	var directories = this.getProjectDirs();
-	var config = null;
-	for ( var i = 0; i < directories.length; ++i) {
-		console.log(path.resolve(directories[i], 'Gruntfile.json'));
-		var content = grunt.file.readJSON(path.resolve(directories[i], 'Gruntfile.json'));
-		console.log(content);
-		config = Object.create(config, content);
-	}
-	return config;
+	return this.getProjectDirs().map(function(dir) {
+		return grunt.file.readJSON(path.resolve(dir, 'Gruntfile.json'));
+	}).reduce(function(target, source) {
+		return extend(true, target, source);
+	}, {});
+}
+
+function Grunt$setConfig(config) {
+	properties.getPrivate(this).config = config;
 }
 
 function Grunt$getConfig() {
-	var config = properties.getPrivate(this).grunt.file.readJSON(path.resolve(path.resolve(__dirname, "../../.."), 'Gruntfile.json'));
-	// var config = this.readConfig();
-	console.log(config);
+	var config = properties.getPrivate(this).config;
+	if (!config)
+		config = this.readConfig();
 	var self = this;
 	var name = self.middleware();
 	var middleware = [];
-	for ( var k = 0; k < name.length; ++k) {
+	for (var k = 0; k < name.length; ++k) {
 		middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() + name[k].substr(1));
 	}
 	config.connect.test.options.base = self.connectSearchPathMiddleware(config.connect.test.options.base);
@@ -333,7 +337,8 @@ function Grunt$Grunt(grunt) {
 	grunt.loadNpmTasks('grunt-zip');
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-connect');
-	//grunt.loadNpmTasks('grunt-bower-task');
+	grunt.loadNpmTasks('grunt-contrib-uglify');
+	// grunt.loadNpmTasks('grunt-bower-task');
 	require('time-grunt')(grunt);
 
 	var config = this.getConfig();
@@ -533,13 +538,14 @@ function Grunt$taskServer() {
 		case "karma":
 			grunt.log.write("Starting Karma server...");
 			var options = {};
-		    if (fs.existsSync('./karma.conf.js')) {
-		        options.configFile = path.resolve('./karma.conf.js');
-		      } else if (fs.existsSync('./karma.conf.coffee')) {
-		        options.configFile = path.resolve('./karma.conf.coffee');
-		      }
+			if (fs.existsSync('./karma.conf.js')) {
+				options.configFile = path.resolve('./karma.conf.js');
+			} else if (fs.existsSync('./karma.conf.coffee')) {
+				options.configFile = path.resolve('./karma.conf.coffee');
+			}
 			require("karma").server.start(options, function(exitCode) {
 				grunt.log.write("Karma has exited with " + exitCode);
+				process.exit(exitCode);
 			});
 			done();
 			break;
@@ -586,7 +592,7 @@ function Grunt$taskWebdav() {
 					if (err) {
 						throw err;
 					}
-					for ( var i = 0; i < files.length; ++i) {
+					for (var i = 0; i < files.length; ++i) {
 						var url = "http://" + (options.domain ? options.domain + "%5C" : "") + options.username
 								+ (options.password ? ":" + options.password : "") + "@" + options.hostname + ":" + options.port
 								+ (options.dest.charAt(options.dest.length - 1) === '/' ? options.dest + path.basename(files[i]) : options.dest);
@@ -639,6 +645,7 @@ Grunt.prototype.middlewareSyntaxHighlighter = Grunt$middlewareSyntaxHighlighter;
 Grunt.prototype.middlewareProxy = Grunt$middlewareProxy;
 Grunt.prototype.getProjectDirs = Grunt$getProjectDirs;
 Grunt.prototype.readConfig = Grunt$readConfig;
+Grunt.prototype.setConfig = Grunt$setConfig;
 Grunt.prototype.getConfig = Grunt$getConfig;
 Grunt.prototype.Grunt = Grunt$Grunt;
 Grunt.prototype.taskValidate = Grunt$taskValidate;

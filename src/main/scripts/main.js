@@ -15,33 +15,13 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict';
-
-var gruntConfig = require("./src/main/scripts/gruntConfig");
-
-module.exports = gruntConfig({
-	clean : [ "dist" ],
-
-	connect : {
-		test : {
-			options : {
-				keepalive : true,
-				hostname : "*",
-				port : 8080,
-				base : [ "src/test/webapp", "src/main/webapp", "src/test", "src/main", "dist", "node_modules/badgerfish.composix/src/main" ]
-			}
-		}
-	},
-
-	uglify : {
-		options : {
-			maxLineLen : 160,
-			banner : "/*! <%= pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today('yyyy-mm-dd') %> */\n"
-		},
-		definition : {
-			files : {
-				"dist/script/definition.min.js" : [ "src/main/javascript/nl/agentsatwork/globals/Definition.js" ]
-			}
-		}
-	}
+var requirejs = require('requirejs');
+requirejs.config({
+	baseUrl : __dirname
 });
+module.exports = {
+	Gruntfile : require("../../../Gruntfile"),
+	gruntConfig : require("./javascript/nl/agentsatwork/grunt/gruntConfig"),
+	Grunt : require("./Grunt"),
+	Private : requirejs("./Private")
+};

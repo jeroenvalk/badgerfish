@@ -27,6 +27,7 @@ require.config({
 		var DefinitionTest = window.definition.classOf("nl.agentsatwork.globals.DefinitionTest");
 		new DefinitionTest();
 		window.DEBUG = true;
+		window.open("http://localhost:8080/", '_blank');
 		window.__karma__.start();
 	}
 });
