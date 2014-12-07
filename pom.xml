@@ -1,4 +1,4 @@
-<!-- Copyright © 2014 dr. ir. Jeroen M. Valk -->
+<!-- Copyright © 2010-2014 dr. ir. Jeroen M. Valk -->
 
 <!-- This file is part of ComPosiX. ComPosiX is free software: you can redistribute 
 	it and/or modify it under the terms of the GNU Lesser General Public License 
@@ -18,12 +18,12 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>nl.agentsatwork</groupId>
-		<artifactId>badgerfish.composix.parent</artifactId>
-		<version>0.1.3-SNAPSHOT</version>
+		<artifactId>composix-parent-pom</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>src/maven</relativePath>
 	</parent>
 	<artifactId>ComPosiX</artifactId>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 	<name>ComPosiX</name>
 	<dependencies>
 		<dependency>

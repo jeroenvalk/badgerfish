@@ -3,7 +3,7 @@ ComPosiX
 
 ## License
 
-Copyright © 2014 dr. ir. Jeroen M. Valk
+Copyright © 2010-2014 dr. ir. Jeroen M. Valk
 
 This file is part of ComPosiX. ComPosiX is free software: you can
 redistribute it and/or modify it under the terms of the GNU Lesser General

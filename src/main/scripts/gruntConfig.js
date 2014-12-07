@@ -25,7 +25,8 @@ function gruntConfig(gruntOrConfig) {
 		if (config.Grunt) {
 			Grunt = config.Grunt;
 		}
-		var grunt = new Grunt();
+		var grunt = new Grunt(gruntOrConfig);
+		extend(true, config, grunt.readConfig());
 		grunt.setConfig(config);
 		grunt.Grunt(gruntOrConfig);
 	} else {

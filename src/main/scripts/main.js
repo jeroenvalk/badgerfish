@@ -21,7 +21,5 @@ requirejs.config({
 });
 module.exports = {
 	Gruntfile : require("../../../Gruntfile"),
-	gruntConfig : require("./javascript/nl/agentsatwork/grunt/gruntConfig"),
-	Grunt : require("./Grunt"),
-	Private : requirejs("./Private")
+	Grunt : require("../javascript/Grunt")
 };

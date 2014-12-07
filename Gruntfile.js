@@ -20,6 +20,10 @@
 var gruntConfig = require("./src/main/scripts/gruntConfig");
 
 module.exports = gruntConfig({
+	properties : {
+		cpxdir : "node_modules/<%= pkg.name %>"
+	},
+
 	clean : [ "dist" ],
 
 	connect : {
@@ -28,20 +32,46 @@ module.exports = gruntConfig({
 				keepalive : true,
 				hostname : "*",
 				port : 8080,
-				base : [ "src/test/webapp", "src/main/webapp", "src/test", "src/main", "dist", "node_modules/badgerfish.composix/src/main" ]
+				base : Object.keys({
+					"src/test/webapp" : 0,
+					"src/main/webapp" : 0,
+					"src/test" : 0,
+					"src/main" : 0,
+					"dist" : 0,
+					"src" : 0,
+					"node_modules/badgerfish.composix/src/main" : 0
+				})
 			}
 		}
 	},
 
 	uglify : {
-		options : {
-			maxLineLen : 160,
-			banner : "/*! <%= pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today('yyyy-mm-dd') %> */\n"
-		},
 		definition : {
-			files : {
-				"dist/script/definition.min.js" : [ "src/main/javascript/nl/agentsatwork/globals/Definition.js" ]
-			}
+			options : {
+				maxLineLen : 160,
+				banner : Object.keys({
+					"/*_____________________________________________<%= grunt.template.today('yyyy-mm-dd') %>\n" : 0,
+					"* Copyright © 2010-2014 dr. ir. Jeroen Valk\n" : 0,
+					"*\n" : 0,
+					"* <%= pkg.name %> - v<%= pkg.version %>:\n" : 0,
+					"* - http://github.com/jeroenvalk/badgerfish/\n" : 0,
+					"* - http://www.npmjs.org/package/badgerfish.composix/\n":0,
+					"* - http://code.google.com/p/composix/\n" : 0,
+					"* - http://www.agentsatwork.nl/\n" : 0,
+					"* ---------------------GNU Lesser General Public License\n" : 0,
+					"*                    LGPLv3: http://www.gnu.org/licenses\n" : 0,
+					"*/\n" : 0
+				}).join("")
+			},
+			files : [ {
+				src : [ "<%= properties.cpxdir %>/src/main/javascript/nl/agentsatwork/globals/Definition.js" ],
+				dest : "dist/script/definition.min.js",
+				nonull : true
+			} ]
 		}
+	},
+
+	compress : {
+
 	}
 });

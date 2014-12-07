@@ -148,7 +148,10 @@
 	 * @returns {Function} constructor of class specified by chain
 	 */
 	function definition$classOf(chain) {
-		return definitionOf(chain).getConstructor();
+		if (plugin instanceof Array) {
+			return definitionOf(chain).getConstructor();
+		}
+		throw new Error("definition.classOf: not yet configured");
 	};
 
 	definition.configure =

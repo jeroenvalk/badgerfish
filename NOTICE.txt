@@ -1,0 +1,24 @@
+Copyright © 2010-2013 dr. ir. Jeroen M. Valk
+
+This product uses:
+- NodeJS:      http://nodejs.org/
+- Jison:       http://zaach.github.io/jison/
+- RequireJS:   http://requirejs.org/
+- Grunt:       http://gruntjs.com/ 
+    Plugins: grunt-{curl,zip}, grunt-contrib-{clean,connect,uglify,compress}
+- Karma:       http://karma-runner.github.io/
+- Jasmine:     http://jasmine.github.io/
+- JQuery:      http://jquery.org/
+- node-glob:   http://github.com/isaacs/node-glob
+- xpath:       http://github.com/goto100/xpath
+- xmldom:      http://github.com/jindw/xmldom
+- JSONPath:    http://github.com/s3u/JSONPath
+- node.extend: http://github.com/dreamerslab/node.extend
+- software developed by The Apache Software Foundation: http://www.apache.org/
+
+This product includes:
+- Prism:      http://prismjs.com/
+
+This product distributes:
+- AngularJS:  http://angularjs.org/
+- Foundation: http://foundation.zurb.com/

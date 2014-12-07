@@ -158,9 +158,9 @@ function Grunt$phase(grunt, names, tasks) {
 
 var Private = requirejs("./Private");
 var properties = new Private(Grunt);
-function Grunt() {
+function Grunt(grunt) {
 	properties.setPrivate(this, {
-		grunt : null,
+		grunt : grunt,
 		downloads : {
 			"lib/require.js" : "http://requirejs.org/docs/release/2.1.11/comments/require.js",
 			"lib/jquery.js" : "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js",
@@ -287,17 +287,9 @@ function Grunt$middlewareProxy(connect, options) {
 	return Grunt$middlewareProxy$serve;
 }
 
-function Grunt$getProjectDirs() {
-	return [ path.resolve(__dirname, "../../..") ];
-}
-
 function Grunt$readConfig() {
 	var grunt = properties.getPrivate(this).grunt;
-	return this.getProjectDirs().map(function(dir) {
-		return grunt.file.readJSON(path.resolve(dir, 'Gruntfile.json'));
-	}).reduce(function(target, source) {
-		return extend(true, target, source);
-	}, {});
+	return grunt.file.readJSON(path.resolve('Gruntfile.json'));
 }
 
 function Grunt$setConfig(config) {
@@ -645,7 +637,6 @@ Grunt.prototype.connectRewriteMiddleware = Grunt$connectRewriteMiddleware;
 Grunt.prototype.middleware = Grunt$middleware;
 Grunt.prototype.middlewareSyntaxHighlighter = Grunt$middlewareSyntaxHighlighter;
 Grunt.prototype.middlewareProxy = Grunt$middlewareProxy;
-Grunt.prototype.getProjectDirs = Grunt$getProjectDirs;
 Grunt.prototype.readConfig = Grunt$readConfig;
 Grunt.prototype.setConfig = Grunt$setConfig;
 Grunt.prototype.getConfig = Grunt$getConfig;

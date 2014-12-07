@@ -1,11 +1,29 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- Copyright © 2014 dr. ir. Jeroen M. Valk -->
+
+<!-- This file is part of ComPosiX. ComPosiX is free software: you can redistribute 
+	it and/or modify it under the terms of the GNU Lesser General Public License 
+	as published by the Free Software Foundation, either version 3 of the License, 
+	or (at your option) any later version. -->
+
+<!-- ComPosiX is distributed in the hope that it will be useful, but WITHOUT 
+	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+	FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more 
+	details. -->
+
+<!-- You should have received a copy of the GNU Lesser General Public License 
+	along with ComPosiX. If not, see <http://www.gnu.org/licenses />. -->
+
 <html xmlns="http://www.w3.org/1999/xhtml"
 	xmlns:cpx="http://www.agentsatwork.nl/2014/cpx"
 	xmlns:xi="http://www.w3.org/2001/XInclude" lang="en" ng-app>
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml; charset=UTF-8" />
 <title>test page</title>
-<script data-main="javascript/badgerfish.js" src="lib/require.js"></script>
+<script type="application/javascript" src="lib/prism/prism.js"
+	data-manual></script>
+<script data-main="badgerfish.js" src="lib/require.js"></script>
+<link href="lib/prism/prism.css" rel="stylesheet" />
 <style type="text/css">
 tr.selected>td {
 	font-weight: bold;
@@ -17,5 +35,12 @@ tr.selected>td {
 		<xi:include href="templates/cdcatalog.xml"></xi:include>
 		<xi:include href="templates/cdcatalog.xsl"></xi:include>
 	</cpx:transform>
+	<div class="source">
+		<pre>
+			<code class="language-markup">
+				<xi:include href="templates/cdcatalog.xml" parse="text"></xi:include>
+			</code>
+		</pre>
+	</div>
 </body>
 </html>

@@ -1,22 +1,25 @@
 /**
  * Copyright © 2014 dr. ir. Jeroen M. Valk
  * 
- * This file is part of Badgerfish CPX. Badgerfish CPX is free software: you can
+ * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
  * Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version. Badgerfish CPX is
- * distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details. You should have received a copy of the GNU Lesser General Public
- * License along with Badgerfish CPX. If not, see
- * <http://www.gnu.org/licenses/>.
+ * of the License, or (at your option) any later version.
+ * 
+ * ComPosiX is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
 define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	// var xpath = require('xpath');
 	// var DOMParser = require('xmldom').DOMParser;
 	// var jsonpath = JSONPath.eval;
+	var Badgerfish = definition.classOf("nl.agentsatwork.globals.Badgerfish");
 
 	function class_Context($, argv, properties) {
 		var context;
@@ -58,7 +61,8 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 		/**
 		 * Initializes a context after it has been loaded.
 		 * 
-		 * @param {string|Node} content
+		 * @param {string|Node}
+		 *            content
 		 */
 		[ "string", function private_Context$initialize(content) {
 			var x = properties.getPrivate(this);
@@ -76,6 +80,7 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 				}
 				x.node = xmlDoc.documentElement;
 			}
+			x.badgerfish = new Badgerfish(x.node);
 			return this;
 		} ];
 
@@ -114,7 +119,8 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 		$.normalize =
 		/**
 		 * @static
-		 * @param {string|Path} path
+		 * @param {string|Path}
+		 *            path
 		 * @return {Context} context at the specified path
 		 */
 		[ "string|Path", function static_Context$normalize(path) {
@@ -122,31 +128,41 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 			return new Context(path);
 		} ];
 
-		$.requireXIncludes = function private_Context$requireXIncludes(callback) {
+		$.requireXIncludes = function Context$requireXIncludes(callback) {
 			var self = this;
 			var x = properties.getPrivate(self);
-			var nodes = x.node.ownerDocument.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
+			var nodes = x.badgerfish.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
 			var modules = [];
-			for ( var i = 0; i < nodes.length; ++i) {
+			for (var i = 0; i < nodes.length; ++i) {
 				modules.push("text!" + nodes[i].getAttribute("href"));
 			}
 			x.includes = [];
 			require(modules, function() {
-				for ( var i = 0; i < arguments.length; ++i) {
-					var context = new Context();
-					argv.Context.initialize.call(context, arguments[i]);
-					x.includes.push(context);
+				for (var i = 0; i < arguments.length; ++i) {
+					if (nodes[0].getAttribute("parse") === "text") {
+						x.includes.push(arguments[i]);
+					} else {
+						var context = new Context();
+						argv.Context.initialize.call(context, arguments[i]);
+						x.includes.push(context);
+					}
 				}
 				callback.call(self);
 			});
 		};
 
-		$.resolveXIncludes = function private_Context$resolveXIncludes() {
+		$.resolveXIncludes = function Context$resolveXIncludes() {
 			var x = properties.getPrivate(this);
-			var nodes = x.node.ownerDocument.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
+			var nodes = x.badgerfish.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
 			console.assert(x.includes.length === nodes.length);
-			for ( var i = 0; i < x.includes.length; ++i) {
-				nodes[0].parentNode.replaceChild(x.includes[i].toNode(), nodes[0]);
+			for (var i = 0; i < x.includes.length; ++i) {
+				if (nodes[0].getAttribute("parse") === "text") {
+					var parent = nodes[0].parentNode;
+					parent.removeChild(nodes[0]);
+					parent.innerText = x.includes[i];
+				} else {
+					nodes[0].parentNode.replaceChild(x.includes[i].toNode(), nodes[0]);
+				}
 			}
 			console.assert(nodes.length === 0);
 		};
@@ -171,7 +187,8 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 
 	Path.prototype.selectJSON =
 	/**
-	 * @param {number} amount
+	 * @param {number}
+	 *            amount
 	 * @return {Array}
 	 */
 	function Path$selectJSON(entity, amount) {
@@ -194,7 +211,8 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	Path.prototype.selectOne =
 	/**
 	 * @param entity
-	 * @param {string} type
+	 * @param {string}
+	 *            type
 	 * @return {type}
 	 */
 	function Path$selectOne(entity, type) {
@@ -204,7 +222,8 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	Path.prototype.selectAll =
 	/**
 	 * @param entity
-	 * @param {string} type
+	 * @param {string}
+	 *            type
 	 * @return {type[]}
 	 */
 	function Path$selectAll(entity, type) {
@@ -232,7 +251,8 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	Path.prototype.selectSingleValue =
 	/**
 	 * @param entity
-	 * @param {String} type
+	 * @param {String}
+	 *            type
 	 * @return {boolean|number|string}
 	 */
 	function Path$selectSingleValue(entity, type) {
@@ -249,7 +269,8 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	Path.prototype.selectValues =
 	/**
 	 * @param entity
-	 * @param {String} type
+	 * @param {String}
+	 *            type
 	 * @return {boolean[]|number[]|string[]}
 	 */
 	function Path$selectValues(entity, type) {
