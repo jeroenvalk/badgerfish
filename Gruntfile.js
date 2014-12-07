@@ -39,7 +39,7 @@ module.exports = gruntConfig({
 					"src/main" : 0,
 					"dist" : 0,
 					"src" : 0,
-					"node_modules/badgerfish.composix/src/main" : 0
+					"<%= properties.cpxdir %>/src/main" : 0
 				})
 			}
 		}
