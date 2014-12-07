@@ -175,7 +175,7 @@ function Grunt(grunt) {
 			"generate-sources" : [ "jison" ],
 			"compile" : [ "uglify" ],
 			"package" : [ "compress" ],
-			"start" : [ "server:node", "server:karma", "connect" ],
+			"start" : [ "server:karma", "connect" ],
 			"stop" : [ "stop" ]
 		},
 		unzip : true
