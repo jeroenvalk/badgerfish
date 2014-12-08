@@ -28,6 +28,8 @@ var Generator = require('jison').Generator;
 var extend = require('node.extend');
 var rewriteModule = require('http-rewrite-middleware');
 
+var cpxdir = path.resolve(__dirname, "../../..");
+
 requirejs.config({
 	baseUrl : __dirname
 });
@@ -232,7 +234,41 @@ function Grunt$connectRewriteMiddleware() {
 }
 
 function Grunt$middleware() {
-	return [ "syntaxHighlighter", "proxy" ];
+	return [ "cachedFiles", "syntaxHighlighter", "proxy" ];
+}
+
+function Grunt$middlewareCachedFiles(connect, options) {
+	var files = {
+		'/text.js' : [ 'node_modules/text/text.js' ],
+		'/lib/knockout-latest.js' : [ 'node_modules/knockout/build/output/knockout-latest.js' ],
+		'/lib/knockout-latest.debug.js' : [ 'node_modules/knockout/build/output/knockout-latest.debug.js' ]
+	}
+	var content = {};
+	for ( var file in files) {
+		if (files.hasOwnProperty(file)) {
+			content[file] = files[file].map(function(filename) {
+				return fs.readFileSync(filename);
+			}).join();
+		}
+	}
+	function Grunt$middlewareCachedFiles$serve(req, res, next) {
+		if (req.url in files) {
+			switch (req.url.substr(req.url.lastIndexOf("."))) {
+			case ".js":
+				res.writeHead(200, {
+					'Content-Type' : 'application/javascript'
+				});
+				break;
+			default:
+				throw new Error("unsupported file type");
+			}
+			res.write(content[req.url]);
+			res.end();
+		} else {
+			next();
+		}
+	}
+	return Grunt$middlewareCachedFiles$serve;
 }
 
 function Grunt$middlewareSyntaxHighlighter(connect, options) {
@@ -635,6 +671,7 @@ Grunt.prototype.getPackage = Grunt$getPackage;
 Grunt.prototype.connectSearchPathMiddleware = Grunt$connectSearchPathMiddleware;
 Grunt.prototype.connectRewriteMiddleware = Grunt$connectRewriteMiddleware;
 Grunt.prototype.middleware = Grunt$middleware;
+Grunt.prototype.middlewareCachedFiles = Grunt$middlewareCachedFiles;
 Grunt.prototype.middlewareSyntaxHighlighter = Grunt$middlewareSyntaxHighlighter;
 Grunt.prototype.middlewareProxy = Grunt$middlewareProxy;
 Grunt.prototype.readConfig = Grunt$readConfig;

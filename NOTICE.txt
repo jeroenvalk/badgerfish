@@ -1,11 +1,12 @@
 Copyright © 2010-2013 dr. ir. Jeroen M. Valk
 
-This product uses:
+ComPosiX uses:
 - NodeJS:      http://nodejs.org/
 - Jison:       http://zaach.github.io/jison/
 - RequireJS:   http://requirejs.org/
+   +text plugin: http://github.com/requirejs/text
 - Grunt:       http://gruntjs.com/ 
-    Plugins: grunt-{curl,zip}, grunt-contrib-{clean,connect,uglify,compress}
+   +plugins: grunt-{curl,zip}, grunt-contrib-{clean,connect,uglify,compress}
 - Karma:       http://karma-runner.github.io/
 - Jasmine:     http://jasmine.github.io/
 - JQuery:      http://jquery.org/
@@ -16,9 +17,10 @@ This product uses:
 - node.extend: http://github.com/dreamerslab/node.extend
 - software developed by The Apache Software Foundation: http://www.apache.org/
 
-This product includes:
+ComPosiX includes:
 - Prism:      http://prismjs.com/
 
-This product distributes:
+ComPosiX distributes:
 - AngularJS:  http://angularjs.org/
+- Knockout:   http://knockoutjs.com/
 - Foundation: http://foundation.zurb.com/

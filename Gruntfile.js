@@ -17,11 +17,14 @@
 
 'use strict';
 
+var cpxpkg = JSON.parse(require('fs').readFileSync(require('path').resolve(__dirname, 'package.json')))
 var gruntConfig = require("./src/main/scripts/gruntConfig");
 
 module.exports = gruntConfig({
 	properties : {
-		cpxdir : "node_modules/<%= pkg.name %>"
+		cpx : cpxpkg.name,
+		cpxdir : "node_modules/" + cpxpkg.name,
+		cpxver : cpxpkg.version
 	},
 
 	clean : [ "dist" ],
@@ -53,9 +56,9 @@ module.exports = gruntConfig({
 					"/*_____________________________________________<%= grunt.template.today('yyyy-mm-dd') %>\n" : 0,
 					"* Copyright © 2010-2014 dr. ir. Jeroen Valk\n" : 0,
 					"*\n" : 0,
-					"* <%= pkg.name %> - v<%= pkg.version %>:\n" : 0,
+					"* <%= properties.cpx %> - v<%= properties.cpxver %> - definition.min.js:\n" : 0,
 					"* - http://github.com/jeroenvalk/badgerfish/\n" : 0,
-					"* - http://www.npmjs.org/package/badgerfish.composix/\n":0,
+					"* - http://www.npmjs.org/package/badgerfish.composix/\n" : 0,
 					"* - http://code.google.com/p/composix/\n" : 0,
 					"* - http://www.agentsatwork.nl/\n" : 0,
 					"* ---------------------GNU Lesser General Public License\n" : 0,
