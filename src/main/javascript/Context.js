@@ -19,7 +19,6 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	// var xpath = require('xpath');
 	// var DOMParser = require('xmldom').DOMParser;
 	// var jsonpath = JSONPath.eval;
-	var Badgerfish = definition.classOf("nl.agentsatwork.globals.Badgerfish");
 
 	function class_Context($, argv, properties) {
 		var context;
@@ -80,6 +79,7 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 				}
 				x.node = xmlDoc.documentElement;
 			}
+			var Badgerfish = definition.classOf("nl.agentsatwork.globals.Badgerfish");
 			x.badgerfish = new Badgerfish(x.node);
 			return this;
 		} ];

@@ -1,4 +1,27 @@
-requirejs.config({
+/**
+ * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * 
+ * This file is part of ComPosiX. ComPosiX is free software: you can
+ * redistribute it and/or modify it under the terms of the GNU Lesser General
+ * Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ * 
+ * ComPosiX is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+(function() {
+	this.GLOBAL = this;
+}).call(this);
+
+GLOBAL.DEBUG = false;
+
+GLOBAL.requirejs.config({
 	baseUrl : "/",
 	paths : {
 		jquery : "lib/jquery",
@@ -6,9 +29,13 @@ requirejs.config({
 	}
 });
 
-require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'javascript/nl/agentsatwork/globals/Badgerfish' ], function(jQuery) {
+GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'javascript/nl/agentsatwork/globals/Badgerfish' ], function(jQuery, definition,
+		Badgerfish, Context) {
+	GLOBAL.definition = definition;
 	definition.configure();
-	require([ 'javascript/Context' ], function(Context) {
+	definition(Badgerfish);
+	GLOBAL.require([ 'javascript/Context' ], function(Context) {
+
 		var html = Context.getHTMLDocument().toNode();
 
 		function transform(context, pipeline, callback) {
@@ -53,8 +80,18 @@ require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'javascript
 								resources.push(elements[i].getAttribute("require"));
 							}
 							require(resources, function() {
-								for (var i = 0; i < arguments.length; ++i) {
-									arguments[i].create(elements[i]);
+								var i;
+								for (i = 0; i < arguments.length; ++i) {
+									definition(arguments[i]);
+								}
+								for (i = 0; i < elements.length; ++i) {
+									// TODO: add support for inheritance
+									var classname = elements[i].getAttribute("require");
+									var index = classname.lastIndexOf("/");
+									if (index > 0) {
+										classname = classname.substr(++index);
+									}
+									new (definition.classOf(classname))(elements[i]);
 								}
 							});
 							var nodes = document.getElementsByTagName("code");

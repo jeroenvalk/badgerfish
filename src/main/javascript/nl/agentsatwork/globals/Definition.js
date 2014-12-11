@@ -15,12 +15,9 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global DEBUG, expect */
+/* global define, DEBUG, expect */
 /* jshint -W030 */
-(function() {
-	this.GLOBAL = this;
-	this.DEBUG = false;
-
+define(function() {
 	var getPrivate, defaultPackage = "nl.agentsatwork.globals", plugin, state = {
 		classdef : {},
 		classes : {}
@@ -42,31 +39,29 @@
 
 	// API
 
-	var definition = this.definition =
+	var definition =
 	/**
-	 * @param {string}
-	 *            pkgname
-	 * @param {Function}
+	 * @param {Object}
 	 *            classdef
-	 * @param {string}
-	 *            [chain]
-	 * @returns {Definition}
 	 */
-	function definition(pkgname, classdef) {
+	function definition(classdef) {
 		if (this instanceof definition) {
 			throw new Error("definition: calling as constructor prohibited");
 		}
-		if (typeof pkgname !== "string") {
-			throw new Error("definition: first parameter must be a package name");
+		if (!(classdef instanceof Object)) {
+			throw new Error("definition: required object mapping qualified names into class definition functions");
 		}
-		if (!(classdef instanceof Function)) {
-			throw new Error("definition: second parameter must be a class definition function of the form 'function class_<classname>(){ ... }'");
+		for ( var qname in classdef) {
+			if (classdef.hasOwnProperty(qname)) {
+				if (state.classdef[qname]) {
+					console.warn("definition: " + qname + ": to be defined only once");
+				} else {
+					state.classdef[qname] = classdef[qname];
+				}
+			}
 		}
-		var fullname = [ pkgname, getClassname(classdef) ].join(".");
-		if (state.classdef[fullname]) {
-			console.warn("definition: " + fullname + ": to be defined only once");
-		} else {
-			state.classdef[fullname] = classdef;
+		if (definition.define) {
+			definition.define.apply(null, Array.prototype.slice.call(arguments));
 		}
 	};
 
@@ -448,5 +443,5 @@
 		return check;
 	}
 
-	return Definition;
-}.call(this));
+	return definition;
+});

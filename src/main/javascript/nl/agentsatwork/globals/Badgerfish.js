@@ -15,20 +15,12 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals definition, DEBUG, expect */
+/* globals define, DEBUG, expect */
 /* jshint -W030 */
-definition('nl.agentsatwork.globals', function class_Badgerfish(properties) {
-	var Badgerfish = this.Badgerfish =
-	/**
-	 * @constructor
-	 */
-	function Badgerfish(node) {
-		properties.setPrivate(this, {
-			node : node
-		});
-	};
-
-	var BadgerfishArray = definition('nl.agentsatwork.globals.Badgerfish.BadgerfishArray', function class_BadgerfishArray() {
+define({
+	'nl.agentsatwork.globals.BadgerfishArray' : function class_BadgerfishArray(properties) {
+		//var Badgerfish = definition.classOf('nl.agentsatwork.globals.Badgerfish');
+		
 		this.BadgerfishArray = function BadgerfishArray(nodes, condition) {
 			for (var i = 0; i < nodes.length; ++i) {
 				var node = new Badgerfish(nodes[i]);
@@ -40,76 +32,94 @@ definition('nl.agentsatwork.globals', function class_Badgerfish(properties) {
 				}
 			}
 		};
-	});
+	},
+	'nl.agentsatwork.globals.Badgerfish' : function class_Badgerfish(properties) {
+		var BadgerfishArray = definition.classOf('nl.agentsatwork.globals.BadgerfishArray');
 
-	this.getElementById = function Badgerfish$getElementById(id) {
-		return new Badgerfish(properties.getPrivate(this).node.getElementById(id));
-	};
+		var Badgerfish = this.Badgerfish =
+		/**
+		 * @param {Node|string}
+		 *            node
+		 * @param {Object}
+		 *            [ns] - mapping of prefixes into their namespace
+		 * 
+		 * @constructor
+		 */
+		function Badgerfish(node) {
+			properties.setPrivate(this, {
+				node : node
+			});
+		};
 
-	this.getElementsByTagName = function Badgerfish$getElementsByTagName(step) {
-		step = step.split("::");
-		switch (step.length) {
-		case 0:
-			DEBUG && expect(false).toBe(true);
-			break;
-		case 1:
-			step.unshift(null);
-			break;
-		}
-		var aux = step[1].split("[");
-		var nodes = properties.getPrivate(this).node.getElementsByTagName(aux[0]);
-		switch (step[0]) {
-		case ".":
-		case "child":
-			return new BadgerfishArray(nodes, aux[1], true);
-		case null:
-		case "descendant":
-			return new BadgerfishArray(nodes, aux[1], true);
-		default:
-			DEBUG && expect(true).toBe(false);
-			break;
-		}
-	};
+		this.getElementById = function Badgerfish$getElementById(id) {
+			return new Badgerfish(properties.getPrivate(this).node.getElementById(id));
+		};
 
-	this.getElementsByTagNameNS = function Badgerfish$getElementsByTagNameNS(namespace, step) {
-		var node = properties.getPrivate(this).node;
-		if (node.ownerDocument === document) {
-			return node.getElementsByTagName("XI:INCLUDE");
-		} else {
-			return node.getElementsByTagNameNS(namespace, step);
-		}
-	};
-
-	this.getElementByTagName = function Badgerfish$getElementByTagName(xpath) {
-		var node, nodes, path = xpath.split("/");
-		var result = new Badgerfish();
-		switch (path.length) {
-		case 0:
-			DEBUG && expect(false).toBe(true);
-			break;
-		case 1:
-			nodes = this.getElementsByTagName(path[0]);
-			switch (nodes.length) {
+		this.getElementsByTagName = function Badgerfish$getElementsByTagName(step) {
+			step = step.split("::");
+			switch (step.length) {
 			case 0:
-				throw new Error("not found");
+				DEBUG && expect(false).toBe(true);
+				break;
 			case 1:
-				properties.getPrivate(result).node = nodes[0];
-			default:
-				throw new Error("not unique");
+				step.unshift(null);
+				break;
 			}
-			break;
-		default:
-			nodes = this.getElementsByTagName(path[0]);
-			switch (nodes.length) {
+			var aux = step[1].split("[");
+			var nodes = properties.getPrivate(this).node.getElementsByTagName(aux[0]);
+			switch (step[0]) {
+			case ".":
+			case "child":
+				return new BadgerfishArray(nodes, aux[1], true);
+			case null:
+			case "descendant":
+				return new BadgerfishArray(nodes, aux[1], true);
+			default:
+				DEBUG && expect(true).toBe(false);
+				break;
+			}
+		};
+
+		this.getElementsByTagNameNS = function Badgerfish$getElementsByTagNameNS(namespace, step) {
+			var node = properties.getPrivate(this).node;
+			if (node.ownerDocument === document) {
+				return node.getElementsByTagName("XI:INCLUDE");
+			} else {
+				return node.getElementsByTagNameNS(namespace, step);
+			}
+		};
+
+		this.getElementByTagName = function Badgerfish$getElementByTagName(xpath) {
+			var node, nodes, path = xpath.split("/");
+			var result = new Badgerfish();
+			switch (path.length) {
 			case 0:
-				throw new Error("not found");
+				DEBUG && expect(false).toBe(true);
+				break;
 			case 1:
-				properties.getPrivate(result).node = nodes[0];
-				return nodes[0];
+				nodes = this.getElementsByTagName(path[0]);
+				switch (nodes.length) {
+				case 0:
+					throw new Error("not found");
+				case 1:
+					properties.getPrivate(result).node = nodes[0];
+				default:
+					throw new Error("not unique");
+				}
+				break;
 			default:
-				throw new Error("not unique");
+				nodes = this.getElementsByTagName(path[0]);
+				switch (nodes.length) {
+				case 0:
+					throw new Error("not found");
+				case 1:
+					properties.getPrivate(result).node = nodes[0];
+					return nodes[0];
+				default:
+					throw new Error("not unique");
+				}
+				break;
 			}
-			break;
-		}
-	};
+		};
+	}
 });
