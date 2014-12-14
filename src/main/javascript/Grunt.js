@@ -145,6 +145,7 @@ function Grunt$middleware() {
 }
 
 function Grunt$middlewareCachedFiles() {
+	var x = properties.getPrivate(this);
 	var files = {
 		'/text.js' : [ 'node_modules/text/text.js' ],
 		'/lib/knockout-latest.js' : [ 'node_modules/knockout/build/output/knockout-latest.js' ],
@@ -153,7 +154,7 @@ function Grunt$middlewareCachedFiles() {
 	var content = {};
 	files && Object.keys(files).forEach(function(file) {
 		content[file] = files[file].map(function(filename) {
-			return fs.readFileSync(filename);
+			return fs.readFileSync([x.config.properties.cpxdir, filename].join("/"));
 		}).join();
 	});
 	function Grunt$middlewareCachedFiles$serve(req, res, next) {

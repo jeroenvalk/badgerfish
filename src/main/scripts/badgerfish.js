@@ -82,7 +82,13 @@ GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'jav
 							require(resources, function() {
 								var i;
 								for (i = 0; i < arguments.length; ++i) {
-									definition(arguments[i]);
+									var classdef = arguments[i];
+									if (classdef instanceof Function) {
+										var fn = classdef;
+										classdef = {};
+										classdef['nl.agentsatwork.globals.' + fn.name.substr(fn.name.lastIndexOf("_") + 1)] = fn;
+									}
+									definition(classdef);
 								}
 								for (i = 0; i < elements.length; ++i) {
 									// TODO: add support for inheritance
