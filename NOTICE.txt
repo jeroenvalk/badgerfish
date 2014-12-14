@@ -1,26 +1,26 @@
 Copyright © 2010-2013 dr. ir. Jeroen M. Valk
 
 ComPosiX uses:
-- NodeJS:      http://nodejs.org/
-- Jison:       http://zaach.github.io/jison/
+- NodeJS:      http://nodejs.org/ (Joyent, Inc)
+- Jison:       http://zaach.github.io/jison/ (Zach Carter)
 - RequireJS:   http://requirejs.org/
    +text plugin: http://github.com/requirejs/text
 - Grunt:       http://gruntjs.com/ 
-   +plugins: grunt-{curl,zip}, grunt-contrib-{clean,connect,uglify,compress}
-- Karma:       http://karma-runner.github.io/
+   +plugins: Todd Wolfson's grunt-{curl,zip}, grunt-contrib-{clean,connect,uglify,copy,compress}
+- Karma:       http://karma-runner.github.io/ (Vojta Jina, et al.)
 - Jasmine:     http://jasmine.github.io/
 - JQuery:      http://jquery.org/
-- node-glob:   http://github.com/isaacs/node-glob
-- xpath:       http://github.com/goto100/xpath
-- xmldom:      http://github.com/jindw/xmldom
-- JSONPath:    http://github.com/s3u/JSONPath
-- node.extend: http://github.com/dreamerslab/node.extend
+- node-glob:   http://github.com/isaacs/node-glob (Isaac Z. Schlueter)
+- xpath:       http://github.com/goto100/xpath (Cameron McCormack, Yaron Naveh)
+- xmldom:      http://github.com/jindw/xmldom (jindw)
+- JSONPath:    http://github.com/s3u/JSONPath (Stefan Goessner)
+- node.extend: http://github.com/dreamerslab/node.extend (Jordan Harband)
 - software developed by The Apache Software Foundation: http://www.apache.org/
 
 ComPosiX includes:
-- Prism:      http://prismjs.com/
+- Prism:      http://prismjs.com/ (Lea Verou, et al.)
 
 ComPosiX distributes:
-- AngularJS:  http://angularjs.org/
+- AngularJS:  http://angularjs.org/ (Google, Inc)
 - Knockout:   http://knockoutjs.com/
 - Foundation: http://foundation.zurb.com/
