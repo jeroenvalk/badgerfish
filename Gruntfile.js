@@ -17,7 +17,7 @@
 
 'use strict';
 
-var cpxpkg = JSON.parse(require('fs').readFileSync(require('path').resolve(__dirname, 'package.json')))
+var cpxpkg = JSON.parse(require('fs').readFileSync(require('path').resolve(__dirname, 'package.json')));
 var gruntConfig = require("./src/main/scripts/gruntConfig");
 
 module.exports = gruntConfig({
@@ -25,6 +25,100 @@ module.exports = gruntConfig({
 		cpx : cpxpkg.name,
 		cpxdir : "node_modules/" + cpxpkg.name,
 		cpxver : cpxpkg.version
+	},
+
+	lifecycle : {
+		"pre-clean" : {},
+		"clean" : {
+			depends : "pre-clean"
+		},
+		"validate" : {},
+		"initialize" : {
+			depends : "validate"
+		},
+		"generate-sources" : {
+			depends : "initialize"
+		},
+		"process-sources" : {
+			depends : "generate-sources"
+		},
+		"generate-resources" : {
+			depends : "process-sources"
+		},
+		"process-resources" : {
+			depends : "generate-resources"
+		},
+		"compile" : {
+			depends : "process-resources"
+		},
+		"process-classes" : {
+			depends : "compile"
+		},
+		"generate-test-sources" : {
+			depends : "process-classes"
+		},
+		"process-test-sources" : {
+			depends : "generate-test-sources"
+		},
+		"generate-test-resources" : {
+			depends : "process-test-sources"
+		},
+		"process-test-resources" : {
+			depends : "generate-test-resources"
+		},
+		"test-compile" : {
+			depends : "process-test-resources"
+		},
+		"process-test-classes" : {
+			depends : "test-compile"
+		},
+		"test" : {
+			depends : "process-test-classes"
+		},
+		"prepare-package" : {
+			depends : "test"
+		},
+		"package" : {
+			depends : "prepare-package"
+		},
+		"pre-integration-test" : {
+			depends : "package"
+		},
+		"integration-test" : {
+			depends : "pre-integration-test"
+		},
+		"post-integration-test" : {
+			depends : "integration-test"
+		},
+		"verify" : {
+			depends : "post-integration-test"
+		},
+		"install" : {
+			depends : "verify"
+		},
+		"deploy" : {
+			depends : "install"
+		},
+		"start" : {
+			depends : "process-test-classes"
+		},
+		"stop" : {},
+		"restart" : {
+			depends : "stop",
+			invoke : "start"
+		}
+	},
+
+	executions : {
+		"clean" : [ "clean" ],
+		"validate" : [ "validate" ],
+		"initialize" : [ "initialize" ],
+		"generate-sources" : [ "jison" ],
+		"compile" : [ "uglify" ],
+		"package" : [ "compress" ],
+		"pre-integration-test" : [ "unzip" ],
+		"start" : [ "server:karma", "connect" ],
+		"stop" : [ "stop" ]
 	},
 
 	clean : [ "dist" ],
@@ -75,6 +169,15 @@ module.exports = gruntConfig({
 	},
 
 	compress : {
+		main : {
+			archive : "dist/<%= pkg.name %>-<%= pkg.version %>.zip"
+		}
+	},
 
+	unzip : {
+		main : {
+			src : "dist/<%= pkg.name %>-<%= pkg.version %>.zip",
+			dest : "target/package"
+		}
 	}
 });

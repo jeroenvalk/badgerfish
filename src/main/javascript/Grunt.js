@@ -15,6 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* jshint -W030 */
 var fs = require('fs');
 var url = require('url');
 var path = require('path');
@@ -25,10 +26,7 @@ var glob = require("glob");
 var xpath = require('xpath');
 var DOMParser = require('xmldom').DOMParser;
 var Generator = require('jison').Generator;
-var extend = require('node.extend');
 var rewriteModule = require('http-rewrite-middleware');
-
-var cpxdir = path.resolve(__dirname, "../../..");
 
 requirejs.config({
 	baseUrl : __dirname
@@ -38,94 +36,12 @@ function endsWith(str, suffix) {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
-var lifecycle = {
-	"pre-clean" : {},
-	"clean" : {
-		depends : "pre-clean"
-	},
-	"validate" : {},
-	"initialize" : {
-		depends : "validate"
-	},
-	"generate-sources" : {
-		depends : "initialize"
-	},
-	"process-sources" : {
-		depends : "generate-sources"
-	},
-	"generate-resources" : {
-		depends : "process-sources"
-	},
-	"process-resources" : {
-		depends : "generate-resources"
-	},
-	"compile" : {
-		depends : "process-resources"
-	},
-	"process-classes" : {
-		depends : "compile"
-	},
-	"generate-test-sources" : {
-		depends : "process-classes"
-	},
-	"process-test-sources" : {
-		depends : "generate-test-sources"
-	},
-	"generate-test-resources" : {
-		depends : "process-test-sources"
-	},
-	"process-test-resources" : {
-		depends : "generate-test-resources"
-	},
-	"test-compile" : {
-		depends : "process-test-resources"
-	},
-	"process-test-classes" : {
-		depends : "test-compile"
-	},
-	"test" : {
-		depends : "process-test-classes"
-	},
-	"prepare-package" : {
-		depends : "test"
-	},
-	"package" : {
-		depends : "prepare-package"
-	},
-	"pre-integration-test" : {
-		depends : "package"
-	},
-	"integration-test" : {
-		depends : "pre-integration-test"
-	},
-	"post-integration-test" : {
-		depends : "integration-test"
-	},
-	"verify" : {
-		depends : "post-integration-test"
-	},
-	"install" : {
-		depends : "verify"
-	},
-	"deploy" : {
-		depends : "install"
-	},
-	"start" : {
-		depends : "process-test-classes"
-	},
-	"stop" : {},
-	"restart" : {
-		depends : "stop",
-		invoke : "start"
-	}
-};
-
 var digraph = {
 	getPostOrderTreeWalk : function(node) {
 		var lifecycle = [ "validate", "initialize", "generate-sources", "process-sources", "generate-resources", "process-resources", "compile",
 				"process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources", "process-test-resources", "test-compile",
-				"process-test-classes", "test", "prepare-package", "package", "pre-integration-test", "integration-test", "post-integration-test", "install",
-				"deploy" ];
+				"process-test-classes", "test", "prepare-package", "package", "pre-integration-test", "integration-test", "post-integration-test", "verify",
+				"install", "deploy" ];
 		switch (node) {
 		case "pre-clean":
 			return [ "pre-clean" ];
@@ -143,7 +59,7 @@ var digraph = {
 	}
 };
 
-function Grunt$phase(grunt, names, tasks) {
+var _phase = function Grunt$phase(grunt, names, tasks) {
 	function Grunt$phase$closure(target) {
 		if (target) {
 			console.assert(names.slice(-1).pop() === target);
@@ -156,10 +72,9 @@ function Grunt$phase(grunt, names, tasks) {
 		}
 	}
 	return Grunt$phase$closure;
-}
+};
 
-var Private = requirejs("./Private");
-var properties = new Private(Grunt);
+var properties;
 function Grunt(grunt) {
 	properties.setPrivate(this, {
 		grunt : grunt,
@@ -170,19 +85,11 @@ function Grunt(grunt) {
 			"lib/foundation.js" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
 			"lib/foundation.css" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css"
 		},
-		executions : {
-			"clean" : [ "clean" ],
-			"validate" : [ "validate" ],
-			"initialize" : [ "initialize" ],
-			"generate-sources" : [ "jison" ],
-			"compile" : [ "uglify" ],
-			"package" : [ "compress" ],
-			"start" : [ "server:karma", "connect" ],
-			"stop" : [ "stop" ]
-		},
 		unzip : true
 	});
 }
+var Private = requirejs("./Private");
+properties = new Private(Grunt);
 
 function Grunt$exists(name, local) {
 	var grunt = properties.getPrivate(this).grunt;
@@ -237,20 +144,18 @@ function Grunt$middleware() {
 	return [ "cachedFiles", "syntaxHighlighter", "proxy" ];
 }
 
-function Grunt$middlewareCachedFiles(connect, options) {
+function Grunt$middlewareCachedFiles() {
 	var files = {
 		'/text.js' : [ 'node_modules/text/text.js' ],
 		'/lib/knockout-latest.js' : [ 'node_modules/knockout/build/output/knockout-latest.js' ],
 		'/lib/knockout-latest.debug.js' : [ 'node_modules/knockout/build/output/knockout-latest.debug.js' ]
-	}
+	};
 	var content = {};
-	for ( var file in files) {
-		if (files.hasOwnProperty(file)) {
-			content[file] = files[file].map(function(filename) {
-				return fs.readFileSync(filename);
-			}).join();
-		}
-	}
+	files && Object.keys(files).forEach(function(file) {
+		content[file] = files[file].map(function(filename) {
+			return fs.readFileSync(filename);
+		}).join();
+	});
 	function Grunt$middlewareCachedFiles$serve(req, res, next) {
 		if (req.url in files) {
 			switch (req.url.substr(req.url.lastIndexOf("."))) {
@@ -271,7 +176,7 @@ function Grunt$middlewareCachedFiles(connect, options) {
 	return Grunt$middlewareCachedFiles$serve;
 }
 
-function Grunt$middlewareSyntaxHighlighter(connect, options) {
+function Grunt$middlewareSyntaxHighlighter() {
 	function Grunt$middlewareSyntaxHighlighter$serve(req, res, next) {
 		var parsed = url.parse(req.url, true);
 		console.assert(parsed.pathname.charAt(0) === '/');
@@ -315,7 +220,7 @@ function Grunt$middlewareSyntaxHighlighter(connect, options) {
 	return Grunt$middlewareSyntaxHighlighter$serve;
 }
 
-function Grunt$middlewareProxy(connect, options) {
+function Grunt$middlewareProxy() {
 	function Grunt$middlewareProxy$serve(req, res, next) {
 		console.log(req.url);
 		next();
@@ -329,7 +234,9 @@ function Grunt$readConfig() {
 }
 
 function Grunt$setConfig(config) {
-	properties.getPrivate(this).config = config;
+	var x = properties.getPrivate(this);
+	x.config = config;
+	x.executions = config.executions;
 }
 
 function Grunt$getConfig() {
@@ -375,9 +282,9 @@ function Grunt$Grunt(grunt) {
 	x.config = config;
 	config.pkg = this.getPackage();
 
-	for ( var target in config.pkg.downloads) {
+	config.pkg.downloads && Object.keys(config.pkg.downloads).forEach(function(target) {
 		x.downloads[target] = config.pkg.downloads[target];
-	}
+	});
 
 	// defaults
 	if (!config.clean)
@@ -390,7 +297,7 @@ function Grunt$Grunt(grunt) {
 		config.unzip = {};
 
 	var checkA = true, checkB = true;
-	for ( var target in x.downloads) {
+	x.downloads && Object.keys(x.downloads).forEach(function(target) {
 		if (!fs.existsSync("dist/" + target)) {
 			checkA = false;
 			config.curl[target] = {
@@ -411,7 +318,7 @@ function Grunt$Grunt(grunt) {
 				};
 			}
 		}
-	}
+	});
 	if (checkA) {
 		x.unzip = null;
 	} else if (checkB) {
@@ -420,12 +327,12 @@ function Grunt$Grunt(grunt) {
 
 	for ( var prop in this) {
 		if (prop.substr(0, 4) === "task" && this[prop] instanceof Function) {
-			var name = prop.substr(4, 1).toLowerCase() + prop.substr(5);
 			grunt.registerTask(prop, this[prop]());
 		}
 	}
 
-	for ( var phase in lifecycle) {
+	var lifecycle = config.lifecycle;
+	lifecycle && Object.keys(lifecycle).forEach(function(phase) {
 		var tasks = x.executions[phase];
 		if (tasks) {
 			tasks = tasks.map(function(name) {
@@ -435,7 +342,7 @@ function Grunt$Grunt(grunt) {
 			tasks = [];
 		}
 
-		grunt.registerTask(phase, Grunt$phase(grunt, digraph.getPostOrderTreeWalk(phase), tasks.map(function(task) {
+		grunt.registerTask(phase, _phase(grunt, digraph.getPostOrderTreeWalk(phase), tasks.map(function(task) {
 			if (lifecycle[task[0]]) {
 				var localTask = "task" + task[0].substr(0, 1).toUpperCase() + task[0].substr(1);
 				if (!self.exists(task[0], true)) {
@@ -462,7 +369,7 @@ function Grunt$Grunt(grunt) {
 				}
 			}
 		})));
-	}
+	});
 
 	grunt.initConfig(config);
 }
@@ -615,28 +522,37 @@ function Grunt$taskWebdav() {
 	return function(target) {
 		var done = this.async();
 		var webdav = properties.getPrivate(self).config.webdav;
-		for ( var prop in webdav) {
-			if (webdav.hasOwnProperty(prop) && (!target || prop === target)) {
-				var options = webdav[prop].options;
-				glob(options.src, function(err, files) {
-					if (err) {
-						throw err;
-					}
-					for (var i = 0; i < files.length; ++i) {
-						var url = "http://" + (options.domain ? options.domain + "%5C" : "") + options.username
-								+ (options.password ? ":" + options.password : "") + "@" + options.hostname + ":" + options.port
-								+ (options.dest.charAt(options.dest.length - 1) === '/' ? options.dest + path.basename(files[i]) : options.dest);
-						self.curl(done, "-T", files[i], url);
-					}
-				});
-			}
-		}
+		webdav
+				&& Object.keys(webdav).forEach(
+						function(prop) {
+							if (!target || prop === target) {
+								var options = webdav[prop].options;
+								glob(options.src,
+										function(err, files) {
+											if (err) {
+												throw err;
+											}
+											for (var i = 0; i < files.length; ++i) {
+												var url = "http://"
+														+ (options.domain ? options.domain + "%5C" : "")
+														+ options.username
+														+ (options.password ? ":" + options.password : "")
+														+ "@"
+														+ options.hostname
+														+ ":"
+														+ options.port
+														+ (options.dest.charAt(options.dest.length - 1) === '/' ? options.dest + path.basename(files[i])
+																: options.dest);
+												self.curl(done, "-T", files[i], url);
+											}
+										});
+							}
+						});
 	};
 }
 
 function Grunt$taskJison() {
-	var self = this;
-	function Grunt$taskJison$execute(target) {
+	var execute = function Grunt$taskJison$execute(target) {
 		if (target) {
 			var parser = new Generator(fs.readFileSync("src/main/resources/" + target + ".jison", {
 				encoding : "utf8"
@@ -650,13 +566,13 @@ function Grunt$taskJison() {
 				files.forEach(function(file) {
 					var size = file.length - 6;
 					if (file.indexOf(".jison", size) !== -1) {
-						Grunt$taskJison$execute(file.substr(0, size));
+						execute(file.substr(0, size));
 					}
 				});
 			}
 		}
-	}
-	return Grunt$taskJison$execute;
+	};
+	return execute;
 }
 
 process.on("exit", function() {
