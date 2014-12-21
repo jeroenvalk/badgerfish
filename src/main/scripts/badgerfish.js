@@ -77,7 +77,7 @@ GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'jav
 							var elements = jQuery("*[require]", result.toNode());
 							var resources = [];
 							for (i = 0; i < elements.length; ++i) {
-								resources.push(elements[i].getAttribute("require"));
+								resources = resources.concat(elements[i].getAttribute("require").split(/\s*,\s*/));
 							}
 							require(resources, function() {
 								var i;
@@ -91,13 +91,15 @@ GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'jav
 									definition(classdef);
 								}
 								for (i = 0; i < elements.length; ++i) {
-									// TODO: add support for inheritance
-									var classname = elements[i].getAttribute("require");
-									var index = classname.lastIndexOf("/");
-									if (index > 0) {
-										classname = classname.substr(++index);
+									var j;
+									var chain = elements[i].getAttribute("chain");
+									var F = new Function("return function " + chain.replace(/\./g, "_").replace(/:/g, "$") + "(){};")();
+									F.prototype = definition.classOf(chain).prototype;
+									var instance = new F();
+									var qnames = chain.split(":");
+									for (j=0; j<qnames.length; ++j) {
+										definition.classOf(qnames.slice(0,j+1).join(":")).call(instance, elements[i]);
 									}
-									new (definition.classOf(classname))(elements[i]);
 								}
 							});
 							var nodes = document.getElementsByTagName("code");

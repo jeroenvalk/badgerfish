@@ -17,6 +17,10 @@
 							<xsl:attribute name="require"><xsl:value-of
 								select="@require" /></xsl:attribute>
 						</xsl:if>
+						<xsl:if test="@chain">
+							<xsl:attribute name="chain"><xsl:value-of
+								select="@chain" /></xsl:attribute>
+						</xsl:if>
 						<td>
 							<xsl:value-of select="title" />
 						</td>

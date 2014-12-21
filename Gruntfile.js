@@ -177,7 +177,7 @@ module.exports = gruntConfig({
 	unzip : {
 		main : {
 			src : "dist/<%= pkg.name %>-<%= pkg.version %>.zip",
-			dest : "target/package"
+			dest : "target/<%= pkg.name %>-<%= pkg.version %>"
 		}
 	}
 });

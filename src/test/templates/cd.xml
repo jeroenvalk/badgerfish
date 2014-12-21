@@ -1,4 +1,4 @@
-<cd require="javascript/Control">
+<cd require="javascript/Control" chain="Control">
 	<title>Cold fact</title>
 	<artist>Sixto Rodriguez</artist>
 	<country>USA</country>
