@@ -19,6 +19,7 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 	// var xpath = require('xpath');
 	// var DOMParser = require('xmldom').DOMParser;
 	// var jsonpath = JSONPath.eval;
+	var Promise = definition.classOf("nl.agentsatwork.globals.Promise");
 
 	function class_Context($, argv, properties) {
 		var context;
@@ -65,6 +66,7 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 		 */
 		[ "string", function private_Context$initialize(content) {
 			var x = properties.getPrivate(this);
+			var xhr = {};
 			if (content.ownerDocument instanceof Document) {
 				x.node = content;
 			} else {
@@ -79,7 +81,7 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 				}
 				x.node = xmlDoc.documentElement;
 			}
-			var Badgerfish = definition.classOf("nl.agentsatwork.globals.Badgerfish");
+			var Badgerfish = definition.classOf("Require:Badgerfish");
 			x.badgerfish = new Badgerfish(x.node);
 			return this;
 		} ];
@@ -93,10 +95,10 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 		};
 
 		$.transform = [ "Context", "Function", "Context", function Context$transform(context, callback, target) {
-			argv.Context.requireXIncludes.call(this, function() {
-				argv.Context.resolveXIncludes.call(this);
-				var x = properties.getPrivate(this);
-				var y = properties.getPrivate(context);
+			var x = properties.getPrivate(this);
+			var y = properties.getPrivate(context);
+			this.requireXIncludes(function() {
+				this.resolveXIncludes();
 				var result;
 				if (window.ActiveXObject) {
 					result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
@@ -129,42 +131,11 @@ define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
 		} ];
 
 		$.requireXIncludes = function Context$requireXIncludes(callback) {
-			var self = this;
-			var x = properties.getPrivate(self);
-			var nodes = x.badgerfish.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
-			var modules = [];
-			for (var i = 0; i < nodes.length; ++i) {
-				modules.push("text!" + nodes[i].getAttribute("href"));
-			}
-			x.includes = [];
-			require(modules, function() {
-				for (var i = 0; i < arguments.length; ++i) {
-					if (nodes[0].getAttribute("parse") === "text") {
-						x.includes.push(arguments[i]);
-					} else {
-						var context = new Context();
-						argv.Context.initialize.call(context, arguments[i]);
-						x.includes.push(context);
-					}
-				}
-				callback.call(self);
-			});
+			return properties.getPrivate(this).badgerfish.requireXIncludes(callback);
 		};
 
 		$.resolveXIncludes = function Context$resolveXIncludes() {
-			var x = properties.getPrivate(this);
-			var nodes = x.badgerfish.getElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
-			console.assert(x.includes.length === nodes.length);
-			for (var i = 0; i < x.includes.length; ++i) {
-				if (nodes[0].getAttribute("parse") === "text") {
-					var parent = nodes[0].parentNode;
-					parent.removeChild(nodes[0]);
-					parent.innerText = x.includes[i];
-				} else {
-					nodes[0].parentNode.replaceChild(x.includes[i].toNode(), nodes[0]);
-				}
-			}
-			console.assert(nodes.length === 0);
+			return properties.getPrivate(this).badgerfish.resolveXIncludes();
 		};
 
 		this.bootstrap();

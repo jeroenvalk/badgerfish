@@ -29,11 +29,13 @@ GLOBAL.requirejs.config({
 	}
 });
 
-GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'javascript/nl/agentsatwork/globals/Badgerfish' ], function(jQuery, definition,
-		Badgerfish, Context) {
+GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'javascript/nl/agentsatwork/globals/Badgerfish',
+		'javascript/nl/agentsatwork/globals/Promise', 'javascript/nl/agentsatwork/globals/Require' ], function(jQuery, definition, Badgerfish, Promise, Require) {
 	GLOBAL.definition = definition;
 	definition.configure();
 	definition(Badgerfish);
+	definition(Promise);
+	definition(Require);
 	GLOBAL.require([ 'javascript/Context' ], function(Context) {
 
 		var html = Context.getHTMLDocument().toNode();
@@ -97,8 +99,8 @@ GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Definition', 'jav
 									F.prototype = definition.classOf(chain).prototype;
 									var instance = new F();
 									var qnames = chain.split(":");
-									for (j=0; j<qnames.length; ++j) {
-										definition.classOf(qnames.slice(0,j+1).join(":")).call(instance, elements[i]);
+									for (j = 0; j < qnames.length; ++j) {
+										definition.classOf(qnames.slice(0, j + 1).join(":")).call(instance, elements[i]);
 									}
 								}
 							});

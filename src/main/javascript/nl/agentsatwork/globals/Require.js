@@ -28,6 +28,10 @@ define({
 			return Array.apply(null, new Array(size));
 		};
 
+		this.Require = function Require() {
+			
+		};
+		
 		this.require =
 		/**
 		 * @param {Array}
@@ -89,15 +93,15 @@ define({
 						case ".xml":
 							DEBUG && expect(xhr.getResponseHeader('content-type')).toBe("application/xml");
 							result[index].forEach(function(handler) {
-								handler[0].call(null, xhr.responseXML);
+								handler[0].call(null, xhr);
 							});
-							result[index] = xhr.responseXML;
+							result[index] = xhr;
 							break;
 						default:
 							result[index].forEach(function(handler) {
-								handler[0].call(null, xhr.responseText);
+								handler[0].call(null, xhr);
 							});
-							result[index] = xhr.responseText;
+							result[index] = xhr;
 							break;
 						}
 						DEBUG && expect(counter).toBeGreaterThan(0);
