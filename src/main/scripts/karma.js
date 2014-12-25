@@ -57,5 +57,5 @@
 				GLOBAL.__karma__.start();
 			}
 		});
-	}
+	};
 }).call(this, this.define);

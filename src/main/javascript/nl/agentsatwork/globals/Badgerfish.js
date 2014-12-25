@@ -60,24 +60,26 @@ define(function() {
 			var x = {
 				root : parent ? properties.getPrivate(parent).root : this,
 				source : node,
-				node : node
+				node : node,
+				cache : {}
 			};
 			properties.setPrivate(this, x);
 			if (this === x.root) {
 				x.namespace = {};
 				x.prefix = {};
-				x.index = 0;
 				x.badgerfish = [];
 				x.includes = [];
 			}
 
-			var index = x.root.index++;
+			var y = properties.getPrivate(x.root);
+			var index = y.badgerfish.length;
+			y.badgerfish.push(this);
 			node['@'] = function Badgerfish$at(root) {
 				if (badgerfish !== null)
 					throw new Error("Badgerfish: integrity violation");
 				if (root && root !== x.root)
 					throw new Error("Badgerfish: foreign node");
-				badgerfish = x.root.badgerfish[index];
+				badgerfish = y.badgerfish[index];
 			};
 
 			var attr = node.attributes;
@@ -221,7 +223,7 @@ define(function() {
 		this.parseTagname = function Badgerfish$parseTagname(tagname) {
 			var x = properties.getPrivate(this);
 			var index = tagname.lastIndexOf(":");
-			if (!index)
+			if (index < 0)
 				return {
 					tagname : tagname,
 					local : tagname
@@ -366,11 +368,23 @@ define(function() {
 			}
 		};
 
-		this.nativeElementById = function Badgerfish$nativeElementById(id) {
+		this.nativeElementById =
+		/**
+		 * @param {string}
+		 *            id
+		 * @returns {Node}
+		 */
+		function Badgerfish$nativeElementById(id) {
 			return properties.getPrivate(this).node.ownerDocument.getElementById(id);
 		};
 
-		this.getElementById = function Badgerfish$getElementById(id) {
+		this.getElementById =
+		/**
+		 * @param {string}
+		 *            id
+		 * @returns {Badgerfish}
+		 */
+		function Badgerfish$getElementById(id) {
 			var element = this.nativeElementById(id);
 			var result = this.getBadgerfish(element);
 			if (!result) {
@@ -378,7 +392,13 @@ define(function() {
 			}
 		};
 
-		this.nativeElementsByTagName = function Badgerfish$nativeElementsByTagName(tagname) {
+		this.nativeElementsByTagName =
+		/**
+		 * @param {string}
+		 *            tagname
+		 * @returns {NodeList}
+		 */
+		function Badgerfish$nativeElementsByTagName(tagname) {
 			var x = properties.getPrivate(this);
 			var tag = this.parseTagname(tagname);
 			if (this.isHTMLDocument()) {
@@ -387,13 +407,27 @@ define(function() {
 			return x.node.getElementsByTagNameNS(tag.ns, tag.local);
 		};
 
-		this.nativeElementsByTagNameNS = function Badgerfish$nativeElementsByTagNameNS(ns, name) {
+		this.nativeElementsByTagNameNS =
+		/**
+		 * @param {string}
+		 *            ns
+		 * @param {string}
+		 *            name
+		 * @returns {NodeList}
+		 */
+		function Badgerfish$nativeElementsByTagNameNS(ns, name) {
 			return this.nativeElementsByTagName(ns + ":" + name);
 		};
 
-		this.getElementsByTagName = function Badgerfish$getElementsByTagName(path) {
+		this.getElementsByTagName =
+		/**
+		 * @param {string}
+		 *            path
+		 * @returns {Array<Badgerfish>}
+		 */
+		function Badgerfish$getElementsByTagName(path) {
 			var self = this, index = path.lastIndexOf("/");
-			if (index < 0)
+			if (index >= 0)
 				self = self.getElementByTagName(path.substr(0, index));
 			var step = self.parseStep(path.substr(++index));
 			var x = properties.getPrivate(self);
@@ -436,7 +470,13 @@ define(function() {
 			return x.cache[step.tagname];
 		};
 
-		this.getElementByTagName = function Badgerfish$getElementByTagName(path) {
+		this.getElementByTagName =
+		/**
+		 * @param {string}
+		 *            path
+		 * @returns {Badgerfish}
+		 */
+		function Badgerfish$getElementByTagName(path) {
 			path = path.split("/");
 			var result;
 			switch (path.length) {
@@ -451,10 +491,21 @@ define(function() {
 			}
 			var x = properties.getPrivate(this);
 			var step = this.parseStep(path[0]);
-			if (!x.cache[step.tagname]) {
-				this.getElementsByTagName(path[0]);
+			// TODO: use axis
+			switch (step.tagname.charAt(0)) {
+			case '@':
+				result = [x.node.getAttribute(step.tagname.substr(1))];
+				break;
+			case '$':
+				result = [x.node.innerText];
+				break;
+			default:
+				if (!x.cache[step.tagname]) {
+					this.getElementsByTagName(path[0]);
+				}
+				result = x.cache[step.tagname];
+				break;
 			}
-			result = x.cache[step.tagname];
 			switch (result.length) {
 			case 0:
 				throw new Error("Badgerfish$getElementByTagName: not found");
@@ -465,23 +516,57 @@ define(function() {
 			}
 		};
 
-		this.getElementsByTagNameNS = function Badgerfish$getElementsByTagNameNS(ns, name) {
-			return this.getElementsByTagName(ns + ":" + name);
+		this.getElementsByTagNameNS =
+		/**
+		 * @param {string|Object}
+		 *            xmlns
+		 * @param {string}
+		 * path @
+		 */
+		function Badgerfish$getElementsByTagNameNS(xmlns, path) {
+			if (!(xmlns instanceof Object))
+				xmlns = {
+					"$" : xmlns
+				};
+			var x = properties.getPrivate(this);
+			for ( var prefix in xmlns) {
+				if (xmlns.hasOwnProperty(prefix)) {
+					if (xmlns[prefix] !== x.namespace[prefix]) {
+						throw new Error("Badgerfish$getElementsByTagNameNS: namespace prefix mismatch");
+					}
+				}
+			}
+			return this.getElementsByTagName(path);
+		};
+
+		this.select = function Badgerfish$select(path) {
+			var index = path.lastIndexOf("/");
+			switch (path.charAt(++index)) {
+			case '@':
+			case '$':
+				return this.getElementByTagName(path);
+			default:
+				return this.getElementsByTagName(path).map(function(badgerfish) {
+					return badgerfish.toJSON();
+				});
+			}
 		};
 
 		this.requireXIncludes = function Context$requireXIncludes(callback) {
 			var self = this;
 			function Context$requireXIncludes$closure(done) {
 				var x = properties.getPrivate(self);
-				var nodes = self.nativeElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
+				var nodes = self.getElementsByTagNameNS({
+					xi : "http://www.w3.org/2001/XInclude"
+				}, "xi:include");
 				var modules = [];
 				for (var i = 0; i < nodes.length; ++i) {
-					modules.push(nodes[i].getAttribute("href"));
+					modules.push(nodes[i].select("@href"));
 				}
 				x.includes = [];
-				self.require(modules, function() {
+				Promise.when.apply(Promise, self.require(modules)).done(function() {
 					for (var i = 0; i < arguments.length; ++i) {
-						if (nodes[0].getAttribute("parse") === "text") {
+						if (nodes[i].select("@parse") === "text") {
 							x.includes.push(arguments[i].responseText);
 						} else {
 							x.includes.push(new Badgerfish(arguments[i].responseXML.documentElement, self));
