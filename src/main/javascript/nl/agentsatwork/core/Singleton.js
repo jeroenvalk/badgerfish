@@ -13,22 +13,26 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+/* global define */
 define(function() {
-
-	function Singleton() {
+	function class_Singleton() {
+		this.Singleton = function Singleton() {
+		};
 	}
-
-	Singleton.initialize =
+	
+	class_Singleton.initialize =
 	/**
 	 * Creates the instance() method on the class that is being initialized.
 	 * 
-	 * @param {object} instance - singleton instance for this class
+	 * @param {object}
+	 *            instance - singleton instance for this class
+	 * @static
 	 */
 	function Singleton$initialize(instance) {
-		var constructor = this;
-		function Singleton$initialize$instance() {
-			constructor.apply(instance, Array.prototype.slice.call(arguments));
-		}
-		this.instance = Singleton$initialize$instance;
-	}
+		this.instance = function Singleton$initialize$instance() {
+			this.apply(instance, Array.prototype.slice.call(arguments));
+		};
+	};
+
+	return class_Singleton;
 });
