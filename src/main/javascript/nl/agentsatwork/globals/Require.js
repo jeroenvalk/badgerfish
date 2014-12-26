@@ -17,14 +17,14 @@
 
 /* global define, definition, DEBUG, expect, XMLHttpRequest */
 /* jshint -W030 */
-define({
-	'nl.agentsatwork.globals.Require' : function class_Require() {
+define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
+	function class_Require() {
 		var Promise = definition.classOf("nl.agentsatwork.globals.Promise");
 
 		this.Require = function Require() {
-			
+
 		};
-		
+
 		this.require =
 		/**
 		 * @param {Array}
@@ -56,9 +56,10 @@ define({
 						}
 					};
 					xhr.open("GET", ref, true);
-					xhr.send();					
+					xhr.send();
 				});
 			});
 		};
 	}
+	return class_Require;
 });

@@ -17,7 +17,7 @@
 
 /* globals define, definition, DEBUG, expect, document, XMLSerializer */
 /* jshint -W030 */
-define(function() {
+define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 	function class_Badgerfish(properties) {
 		var Promise = definition.classOf("nl.agentsatwork.globals.Promise");
 		var xmlSerializer = new XMLSerializer();
@@ -494,10 +494,10 @@ define(function() {
 			// TODO: use axis
 			switch (step.tagname.charAt(0)) {
 			case '@':
-				result = [x.node.getAttribute(step.tagname.substr(1))];
+				result = [ x.node.getAttribute(step.tagname.substr(1)) ];
 				break;
 			case '$':
-				result = [x.node.innerText];
+				result = [ x.node.innerText ];
 				break;
 			default:
 				if (!x.cache[step.tagname]) {
@@ -599,7 +599,5 @@ define(function() {
 		};
 	}
 
-	return {
-		'nl.agentsatwork.globals.Badgerfish' : class_Badgerfish
-	};
+	return class_Badgerfish;
 });

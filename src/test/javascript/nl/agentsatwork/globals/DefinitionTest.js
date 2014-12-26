@@ -1,7 +1,7 @@
 /* global define, expect */
-define({
-	'nl.agentsatwork.globals.DefinitionTest' : function class_DefinitionTest(properties) {
-		properties.extends('nl.agentsatwork.testing.JasmineTestCase');
+define([ "javascript/nl/agentsatwork/testing/JasmineTestCase" ], function(classJasmineTestCase) {
+	function class_DefinitionTest(properties) {
+		properties.extends([ classJasmineTestCase ]);
 
 		this.DefinitionTest = function DefinitionTest() {
 			properties.getBase().call(this);
@@ -19,4 +19,5 @@ define({
 			});
 		};
 	}
+	return class_DefinitionTest;
 });

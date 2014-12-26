@@ -15,13 +15,29 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+this.GLOBAL = this;
+
 /* global define, DEBUG, expect */
 /* jshint -W030 */
-define(function() {
+define([ "module" ], function(module) {
+	"use strict";
+	GLOBAL.DEBUG = false;
+
+	var shift = Array.prototype.shift;
+
+	function isFunction(value) {
+		return typeof value === 'function';
+	}
+
+	function isClass(value) {
+		return isFunction(value) && !value.name.lastIndexOf("class_", 0);
+	}
+
 	var getPrivate, defaultPackage = "nl.agentsatwork.globals", plugin, state = {
 		classdef : {},
 		classes : {}
 	};
+	var offset = module.uri.indexOf("nl/agentsatwork/globals/Definition");
 
 	/**
 	 * @param {Function}
@@ -80,7 +96,13 @@ define(function() {
 		var pkgname = defaultPackage;
 		var classes, current = state.classes;
 		var isPlugin = false, base = Object;
-		chain.split(":").forEach(function(qname, index) {
+		if (!(chain instanceof Array)) {
+			chain = chain.split(":");
+		}
+		chain.forEach(function(qname, index) {
+			if (isClass(qname)) {
+				qname = qname.qname;
+			}
 			classes = current;
 			var dot = qname.lastIndexOf(".");
 			if (dot < 0) {
@@ -136,6 +158,35 @@ define(function() {
 		return base;
 	};
 
+	function bootstrap(callback) {
+		return function closure() {
+			var module = shift.call(arguments);
+			var fn = callback.apply(null, arguments);
+			if (isClass(fn)) {
+				var uri = module.uri;
+				var qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
+				var classdef = {};
+				classdef[qname] = fn;
+				fn.qname = qname;
+				definition(classdef);
+				definitionOf(qname);
+			}
+			return fn;
+		};
+	}
+
+	var _define = GLOBAL.define;
+	GLOBAL.define = function(deps, callback) {
+		if (deps instanceof Array) {
+			deps.unshift("module");
+			_define(deps, bootstrap(callback));
+		} else if (isFunction(deps)) {
+			_define([ "module" ], bootstrap(deps));
+		} else {
+			_define.apply(null, arguments);
+		}
+	};
+
 	definition.classOf =
 	/**
 	 * @param {string}
@@ -165,7 +216,7 @@ define(function() {
 		};
 
 		var plugins = [];
-		if (config) {
+		if (config.definition) {
 			plugins = config.definition.plugin;
 		}
 		plugins.forEach(function(config) {
@@ -292,32 +343,43 @@ define(function() {
 
 	Definition.prototype.extends =
 	/**
-	 * @param {Definition}
-	 *            definition - to be extended by this definition
+	 * @param {Array}
+	 *            chain - to be extended by this definition
 	 * @returns {Definition} this definition for method chaining
 	 */
-	function Definition$extends(definition) {
+	function Definition$extends(chain) {
 		var x = getPrivate.call(this);
-		if (!(definition instanceof Definition)) {
-			if (definition !== Object) {
-				DEBUG && expect(definition).toBe(String);
-				definition = definitionOf(definition);
-				DEBUG && expect(definition instanceof Definition).toBe(true);
+		if (chain instanceof Array) {
+			chain = definitionOf(chain);
+		}
+		if (chain === Object || chain instanceof Definition) {
+//			if (chain instanceof Definition) {
+//				var y = getPrivate.call(chain);
+//				var xClassdef = state.classdef[x.qname];
+//				var yClassdef = state.classdef[y.qname];
+//				for ( var prop in yClassdef) {
+//					if (xClassdef[prop] === undefined && yClassdef.hasOwnProperty(prop)) {
+//						xClassdef[prop] = yClassdef[prop];
+//					}
+//				}
+//			}
+			DEBUG && expect(chain === Object || chain instanceof Definition).toBe(true);
+			switch (x.state) {
+			case this.State.CREATED:
+				break;
+			case this.State.INITIALIZED:
+				x.base = chain;
+				this.onStateChange(this.State.BASED);
+				return this;
+			default:
+				if (x.base !== chain)
+					throw new Error("Definition.extend: " + x.qname + ": only one base can be extended");
 			}
-		}
-		switch (x.state) {
-		case this.State.CREATED:
-			break;
-		case this.State.INITIALIZED:
-			x.base = definition;
-			this.onStateChange(this.State.BASED);
+			x.base = chain;
 			return this;
-		default:
-			if (x.base !== definition)
-				throw new Error("Definition.extend: " + x.qname + ": only one base can be extended");
+		} else {
+			throw new Error("Definition.extend: " + x.qname + ": specify inheritance chain as an array");
 		}
-		x.base = definition;
-		return this;
 	};
 
 	Definition.prototype.getBase =
@@ -408,16 +470,30 @@ define(function() {
 	 * @private
 	 */
 	function Definition$define(x) {
-		var prototype = Object.create(this.getBase().prototype);
+		var base = this.getBase();
+		var prototype = Object.create(base.prototype);
 		for ( var name in x.methods) {
 			if (name !== x.classname && x.methods.hasOwnProperty(name)) {
 				prototype[name] = x.methods[name];
 			}
 		}
-
 		var Constructor = this.getConstructor(true);
+		var methods = state.classdef[x.qname];
+		for (var prop in methods) {
+			if (Constructor[prop] === undefined && methods.hasOwnProperty(prop)) {
+				Constructor[prop] = methods[prop];
+			}
+		}
+		for (var prop in base) {
+			if (Constructor[prop] === undefined && base.hasOwnProperty(prop)) {
+				Constructor[prop] = base[prop];
+			}
+		}
 		prototype.constructor = Constructor;
 		Constructor.prototype = prototype;
+		if (Constructor.initialize) {
+			Constructor.initialize();
+		}
 	};
 
 	Definition.prototype.State = {
@@ -442,6 +518,8 @@ define(function() {
 		}
 		return check;
 	}
+
+	definition.configure(module.config());
 
 	return definition;
 });

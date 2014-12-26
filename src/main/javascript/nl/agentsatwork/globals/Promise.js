@@ -15,9 +15,9 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define */
-define({
-	'nl.agentsatwork.globals.Promise' : function class_Promise() {
+/* global define, DEBUG, expect */
+define(function() {
+	function class_Promise() {
 		var Promise = this.Promise =
 		/**
 		 * @param {Promise|Function}
@@ -99,6 +99,8 @@ define({
 			if (value instanceof Promise) {
 				value.done(private_Promise$onSuccess, private_Promise$onFailure);
 			} else {
+				DEBUG && expect(onSuccess).not.toBeDefined();
+				DEBUG && expect(onFailure).not.toBeDefined();
 				value.call(null, private_Promise$done);
 			}
 		};
@@ -164,4 +166,5 @@ define({
 			return promise;
 		};
 	}
+	return class_Promise;
 });

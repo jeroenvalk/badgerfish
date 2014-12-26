@@ -16,8 +16,10 @@
  */
 
 /* global define, describe, it */
-define({
-	"nl.agentsatwork.testing.JasmineTestCase" : function class_JasmineTestCase() {
+define(["../core/Singleton"], function(classAbstractMain) {
+	function class_JasmineTestCase(properties) {
+		properties.extends([classAbstractMain]);
+		
 		this.JasmineTestCase = function JasmineTestCase() {
 			var self = this;
 			describe(this.constructor.name, function() {
@@ -36,4 +38,5 @@ define({
 			};
 		};
 	}
+	return class_JasmineTestCase;
 });

@@ -16,18 +16,13 @@
  */
 
 /* global window */
-(function(_define) {
-	this.GLOBAL = this;
-
-	GLOBAL.define = function(closure) {
-		GLOBAL.define = closure();
-		GLOBAL.DEBUG = false;
-
+(function() {
+	require(["/base/src/main/javascript/nl/agentsatwork/globals/Definition.js"], function() {
 		var allTestFiles = [];
 		var TEST_REGEXP = /(spec|test)\.js$/i;
 
 		var pathToModule = function(path) {
-			return path.replace(/^\/base\//, '').replace(/\.js$/, '');
+			return path.replace(/^\/base\/src\/main\//, '');
 		};
 
 		Object.keys(window.__karma__.files).forEach(function(file) {
@@ -41,21 +36,18 @@
 			// Karma serves files under /base, which is the basePath from your
 			// config
 			// file
-			baseUrl : '/base',
+			baseUrl : '/base/src/main',
 
 			// dynamically load all test files
 			deps : allTestFiles,
 
 			// we have to kickoff jasmine, as it is asynchronous
 			callback : function() {
-				GLOBAL.define.configure();
-				var DefinitionTest = GLOBAL.define.classOf("nl.agentsatwork.globals.DefinitionTest");
-				new DefinitionTest();
 				GLOBAL.DEBUG = true;
 				if (location.pathname !== '/debug.html')
 					GLOBAL.open("http://localhost:8080/", '_blank');
 				GLOBAL.__karma__.start();
 			}
-		});
-	};
-}).call(this, this.define);
+		});		
+	});
+}).call(this);

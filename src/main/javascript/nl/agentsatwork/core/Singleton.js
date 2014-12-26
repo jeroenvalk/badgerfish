@@ -28,10 +28,13 @@ define(function() {
 	 *            instance - singleton instance for this class
 	 * @static
 	 */
-	function Singleton$initialize(instance) {
-		this.instance = function Singleton$initialize$instance() {
-			this.apply(instance, Array.prototype.slice.call(arguments));
-		};
+	function Singleton$initialize() {
+		if (this.name.lastIndexOf("Abstract", 0)) {
+			var instance = new this();
+			this.instance = function Singleton$initialize$instance() {
+				this.apply(instance, Array.prototype.slice.call(arguments));
+			};			
+		}
 	};
 
 	return class_Singleton;

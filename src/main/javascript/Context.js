@@ -15,7 +15,8 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-define([ "./Argv", "./Path" ], function(Argv, Path, JSONPath) {
+define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'javascript/nl/agentsatwork/globals/Require',
+		'javascript/nl/agentsatwork/globals/Promise' ], function(Argv, Path, JSONPath) {
 	// var xpath = require('xpath');
 	// var DOMParser = require('xmldom').DOMParser;
 	// var jsonpath = JSONPath.eval;
