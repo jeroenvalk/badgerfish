@@ -1,8 +1,0 @@
-GLOBAL_RULES=default
-JAVASCRIPT_SEMANTIC=Ignore
-JAVA_COMPAT_TYPE_CHECK=default
-TYPE_CHECK=default
-VJETVALIDATION=true
-VJO_SPECIFIC=Default
-eclipse.preferences.version=1
-initialized_project_from_v4classpath=true
