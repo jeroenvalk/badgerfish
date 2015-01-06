@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
+ * Copyright © 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -15,9 +15,10 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var definition = require("../javascript/nl/agentsatwork/globals/Definition");
-
-module.exports = {
-	Gruntfile : require("../../../Gruntfile"),
-	getClass : definition.getClass
-};
+if (typeof define !== "function") {
+	var path = require("path");
+	require("scripts/main");
+	require("glob").sync("src/test/javascript/nl/agentsatwork/**/*{.spec,Test}.js").forEach(function(filename) {
+		require(path.resolve(process.cwd(), path.dirname(filename), path.basename(filename, ".js")));
+	});
+}

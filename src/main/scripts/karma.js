@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -21,14 +21,10 @@
 		var allTestFiles = [];
 		var TEST_REGEXP = /(spec|test)\.js$/i;
 
-		var pathToModule = function(path) {
-			return path.replace(/^\/base\/src\/main\//, '');
-		};
-
 		Object.keys(window.__karma__.files).forEach(function(file) {
 			if (TEST_REGEXP.test(file)) {
 				// Normalize paths to RequireJS module names.
-				allTestFiles.push(pathToModule(file));
+				allTestFiles.push(file);
 			}
 		});
 

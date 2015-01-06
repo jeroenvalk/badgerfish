@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -15,8 +15,14 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-this.GLOBAL = this;
-
+if (typeof global === 'object') {
+	global.GLOBAL = global;
+} else {
+	this.GLOBAL = this;
+}
+if (typeof define !== 'function') {
+	var define = require('amdefine')(module)
+}
 /* global define, DEBUG, expect */
 /* jshint -W030 */
 define([ "module" ], function(module) {
@@ -33,10 +39,21 @@ define([ "module" ], function(module) {
 		return isFunction(value) && !value.name.lastIndexOf("class_", 0);
 	}
 
+	function moduleURI(module) {
+		if (!module.uri) {
+			var filename = module.filename.replace(/\\/g, '/');
+			if (filename.charAt(0) === '/')
+				filename = filename.substr(1);
+			DEBUG && expect(filename.charAt(0)).not.toBe('/');
+			module.uri = [ 'file://', filename ].join('/');
+		}
+	}
+
 	var getPrivate, defaultPackage = "nl.agentsatwork.globals", plugin, state = {
 		classdef : {},
 		classes : {}
 	};
+	moduleURI(module);
 	var offset = module.uri.indexOf("nl/agentsatwork/globals/Definition");
 
 	/**
@@ -163,6 +180,7 @@ define([ "module" ], function(module) {
 			var module = shift.call(arguments);
 			var fn = callback.apply(null, arguments);
 			if (isClass(fn)) {
+				moduleURI(module);
 				var uri = module.uri;
 				var qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
 				var classdef = {};
@@ -176,7 +194,20 @@ define([ "module" ], function(module) {
 	}
 
 	var _define = GLOBAL.define;
+	var current = null;
+	if (!_define) {
+		var Module = require("module");
+		var fn = Module._extensions['.js'];
+		Module._extensions['.js'] = function(module, filename) {
+			current = module;
+			fn.apply(this, arguments);
+		};
+	}
 	GLOBAL.define = function(deps, callback) {
+		if (current) {
+			_define = require("amdefine")(current);
+			current = null;
+		}
 		if (deps instanceof Array) {
 			deps.unshift("module");
 			_define(deps, bootstrap(callback));
@@ -353,16 +384,6 @@ define([ "module" ], function(module) {
 			chain = definitionOf(chain);
 		}
 		if (chain === Object || chain instanceof Definition) {
-//			if (chain instanceof Definition) {
-//				var y = getPrivate.call(chain);
-//				var xClassdef = state.classdef[x.qname];
-//				var yClassdef = state.classdef[y.qname];
-//				for ( var prop in yClassdef) {
-//					if (xClassdef[prop] === undefined && yClassdef.hasOwnProperty(prop)) {
-//						xClassdef[prop] = yClassdef[prop];
-//					}
-//				}
-//			}
 			DEBUG && expect(chain === Object || chain instanceof Definition).toBe(true);
 			switch (x.state) {
 			case this.State.CREATED:
@@ -479,12 +500,12 @@ define([ "module" ], function(module) {
 		}
 		var Constructor = this.getConstructor(true);
 		var methods = state.classdef[x.qname];
-		for (var prop in methods) {
+		for ( var prop in methods) {
 			if (Constructor[prop] === undefined && methods.hasOwnProperty(prop)) {
 				Constructor[prop] = methods[prop];
 			}
 		}
-		for (var prop in base) {
+		for ( var prop in base) {
 			if (Constructor[prop] === undefined && base.hasOwnProperty(prop)) {
 				Constructor[prop] = base[prop];
 			}
@@ -519,7 +540,7 @@ define([ "module" ], function(module) {
 		return check;
 	}
 
-	definition.configure(module.config());
+	definition.configure(module.config ? module.config() : {});
 
 	return definition;
 });

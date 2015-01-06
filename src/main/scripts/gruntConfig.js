@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -16,19 +16,21 @@
  */
 
 var config = {};
-
-var Grunt = require('../javascript/Grunt');
+var definition = require('../javascript/nl/agentsatwork/globals/Definition');
+require('../javascript/nl/agentsatwork/main/Grunt');
 var extend = require('node.extend');
 
+var chain = ["nl.agentsatwork.main.Grunt"];
 function gruntConfig(gruntOrConfig) {
 	if (typeof gruntOrConfig.initConfig === "function") {
 		if (config.Grunt) {
-			Grunt = config.Grunt;
+			chain.push(config.Grunt);
 		}
+		var Grunt = definition.classOf(chain.join(":"));
 		var grunt = new Grunt(gruntOrConfig);
 		extend(true, config, grunt.readConfig());
 		grunt.setConfig(config);
-		grunt.Grunt(gruntOrConfig);
+		grunt.grunt(gruntOrConfig);
 	} else {
 		extend(true, config, gruntOrConfig);
 		return gruntConfig;
