@@ -54,7 +54,7 @@ define([ "module" ], function(module) {
 		classes : {}
 	};
 	moduleURI(module);
-	var offset = module.uri.indexOf("nl/agentsatwork/globals/Definition");
+	var searchpath = [module.uri.substr(0,module.uri.indexOf("nl/agentsatwork/globals/Definition"))];
 
 	/**
 	 * @param {Function}
@@ -181,8 +181,16 @@ define([ "module" ], function(module) {
 			var fn = callback.apply(null, arguments);
 			if (isClass(fn)) {
 				moduleURI(module);
-				var uri = module.uri;
+				var offset, uri = module.uri;
+				if (!uri.lastIndexOf(searchpath[0], 0)) {
+					offset = searchpath[0].length;
+				} else {
+					offset = 0;
+				}
 				var qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
+				if (!offset) {
+					qname = '@' + qname;
+				}
 				var classdef = {};
 				classdef[qname] = fn;
 				fn.qname = qname;

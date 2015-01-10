@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -529,13 +529,7 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 					"$" : xmlns
 				};
 			var x = properties.getPrivate(this);
-			for ( var prefix in xmlns) {
-				if (xmlns.hasOwnProperty(prefix)) {
-					if (xmlns[prefix] !== x.namespace[prefix]) {
-						throw new Error("Badgerfish$getElementsByTagNameNS: namespace prefix mismatch");
-					}
-				}
-			}
+			x.root.registerNamespaces(xmlns);
 			return this.getElementsByTagName(path);
 		};
 
@@ -559,21 +553,33 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 				var nodes = self.getElementsByTagNameNS({
 					xi : "http://www.w3.org/2001/XInclude"
 				}, "xi:include");
+				if (nodes.length > 0) {
 				var modules = [];
 				for (var i = 0; i < nodes.length; ++i) {
 					modules.push(nodes[i].select("@href"));
 				}
 				x.includes = [];
-				Promise.when.apply(Promise, self.require(modules)).done(function() {
-					for (var i = 0; i < arguments.length; ++i) {
+				Promise.when.apply(Promise, self.require(modules)).done(function(argvv) {
+					var argv = argvv;
+					if (!(argvv instanceof Array)) {
+						argv = arguments;
+					}
+					for (var i = 0; i < argv.length; ++i) {
 						if (nodes[i].select("@parse") === "text") {
-							x.includes.push(arguments[i].responseText);
+							x.includes.push(argv[i].responseText);
 						} else {
-							x.includes.push(new Badgerfish(arguments[i].responseXML.documentElement, self));
+							var responseXML = argv[i].responseXML;
+							if (!responseXML) {
+								responseXML = new DOMParser().parseFromString(argv[i].responseText, "application/xml");
+							}
+							x.includes.push(new Badgerfish(responseXML.documentElement, self));
 						}
 					}
 					done(self);
 				});
+				} else {
+					callback();
+				}
 			}
 			var result = Promise.when(Context$requireXIncludes$closure);
 			result.done(function(value) {

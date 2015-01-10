@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -98,8 +98,9 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 		$.transform = [ "Context", "Function", "Context", function Context$transform(context, callback, target) {
 			var x = properties.getPrivate(this);
 			var y = properties.getPrivate(context);
-			this.requireXIncludes(function() {
-				this.resolveXIncludes();
+			function doIt() {
+				if (x.node.tagName !== 'layout' && x.node.tagName !== 'panel')
+					this.resolveXIncludes();
 				var result;
 				if (window.ActiveXObject) {
 					result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
@@ -116,7 +117,12 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 				}
 				console.assert(result.childElementCount === 1);
 				callback.call(this, argv.Context.initialize.call(new Context(), result.firstElementChild));
-			});
+			}
+			if (x.node.tagName === 'layout' || x.node.tagName === 'panel') {
+				doIt();
+			} else {
+				this.requireXIncludes(doIt);
+			}
 		} ];
 
 		$.normalize =
