@@ -54,7 +54,14 @@ define([ "module" ], function(module) {
 		classes : {}
 	};
 	moduleURI(module);
-	var searchpath = [module.uri.substr(0,module.uri.indexOf("nl/agentsatwork/globals/Definition"))];
+	var prefix = module.uri.substr(0, module.uri.indexOf("nl/agentsatwork/globals/Definition"));
+	var searchpath = [ prefix.replace("/main/", "/test/"), prefix ];
+	if (!prefix.lastIndexOf("file://", 0) && prefix.indexOf("/node_modules/ComPosiX/") > 0) {
+		// NodeJS module
+		prefix = prefix.replace("/node_modules/ComPosiX/", "/");
+		searchpath.concat([ prefix.replace("/main/", "/test/"), prefix ]);
+	}
+	var searchpath = [ prefix.replace("main", "test"), prefix ];
 
 	/**
 	 * @param {Function}
@@ -106,7 +113,7 @@ define([ "module" ], function(module) {
 	 * 
 	 * @private
 	 */
-	function definition$definitionOf(chain) {
+	function define$definitionOf(chain) {
 		if (!chain) {
 			throw new Error("definition.classOf: empty inheritance chain");
 		}
@@ -181,11 +188,11 @@ define([ "module" ], function(module) {
 			var fn = callback.apply(null, arguments);
 			if (isClass(fn)) {
 				moduleURI(module);
-				var offset, uri = module.uri;
-				if (!uri.lastIndexOf(searchpath[0], 0)) {
-					offset = searchpath[0].length;
-				} else {
-					offset = 0;
+				var offset = 0, uri = module.uri;
+				for (var i = 0; i < searchpath.length; ++i) {
+					if (!uri.lastIndexOf(searchpath[i], 0)) {
+						offset = searchpath[i].length;
+					}
 				}
 				var qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
 				if (!offset) {
@@ -226,13 +233,13 @@ define([ "module" ], function(module) {
 		}
 	};
 
-	definition.classOf =
+	GLOBAL.define.classOf = definition.classOf =
 	/**
 	 * @param {string}
 	 *            chain - inheritance chain
 	 * @returns {Function} constructor of class specified by chain
 	 */
-	function definition$classOf(chain) {
+	function define$classOf(chain) {
 		if (plugin instanceof Array) {
 			return definitionOf(chain).getConstructor();
 		}
@@ -250,7 +257,7 @@ define([ "module" ], function(module) {
 		plugin = [];
 
 		var root = new Definition('nl.agentsatwork.globals.Definition');
-		state.classes['nl.agentsatwork.globals.Definition'] = {
+		state.classes['Definition'] = {
 			'@' : root
 		};
 
@@ -345,41 +352,6 @@ define([ "module" ], function(module) {
 		}
 	};
 
-	Definition.prototype.setPrivate =
-	/**
-	 * Method for setting the private properties on an instance; typically a
-	 * plugin that provides more advanced encapsulation overrides this method.
-	 * 
-	 * @param {Object}
-	 *            self - instance for which to get private properties
-	 * @param {Object}
-	 *            object - object of private properties
-	 */
-	function Definition$setPrivate(self, object) {
-		var x = getPrivate.call(this);
-		if (!self.properties) {
-			self.properties = {};
-		}
-		if (self.properties[x.classname]) {
-			throw new Error("Definition: " + x.classname + ": private properties to be set only once");
-		}
-		self.properties[x.classname] = object;
-	};
-
-	Definition.prototype.getPrivate =
-	/**
-	 * Method for getting the private properties on an instance; typically a
-	 * plugin that provides more advanced encapsulation overrides this method.
-	 * 
-	 * @param {Object}
-	 *            self - instance for which to get private properties
-	 * @returns {Object} private properties
-	 */
-	function Definition$getPrivate(self) {
-		var x = getPrivate.call(this);
-		return self.properties[x.classname];
-	};
-
 	Definition.prototype.extends =
 	/**
 	 * @param {Array}
@@ -450,6 +422,41 @@ define([ "module" ], function(module) {
 			throw new Error("Definition$getConstructor: " + x.qname + ": missing constructor");
 		}
 		return result;
+	};
+
+	Definition.prototype.setPrivate =
+	/**
+	 * Method for setting the private properties on an instance; typically a
+	 * plugin that provides more advanced encapsulation overrides this method.
+	 * 
+	 * @param {Object}
+	 *            self - instance for which to get private properties
+	 * @param {Object}
+	 *            object - object of private properties
+	 */
+	function Definition$setPrivate(self, object) {
+		var x = getPrivate.call(this);
+		if (!self.properties) {
+			self.properties = {};
+		}
+		if (self.properties[x.classname]) {
+			throw new Error("Definition: " + x.classname + ": private properties to be set only once");
+		}
+		self.properties[x.classname] = object;
+	};
+
+	Definition.prototype.getPrivate =
+	/**
+	 * Method for getting the private properties on an instance; typically a
+	 * plugin that provides more advanced encapsulation overrides this method.
+	 * 
+	 * @param {Object}
+	 *            self - instance for which to get private properties
+	 * @returns {Object} private properties
+	 */
+	function Definition$getPrivate(self) {
+		var x = getPrivate.call(this);
+		return self.properties[x.classname];
 	};
 
 	getPrivate =
