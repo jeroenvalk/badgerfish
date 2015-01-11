@@ -59,9 +59,9 @@ define([ "javascript/nl/agentsatwork/testing/JasmineTestCase" ], function(classJ
 			expect(SingletonSingleton).toBe(SingletonSingleton.prototype.constructor);
 			expect(Object.getPrototypeOf(SingletonSingleton.prototype).constructor).toBe(Singleton);
 			expect(Object.getPrototypeOf(Singleton.prototype)).toEqual({});
-			expect(Object.getPrototypeOf(Singleton.prototype).constructor).toBe(Object);			
+			expect(Object.getPrototypeOf(Singleton.prototype).constructor).toBe(Object);
 		};
-		
+
 		this.testGetBase = function DefinitionTest$testGetBase() {
 			expect(properties.getBase().prototype).toBe(Object.getPrototypeOf(Object.getPrototypeOf(this)));
 		};
@@ -70,6 +70,14 @@ define([ "javascript/nl/agentsatwork/testing/JasmineTestCase" ], function(classJ
 			var constr = properties.getConstructor();
 			expect(constr).toBe(constr.prototype.constructor);
 			expect(constr.prototype).toBe(Object.getPrototypeOf(this));
+		};
+
+		this.xtestSetPrivate = function DefinitionTest$testSetPrivate() {
+
+		};
+
+		this.xtestGetPrivate = function DefinitionTest$testGetPrivate() {
+
 		};
 	}
 	return class_DefinitionTest;

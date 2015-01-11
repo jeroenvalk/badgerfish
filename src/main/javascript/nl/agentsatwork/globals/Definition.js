@@ -59,9 +59,9 @@ define([ "module" ], function(module) {
 	if (!prefix.lastIndexOf("file://", 0) && prefix.indexOf("/node_modules/ComPosiX/") > 0) {
 		// NodeJS module
 		prefix = prefix.replace("/node_modules/ComPosiX/", "/");
-		searchpath.concat([ prefix.replace("/main/", "/test/"), prefix ]);
+		searchpath.push(prefix.replace("/main/", "/test/"));
+		searchpath.push(prefix);
 	}
-	var searchpath = [ prefix.replace("main", "test"), prefix ];
 
 	/**
 	 * @param {Function}
