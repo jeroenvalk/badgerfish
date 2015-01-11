@@ -24,7 +24,7 @@ define([ 'javascript/nl/agentsatwork/testing/JasmineTestCase', 'javascript/nl/ag
 			properties.getBase().call(this);
 		};
 
-		this.testDone = function PromiseTest$testDone() {
+		this.xtestDone = function PromiseTest$testDone() {
 			var e = new Error();
 
 			var executor = jasmine.createSpy("executor");
@@ -70,7 +70,7 @@ define([ 'javascript/nl/agentsatwork/testing/JasmineTestCase', 'javascript/nl/ag
 			expect(failure).not.toHaveBeenCalled();
 		};
 		
-		this.testThen = function PromiseTest$then() {
+		this.xtestThen = function PromiseTest$then() {
 			var resolve, reject;
 			var promise = new Promise(function(_resolve, _reject) {
 				resolve = _resolve;

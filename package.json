@@ -52,7 +52,7 @@
 		"karma-jasmine": "^0.3.0",
 		"karma-requirejs": "^0.2.2",
 		"jasmine-core": "^2.1.2",
-		"jasmine-node": "~1.13.1"
+		"jasmine-node": "~1.14.5"
 	},
 
 	"devDependencies": 
@@ -74,7 +74,7 @@
 		"karma-jasmine": "^0.3.0",
 		"karma-requirejs": "^0.2.2",
 		"jasmine-core": "^2.1.2",
-		"jasmine-node": "~1.13.1",
+		"jasmine-node": "~1.14.5",
 		"binford-slf4j": "~0.0.1",
 		"chai": "*",
 		"ez-streams": "~0.1.3",

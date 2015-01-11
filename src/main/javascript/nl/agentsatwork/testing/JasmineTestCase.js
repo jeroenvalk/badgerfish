@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -16,9 +16,9 @@
  */
 
 /* global define, describe, it */
-define(["../core/Singleton"], function(classAbstractMain) {
+define(["../core/Singleton"], function(classSingleton) {
 	function class_JasmineTestCase(properties) {
-		properties.extends([classAbstractMain]);
+		properties.extends([classSingleton]);
 		
 		this.JasmineTestCase = function JasmineTestCase() {
 			var self = this;
@@ -26,6 +26,9 @@ define(["../core/Singleton"], function(classAbstractMain) {
 				for ( var prop in self) {
 					if (prop.lastIndexOf("test", 0) === 0 && self[prop] instanceof Function) {
 						it(prop, self.getTestRunner(prop));
+					}
+					if (prop.lastIndexOf("xtest", 0) === 0 && self[prop] instanceof Function) {
+						xit(prop, self.getTestRunner(prop));
 					}
 				}
 			});

@@ -216,7 +216,7 @@ define(
 
 				function Grunt$middlewareProxy() {
 					function Grunt$middlewareProxy$serve(req, res, next) {
-						console.log(req.url);
+						// console.log(req.url);
 						next();
 					}
 					return Grunt$middlewareProxy$serve;
@@ -452,7 +452,7 @@ define(
 				}
 
 				function Grunt$taskJasmine() {
-					var self = this;
+					var env, self = this;
 					var cpxdir = properties.getPrivate(this).config.properties.cpxdir;
 					var spec = path.join(cpxdir, "src/main/scripts/jasmine.spec.js");
 					return function(target) {
@@ -460,10 +460,10 @@ define(
 						switch (target) {
 						case "node":
 							console.log(spec);
+							env = process.env;
+							env.NODE_PATH = [ "src/test", "src/main" ].join(path.delimiter);
 							self.system(done, "./node/node", [ "node_modules/jasmine-node/bin/jasmine-node", spec ], {
-								env : {
-									NODE_PATH : [ "src/test", "src/main" ].join(path.delimiter)
-								}
+								env : env
 							});
 							break;
 						default:
