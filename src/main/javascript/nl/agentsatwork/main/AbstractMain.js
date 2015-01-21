@@ -49,11 +49,21 @@ define(["../core/Singleton"], function(classSingleton) {
 			});			
 		};
 		
-		this.initialize = function AbstractMain$initialize(config) {
+		this.initialize = 
+		/**
+		 * @param {Object}
+		 *            config
+		 */
+		function AbstractMain$initialize() {
 			
 		};
 		
-		this.bootstrap = function AbstractMain$bootstrap(config) {
+		this.bootstrap = 
+		/**
+		 * @param {Object}
+		 *            config
+		 */
+		function AbstractMain$bootstrap() {
 			
 		};
 	}

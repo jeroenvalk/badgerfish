@@ -15,13 +15,13 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, expect */
+/* global define, jasmine, expect */
 define([ "javascript/nl/agentsatwork/testing/JasmineTestCase" ], function(classJasmineTestCase) {
 	function class_DefinitionTest(properties) {
 		properties.extends([ classJasmineTestCase ]);
 
-		this.DefinitionTest = function DefinitionTest() {
-			properties.getBase().call(this);
+		this.constructor = function DefinitionTest() {
+			properties.getPrototype(1).constructor.call(this);
 		};
 
 		this.testClassOf = function DefinitionTest$testClassOf() {
@@ -46,7 +46,7 @@ define([ "javascript/nl/agentsatwork/testing/JasmineTestCase" ], function(classJ
 			expect(proto.createDefinition).toEqual(jasmine.any(Function));
 			expect(proto.onStateChange).toEqual(jasmine.any(Function));
 			expect(proto.extends).toEqual(jasmine.any(Function));
-			expect(proto.getBase).toEqual(jasmine.any(Function));
+//			expect(proto.getBase).toEqual(jasmine.any(Function));
 			expect(proto.getConstructor).toEqual(jasmine.any(Function));
 			expect(proto.setPrivate).toEqual(jasmine.any(Function));
 			expect(proto.getPrivate).toEqual(jasmine.any(Function));
@@ -63,7 +63,7 @@ define([ "javascript/nl/agentsatwork/testing/JasmineTestCase" ], function(classJ
 		};
 
 		this.testGetBase = function DefinitionTest$testGetBase() {
-			expect(properties.getBase().prototype).toBe(Object.getPrototypeOf(Object.getPrototypeOf(this)));
+//			expect(properties.getBase().prototype).toBe(Object.getPrototypeOf(Object.getPrototypeOf(this)));
 		};
 
 		this.testGetConstructor = function DefinitionTest$testGetConstructor() {

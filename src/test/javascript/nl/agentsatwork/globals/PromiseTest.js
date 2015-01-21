@@ -20,8 +20,8 @@ define([ 'javascript/nl/agentsatwork/testing/JasmineTestCase', 'javascript/nl/ag
 	return function class_PromiseTest(properties) {
 		properties.extends([classJasmineTestCase]);
 
-		this.PromiseTest = function PromiseTest() {
-			properties.getBase().call(this);
+		this.constructor = function PromiseTest() {
+			properties.getPrototype(1).constructor.call(this);
 		};
 
 		this.xtestDone = function PromiseTest$testDone() {

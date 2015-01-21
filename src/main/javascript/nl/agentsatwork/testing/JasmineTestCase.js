@@ -15,12 +15,13 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, describe, it */
+/* global define, describe, it, xit */
+/*jshint -W089 */
 define(["../core/Singleton"], function(classSingleton) {
 	function class_JasmineTestCase(properties) {
 		properties.extends([classSingleton]);
 		
-		this.JasmineTestCase = function JasmineTestCase() {
+		this.constructor = function JasmineTestCase() {
 			var self = this;
 			describe(this.constructor.name, function() {
 				for ( var prop in self) {

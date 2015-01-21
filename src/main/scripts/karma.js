@@ -15,13 +15,13 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global window */
+/* global location, DEBUG:true, __karma__ */
 (function() {
 	require(["/base/src/main/javascript/nl/agentsatwork/globals/Definition.js"], function() {
 		var allTestFiles = [];
 		var TEST_REGEXP = /(spec|test)\.js$/i;
 
-		Object.keys(window.__karma__.files).forEach(function(file) {
+		Object.keys(__karma__.files).forEach(function(file) {
 			if (TEST_REGEXP.test(file)) {
 				// Normalize paths to RequireJS module names.
 				allTestFiles.push(file);
@@ -39,10 +39,10 @@
 
 			// we have to kickoff jasmine, as it is asynchronous
 			callback : function() {
-				GLOBAL.DEBUG = true;
+				DEBUG = true;
 				if (location.pathname !== '/debug.html')
 					GLOBAL.open("http://localhost:8080/", '_blank');
-				GLOBAL.__karma__.start();
+				__karma__.start();
 			}
 		});		
 	});

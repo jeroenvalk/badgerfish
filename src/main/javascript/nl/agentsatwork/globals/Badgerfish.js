@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals define, definition, DEBUG, expect, document, XMLSerializer */
+/* globals define, definition, DEBUG, expect, document, DOMParser, XMLSerializer */
 /* jshint -W030 */
 define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 	function class_Badgerfish(properties) {
@@ -42,7 +42,7 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 			}
 		};
 
-		var Badgerfish = this.Badgerfish =
+		var Badgerfish = this.constructor =
 		/**
 		 * @param {Node}
 		 *            node - XML node in which to synchronize the JSON object
@@ -339,7 +339,7 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 			delete x.source;
 			delete x.jsonPromise;
 			x.nodePromise = promise.then(function(xhr) {
-				console.assert(false);
+				console.assert(xhr !== xhr);
 			});
 		};
 

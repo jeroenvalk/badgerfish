@@ -16,9 +16,10 @@
  */
 
 /* global define, DEBUG, expect */
+/* jshint -W030 */
 define(function() {
 	function class_Promise() {
-		var Promise = this.Promise =
+		var Promise = this.constructor =
 		/**
 		 * @param {Promise|Function}
 		 *            value - prerequisite value (as another promise) used to

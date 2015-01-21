@@ -16,7 +16,7 @@
 /* global define */
 define(function() {
 	function class_Singleton() {
-		this.Singleton = function Singleton() {
+		this.constructor = function Singleton() {
 		};
 	}
 	

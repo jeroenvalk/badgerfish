@@ -17,8 +17,8 @@
 
 if (typeof define !== "function") {
 	var path = require("path");
-	require("scripts/main");
-	require("glob").sync("src/test/javascript/nl/agentsatwork/**/*{.spec,Test}.js").forEach(function(filename) {
+	require("./main");
+	require("glob").sync("src/test/javascript/**/*{.spec,Test}.js").forEach(function(filename) {
 		require(path.resolve(process.cwd(), path.dirname(filename), path.basename(filename, ".js")));
 	});
 }

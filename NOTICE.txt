@@ -7,6 +7,10 @@ ComPosiX uses:
    +text plugin: http://github.com/requirejs/text
 - Grunt:       http://gruntjs.com/ 
    +plugins: Todd Wolfson's grunt-{curl,zip}, grunt-contrib-{clean,connect,uglify,copy,compress}
+- JSHint       http://jshint.com/ (Anton Kovalyov)
+   +fork of JSLint         http://www.jslint.com/ (Douglas Crockford)
+   +Eclipse plugin         http://github.eclipsesource.com/jshint-eclipse/ (Ralf Sternberg)
+   +grunt-contrib-jshint   https://github.com/gruntjs/grunt-contrib-jshint (Ben Alman)
 - Karma:       http://karma-runner.github.io/ (Vojta Jina, et al.)
 - Jasmine:     http://jasmine.github.io/
 - JQuery:      http://jquery.org/
@@ -16,6 +20,9 @@ ComPosiX uses:
 - JSONPath:    http://github.com/s3u/JSONPath (Stefan Goessner)
 - node.extend: http://github.com/dreamerslab/node.extend (Jordan Harband)
 - software developed by The Apache Software Foundation: http://www.apache.org/
+ideas from:
+- Jürg Lehni	http://stackoverflow.com/questions/6903762/function-name-not-supported-in-ie
+- Mark Byers	http://stackoverflow.com/questions/646628/how-to-check-if-a-string-startswith-another-string
 
 ComPosiX includes:
 - Prism:      http://prismjs.com/ (Lea Verou, et al.)

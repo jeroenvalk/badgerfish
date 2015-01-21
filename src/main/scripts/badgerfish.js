@@ -15,6 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* global document, $, Prism */
 (function() {
 	this.GLOBAL = this;
 }).call(this);
@@ -32,12 +33,7 @@ GLOBAL.require([ '/javascript/nl/agentsatwork/globals/Definition.js' ], function
 	});
 
 	GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Badgerfish', 'javascript/nl/agentsatwork/globals/Promise',
-			'javascript/nl/agentsatwork/globals/Require' ], function(jQuery, Badgerfish, Promise, Require) {
-		//GLOBAL.definition = definition;
-		// definition.configure();
-		//definition(Badgerfish);
-		//definition(Promise);
-		//definition(Require);
+			'javascript/nl/agentsatwork/globals/Require' ], function(jQuery) {
 		if (!jQuery) jQuery = $;
 		GLOBAL.require([ 'javascript/Context' ], function(Context) {
 

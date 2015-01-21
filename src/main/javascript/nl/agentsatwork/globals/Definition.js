@@ -15,14 +15,34 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+// compatibility reference to the global scope
 if (typeof global === 'object') {
 	global.GLOBAL = global;
 } else {
 	this.GLOBAL = this;
 }
+
+// Fix Function#name on browsers that do not support it (IE) (Jürg Lehni):
+if (!function f() {
+}.name) {
+	Object.defineProperty(Function.prototype, 'name', {
+		get : function() {
+			var name = this.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
+			// For better performance only parse once, and then cache the
+			// result through a new accessor for repeated access.
+			Object.defineProperty(this, 'name', {
+				value : name
+			});
+			return name;
+		}
+	});
+}
+
+// jshint ignore: start
 if (typeof define !== 'function') {
 	var define = require('amdefine')(module)
 }
+// jshint ignore: end
 /* global define, DEBUG, expect */
 /* jshint -W030 */
 define([ "module" ], function(module) {
@@ -36,7 +56,7 @@ define([ "module" ], function(module) {
 	}
 
 	function isClass(value) {
-		return isFunction(value) && !value.name.lastIndexOf("class_", 0);
+		return (isFunction(value) && !value.name.lastIndexOf("class", 0));
 	}
 
 	function moduleURI(module) {
@@ -62,20 +82,6 @@ define([ "module" ], function(module) {
 		searchpath.push(prefix.replace("/main/", "/test/"));
 		searchpath.push(prefix);
 	}
-
-	/**
-	 * @param {Function}
-	 *            classdef - function defining the class
-	 * @returns {string} classname provided by the function name
-	 * 
-	 * @private
-	 * @static
-	 */
-	var getClassname = function definition$getClassname(classdef) {
-		var name = classdef.name;
-		var index = name.lastIndexOf("_");
-		return name.substr(++index);
-	};
 
 	// API
 
@@ -119,7 +125,7 @@ define([ "module" ], function(module) {
 		}
 		var pkgname = defaultPackage;
 		var classes, current = state.classes;
-		var isPlugin = false, base = Object;
+		var isPlugin = false, base = state.classes.Object['@'];
 		if (!(chain instanceof Array)) {
 			chain = chain.split(":");
 		}
@@ -159,6 +165,7 @@ define([ "module" ], function(module) {
 				var result;
 				if (isPlugin) {
 					result = base.createDefinition(fullname);
+					plugin.unshift(result);
 				} else {
 					for (var i = 0; i < plugin.length; ++i) {
 						result = plugin[i].createDefinition(fullname);
@@ -186,6 +193,11 @@ define([ "module" ], function(module) {
 		return function closure() {
 			var module = shift.call(arguments);
 			var fn = callback.apply(null, arguments);
+			var argv = null;
+			if (fn instanceof Array) {
+				argv = fn;
+				fn = argv.shift();
+			}
 			if (isClass(fn)) {
 				moduleURI(module);
 				var offset = 0, uri = module.uri;
@@ -213,7 +225,7 @@ define([ "module" ], function(module) {
 	if (!_define) {
 		var Module = require("module");
 		var fn = Module._extensions['.js'];
-		Module._extensions['.js'] = function(module, filename) {
+		Module._extensions['.js'] = function(module) {
 			current = module;
 			fn.apply(this, arguments);
 		};
@@ -250,34 +262,18 @@ define([ "module" ], function(module) {
 	/**
 	 * 
 	 */
-	function definition$configure(config) {
+	function definition$configure() {
 		if (plugin) {
 			throw new Error("definition: configure to be called only once");
 		}
-		plugin = [];
-
 		var root = new Definition('nl.agentsatwork.globals.Definition');
-		state.classes['Definition'] = {
+		state.classes.Definition = {
 			'@' : root
 		};
-
-		var plugins = [];
-		if (config.definition) {
-			plugins = config.definition.plugin;
-		}
-		plugins.forEach(function(config) {
-			var chain = config['@chain'];
-			if (typeof chain !== "string")
-				throw new Error("definition.configure: chain attribute must be string");
-
-			var thePlugin = definitionOf(chain);
-			if (thePlugin === root) {
-				throw new Error("definition.configure: Definition itself cannot be a plugin");
-			}
-			thePlugin.configure(config);
-			plugin.push(thePlugin);
-		});
-		plugin.push(root);
+		state.classes.Object = {
+			'@' : new Definition('nl.agentsatwork.globals.Object')
+		};
+		plugin = [ root ];
 	};
 
 	// class Definition
@@ -304,14 +300,27 @@ define([ "module" ], function(module) {
 		this['@'] = Definition$at;
 		var x = {
 			'@' : Definition$at,
-			qname : qname
+			qname : qname,
+			proto : {}
 		};
 		properties.push(x);
 
-		if (qname === 'nl.agentsatwork.globals.Definition') {
-			this.onStateChange(this.State.DEFINED);
-		} else {
+		if (qname.lastIndexOf('nl.agentsatwork.globals.', 0)) {
 			this.onStateChange(this.State.CREATED);
+		} else {
+			var index = qname.lastIndexOf('.');
+			var classname = qname.substr(++index);
+			if (classname === 'Definition') {
+				x.proto = Definition.prototype;
+				this.onStateChange(this.State.DEFINED);
+			} else {
+				if (state.classdef[qname]) {
+					this.onStateChange(this.State.CREATED);
+				} else {
+					x.proto = GLOBAL[classname].prototype;
+					this.onStateChange(this.State.DEFINED);					
+				}
+			}
 		}
 	}
 
@@ -322,7 +331,7 @@ define([ "module" ], function(module) {
 	 * @returns {Definition}
 	 */
 	function Definition$createDefinition(qname) {
-		var Constructor = this.getConstructor();
+		var Constructor = this.getPrototype(0).constructor;
 		return new Constructor(qname);
 	};
 
@@ -383,7 +392,15 @@ define([ "module" ], function(module) {
 		}
 	};
 
-	Definition.prototype.getBase =
+	Definition.prototype.getPrototype = function Definition$getPrototype(depth) {
+		if (!depth) {
+			return getPrivate.call(this).proto;			
+		} else {
+			return getPrivate.call(this).base.getPrototype(--depth);
+		}
+	};
+	
+	Definition.prototype._getBase =
 	/**
 	 * @returns {Function}
 	 */
@@ -401,7 +418,6 @@ define([ "module" ], function(module) {
 	 */
 	function Definition$getConstructor(forced) {
 		var x = getPrivate.call(this);
-		var result;
 		switch (x.state) {
 		case this.State.CREATED:
 		case this.State.INITIALIZED:
@@ -409,19 +425,19 @@ define([ "module" ], function(module) {
 		case this.State.BASED:
 			if (!forced)
 				throw new Error("Definition.getConstructor: class not yet defined");
+			/* falls through */
 		default:
-			if (x.methods) {
-				var index = x.qname.lastIndexOf(".");
-				result = x.methods[x.qname.substr(++index)];
+			if (x.proto) {
+				if (x.proto.hasOwnProperty("constructor")) {
+					return x.proto.constructor;
+				} else {
+					throw new Error("Definition$getConstructor: " + x.qname + ": missing constructor");
+				}
 			} else {
 				DEBUG && expect(x.qname).toBe('nl.agentsatwork.globals.Definition');
-				result = Definition;
+				return Definition;
 			}
 		}
-		if (!result) {
-			throw new Error("Definition$getConstructor: " + x.qname + ": missing constructor");
-		}
-		return result;
 	};
 
 	Definition.prototype.setPrivate =
@@ -494,8 +510,7 @@ define([ "module" ], function(module) {
 	function Definition$initialize(x) {
 		DEBUG && expect(x.state).toBe(this.State.CREATED);
 		var classdef = state.classdef[x.qname];
-		x.methods = {};
-		x.result = classdef.call(x.methods, this);
+		x.result = classdef.call(x.proto, this);
 	};
 
 	define =
@@ -506,26 +521,29 @@ define([ "module" ], function(module) {
 	 * @private
 	 */
 	function Definition$define(x) {
-		var base = this.getBase();
-		var prototype = Object.create(base.prototype);
-		for ( var name in x.methods) {
-			if (name !== x.classname && x.methods.hasOwnProperty(name)) {
-				prototype[name] = x.methods[name];
-			}
+		var y = getPrivate.call(x.base);
+		var base = y.proto.constructor;
+		var prototype = x.proto;
+		// jshint ignore: start
+		if (Object.setPrototypeOf) {
+			Object.setPrototypeOf(prototype, y.proto);
+		} else {
+			prototype.__proto__ = y.proto;
 		}
-		var Constructor = this.getConstructor(true);
+		// jshint ignore: end
+		var Constructor = prototype.constructor;
 		var methods = state.classdef[x.qname];
-		for ( var prop in methods) {
+		var prop;
+		for (prop in methods) {
 			if (Constructor[prop] === undefined && methods.hasOwnProperty(prop)) {
 				Constructor[prop] = methods[prop];
 			}
 		}
-		for ( var prop in base) {
+		for (prop in base) {
 			if (Constructor[prop] === undefined && base.hasOwnProperty(prop)) {
 				Constructor[prop] = base[prop];
 			}
 		}
-		prototype.constructor = Constructor;
 		Constructor.prototype = prototype;
 		if (Constructor.initialize) {
 			Constructor.initialize();
@@ -538,22 +556,6 @@ define([ "module" ], function(module) {
 		BASED : 2,
 		DEFINED : 3
 	};
-
-	function validate(classes) {
-		var check = false;
-		for ( var qname in classes) {
-			if (classes.hasOwnProperty(qname)) {
-				if (qname === '@') {
-					check = true;
-				} else {
-					if (!validate(classes[qname])) {
-						throw new Error("definition.configure: " + qname + " not found");
-					}
-				}
-			}
-		}
-		return check;
-	}
 
 	definition.configure(module.config ? module.config() : {});
 

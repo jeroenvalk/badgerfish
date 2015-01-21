@@ -21,7 +21,7 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 	function class_Require() {
 		var Promise = definition.classOf("nl.agentsatwork.globals.Promise");
 
-		this.Require = function Require() {
+		this.constructor = function Require() {
 
 		};
 

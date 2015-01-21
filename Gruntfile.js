@@ -115,9 +115,9 @@ module.exports = gruntConfig({
 		"initialize" : [ "initialize" ],
 		"generate-sources" : [ "jison" ],
 		"compile" : [ "uglify" ],
+		"test" : [ "jshint:all", "jasmine:node" ],
 		"package" : [ "compress" ],
 		"pre-integration-test" : [ "unzip" ],
-		"test" : [ "jasmine:node" ],
 		"start" : [ "server:karma", "connect" ],
 		"stop" : [ "stop" ]
 	},
@@ -141,6 +141,10 @@ module.exports = gruntConfig({
 				})
 			}
 		}
+	},
+
+	jshint : {
+		all : [ "*.js", "src/main/scripts/*.js", "src/main/javascript/**/*.js", "src/test/javascript/**/*.js" ]
 	},
 
 	uglify : {
