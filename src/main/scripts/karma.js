@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global location, DEBUG:true, __karma__ */
+/* global location, DEBUG:true, __karma__, open */
 (function() {
 	require(["/base/src/main/javascript/nl/agentsatwork/globals/Definition.js"], function() {
 		var allTestFiles = [];
@@ -41,7 +41,7 @@
 			callback : function() {
 				DEBUG = true;
 				if (location.pathname !== '/debug.html')
-					GLOBAL.open("http://localhost:8080/", '_blank');
+					open("http://localhost:8080/", 'test');
 				__karma__.start();
 			}
 		});		

@@ -193,11 +193,6 @@ define([ "module" ], function(module) {
 		return function closure() {
 			var module = shift.call(arguments);
 			var fn = callback.apply(null, arguments);
-			var argv = null;
-			if (fn instanceof Array) {
-				argv = fn;
-				fn = argv.shift();
-			}
 			if (isClass(fn)) {
 				moduleURI(module);
 				var offset = 0, uri = module.uri;
@@ -318,12 +313,16 @@ define([ "module" ], function(module) {
 					this.onStateChange(this.State.CREATED);
 				} else {
 					x.proto = GLOBAL[classname].prototype;
-					this.onStateChange(this.State.DEFINED);					
+					this.onStateChange(this.State.DEFINED);
 				}
 			}
 		}
 	}
 
+	Definition.prototype.import = function Definition$import(chain) {
+		return GLOBAL.define.classOf(chain);
+	};
+	
 	Definition.prototype.createDefinition =
 	/**
 	 * @param {Object}
@@ -394,12 +393,12 @@ define([ "module" ], function(module) {
 
 	Definition.prototype.getPrototype = function Definition$getPrototype(depth) {
 		if (!depth) {
-			return getPrivate.call(this).proto;			
+			return getPrivate.call(this).proto;
 		} else {
 			return getPrivate.call(this).base.getPrototype(--depth);
 		}
 	};
-	
+
 	Definition.prototype._getBase =
 	/**
 	 * @returns {Function}
@@ -521,17 +520,25 @@ define([ "module" ], function(module) {
 	 * @private
 	 */
 	function Definition$define(x) {
-		var y = getPrivate.call(x.base);
-		var base = y.proto.constructor;
 		var prototype = x.proto;
+		if (!prototype.hasOwnProperty("constructor")) {
+			var index = x.qname.lastIndexOf(".");
+			prototype.constructor = {
+				name : x.qname.substr(++index)
+			};
+		}
+		var Constructor = prototype.constructor;
+		Constructor.prototype = prototype;
 		// jshint ignore: start
+		var y = getPrivate.call(x.base);
 		if (Object.setPrototypeOf) {
 			Object.setPrototypeOf(prototype, y.proto);
+			Object.setPrototypeOf(Constructor, y.proto.constructor);
 		} else {
 			prototype.__proto__ = y.proto;
+			Constructor.__proto__ = y.proto.constructor;
 		}
 		// jshint ignore: end
-		var Constructor = prototype.constructor;
 		var methods = state.classdef[x.qname];
 		var prop;
 		for (prop in methods) {
@@ -539,12 +546,6 @@ define([ "module" ], function(module) {
 				Constructor[prop] = methods[prop];
 			}
 		}
-		for (prop in base) {
-			if (Constructor[prop] === undefined && base.hasOwnProperty(prop)) {
-				Constructor[prop] = base[prop];
-			}
-		}
-		Constructor.prototype = prototype;
 		if (Constructor.initialize) {
 			Constructor.initialize();
 		}

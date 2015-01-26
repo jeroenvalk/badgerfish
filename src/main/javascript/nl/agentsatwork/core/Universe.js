@@ -1,3 +1,20 @@
+/**
+ * Copyright © 2015 dr. ir. Jeroen M. Valk
+ * 
+ * This file is part of ComPosiX. ComPosiX is free software: you can
+ * redistribute it and/or modify it under the terms of the GNU Lesser General
+ * Public License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ * 
+ * ComPosiX is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /* global define */
 define(function() {
 	var self = {};
@@ -12,7 +29,8 @@ define(function() {
 		 */
 		function Universe() {
 			var x = Object.create(self);
-			x.clear();
+			x.universe = [];
+			x.indexOf = {};
 			var size = arguments.length;
 			for (var i = 0; i < size; ++i) {
 				x.addValue(arguments[i]);
@@ -44,11 +62,21 @@ define(function() {
 		};
 
 		this.inverse = function Universe$inverse() {
-			var x = properties.getPrivate(this);
-			var result = {};
+			var result, x = properties.getPrivate(this);
+			switch (x.type) {
+			case "number":
+				result = [];
+				break;
+			case "string":
+				result = {};
+				break;
+			default:
+				throw new Error("Universe: only 'number' and 'string' universes can be inverted");
+			}
 			x.universe.forEach(function(value, index) {
 				result[value] = index;
 			});
+			return result;
 		};
 
 		this.clear = function Universe$clear() {
@@ -91,14 +119,33 @@ define(function() {
 	self.addValue = function private_Universe$addValue() {
 		var self = this;
 		function private_Universe$addValue$recurse(value) {
-			return self.addValue(value);			
+			return self.addValue(value);
 		}
-		
+
 		var result;
 		for (var i = 0; i < arguments.length; ++i) {
 			var value = arguments[i];
 			if (value instanceof Array) {
 				value = value.map(private_Universe$addValue$recurse);
+			} else {
+				var type = typeof value;
+				switch (this.type) {
+				case undefined:
+					this.type = type;
+					break;
+				case "string":
+					if (type === "object")
+						this.type = type;
+					/* falls through */
+				case "object":
+					break;
+				default:
+					switch (type) {
+					case "string":
+					case "object":
+						this.type = type;
+					}
+				}
 			}
 			result = JSON.stringify(value);
 			if (isNaN(this.indexOf[result])) {
@@ -127,11 +174,6 @@ define(function() {
 			}
 		}
 		return true;
-	};
-
-	self.clear = function private_Universe$clear() {
-		this.universe = [];
-		this.indices = {};
 	};
 
 	return class_Universe;
