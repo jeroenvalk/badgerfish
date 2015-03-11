@@ -112,7 +112,7 @@ module.exports = gruntConfig({
 	executions : {
 		"clean" : [ "clean" ],
 		"validate" : [ "validate" ],
-		"initialize" : [ "initialize" ],
+		"initialize" : [ "curl-dir" ],
 		"generate-sources" : [ "jison" ],
 		"compile" : [ "uglify" ],
 		"test" : [ "jshint:all", "jasmine:node" ],
@@ -123,6 +123,12 @@ module.exports = gruntConfig({
 	},
 
 	clean : [ "dist" ],
+
+	'curl-dir' : {
+		'dist/lib' : [ "http://requirejs.org/docs/release/2.1.11/comments/require.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js",
+				"http://code.angularjs.org/1.2.13/angular.js", "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
+				"https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css", "http://modernizr.com/downloads/modernizr-latest.js" ]
+	},
 
 	connect : {
 		test : {

@@ -58,7 +58,11 @@ define([ "javascript/nl/agentsatwork/testing/JasmineTestCase", "javascript/nl/ag
 			});
 
 			universe = new Universe(0, 2, 4);
-			expect(universe.inverse()).toEqual([ 0, undefined, 1, undefined, 2 ]);
+			var result = new Array(5);
+			result[0] = 0;
+			result[2] = 1;
+			result[4] = 2;
+			expect(universe.inverse()).toEqual(result);
 
 			universe = new Universe(0, "1");
 			expect(universe.inverse()).toEqual({

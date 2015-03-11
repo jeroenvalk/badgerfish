@@ -15,29 +15,6 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// compatibility reference to the global scope
-if (typeof global === 'object') {
-	global.GLOBAL = global;
-} else {
-	this.GLOBAL = this;
-}
-
-// Fix Function#name on browsers that do not support it (IE) (Jürg Lehni):
-if (!function f() {
-}.name) {
-	Object.defineProperty(Function.prototype, 'name', {
-		get : function() {
-			var name = this.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
-			// For better performance only parse once, and then cache the
-			// result through a new accessor for repeated access.
-			Object.defineProperty(this, 'name', {
-				value : name
-			});
-			return name;
-		}
-	});
-}
-
 // jshint ignore: start
 if (typeof define !== 'function') {
 	var define = require('amdefine')(module)

@@ -71,15 +71,7 @@ define(
 
 				this.constructor = function Grunt(grunt) {
 					properties.setPrivate(this, {
-						grunt : grunt,
-						downloads : {
-							"lib/require.js" : "http://requirejs.org/docs/release/2.1.11/comments/require.js",
-							"lib/jquery.js" : "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js",
-							"lib/angular.js" : "http://code.angularjs.org/1.2.13/angular.js",
-							"lib/foundation.js" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
-							"lib/foundation.css" : "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css"
-						},
-						unzip : true
+						grunt : grunt
 					});
 				};
 
@@ -110,14 +102,6 @@ define(
 						cli.stdin.end();
 						done();
 					});
-				}
-
-				function Grunt$curl(done) {
-					this.system(done, "curl", Array.prototype.slice.call(arguments, 1));
-				}
-
-				function Grunt$download(target, source) {
-					properties.getPrivate(this).downloads[target] = source;
 				}
 
 				function Grunt$getPackage() {
@@ -277,50 +261,6 @@ define(
 					x.config = config;
 					config.pkg = this.getPackage();
 
-					config.pkg.downloads && Object.keys(config.pkg.downloads).forEach(function(target) {
-						x.downloads[target] = config.pkg.downloads[target];
-					});
-
-					// defaults
-					if (!config.clean)
-						config.clean = [ 'dist' ];
-
-					if (!config.curl)
-						config.curl = {};
-
-					if (!config.unzip)
-						config.unzip = {};
-
-					var checkA = true, checkB = true;
-					x.downloads && Object.keys(x.downloads).forEach(function(target) {
-						if (!fs.existsSync("dist/" + target)) {
-							checkA = false;
-							config.curl[target] = {
-								src : {
-									uri : x.downloads[target]
-								},
-								dest : "dist/" + target
-							};
-							if (endsWith(target, ".zip")) {
-								checkB = false;
-								config.unzip[target] = {
-									src : "dist/" + target,
-									dest : "dist",
-									// fix for zipfile corrupted by the windows
-									// slash
-									router : function(filepath) {
-										return filepath.replace(/\\/g, "/");
-									}
-								};
-							}
-						}
-					});
-					if (checkA) {
-						x.unzip = null;
-					} else if (checkB) {
-						x.unzip = false;
-					}
-
 					for ( var prop in this) {
 						if (prop.substr(0, 4) === "task" && this[prop] instanceof Function) {
 							grunt.registerTask(prop, this[prop]());
@@ -406,25 +346,6 @@ define(
 						}
 						fs.writeFileSync("target/grunt.properties", "grunt.cwd=" + process.cwd().replace(/\\/g, "/") + "\n");
 					};
-				}
-
-				function Grunt$taskInitialize() {
-					var result, x = properties.getPrivate(this);
-					if (x.unzip) {
-						result = [ "curl", "unzip" ];
-					} else {
-						if (x.unzip === false) {
-							result = [ "curl" ];
-						} else {
-							result = [];
-						}
-					}
-					if (fs.existsSync("bower.json") && fs.statSync("bower.json").isFile()) {
-						// Problem with Bower? Run the following git command:
-						// git config --global url."https://".insteadOf git://
-						result.push("bower");
-					}
-					return result;
 				}
 
 				function Grunt$taskInit() {
@@ -595,8 +516,6 @@ define(
 
 				this.exists = Grunt$exists;
 				this.system = Grunt$system;
-				this.curl = Grunt$curl;
-				this.download = Grunt$download;
 				this.getPackage = Grunt$getPackage;
 				this.connectSearchPathMiddleware = Grunt$connectSearchPathMiddleware;
 				this.connectRewriteMiddleware = Grunt$connectRewriteMiddleware;
@@ -609,7 +528,6 @@ define(
 				this.getConfig = Grunt$getConfig;
 				this.grunt = Grunt$grunt;
 				this.taskValidate = Grunt$taskValidate;
-				this.taskInitialize = Grunt$taskInitialize;
 				this.taskInit = Grunt$taskInit;
 				this.taskDeploy = Grunt$taskDeploy;
 				this.taskJasmine = Grunt$taskJasmine;

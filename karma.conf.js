@@ -13,13 +13,13 @@ module.exports = function(config) {
 		frameworks : [ 'jasmine', 'requirejs' ],
 
 		// list of files / patterns to load in the browser
-		files : [ 'src/main/scripts/karma.js', {
+		files : [ 'src/main/scripts/shims.js', 'src/main/scripts/karma.js', {
 			pattern : 'src/test/javascript/nl/**/*.js',
-			included: false
+			included : false
 		}, {
 			pattern : 'src/main/**/*.js',
-			included: false
-		}  ],
+			included : false
+		} ],
 
 		// proxy to the grunt connect server
 		proxies : {
