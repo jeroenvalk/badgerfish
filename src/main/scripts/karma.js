@@ -17,7 +17,9 @@
 
 /* global location, DEBUG:true, __karma__, open */
 (function() {
-	require(["/base/src/main/javascript/nl/agentsatwork/globals/Definition.js"], function() {
+	// add to files to indicate there is no timestamp avoiding the error
+	__karma__.files["/javascript/nl/agentsatwork/globals/Definition.js"] = null;
+	require(["/javascript/nl/agentsatwork/globals/Definition.js"], function() {
 		var allTestFiles = [];
 		var TEST_REGEXP = /(spec|test)\.js$/i;
 

@@ -203,10 +203,14 @@ module.exports = gruntConfig({
 
 		// list of files / patterns to load in the browser
 		files : [ '<%= properties.cpxdir %>/src/main/scripts/shims.js', '<%= properties.cpxdir %>/src/main/scripts/karma.js', {
-			pattern : 'src/test/javascript/nl/**/*.js',
+			pattern : './src/test/javascript/nl/**/*.js',
 			included : false
 		}, {
-			pattern : 'src/main/**/*.js',
+			pattern : './src/main/**/*.js',
+			included : false
+		}, {
+			pattern : '<%= properties.cpxdir %>/src/main/**/*.js',
+			watched : false,
 			included : false
 		} ],
 

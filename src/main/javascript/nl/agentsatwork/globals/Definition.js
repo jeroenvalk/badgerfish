@@ -51,13 +51,17 @@ define([ "module" ], function(module) {
 		classes : {}
 	};
 	moduleURI(module);
-	var prefix = module.uri.substr(0, module.uri.indexOf("nl/agentsatwork/globals/Definition"));
-	var searchpath = [ prefix.replace("/main/", "/test/"), prefix ];
-	if (!prefix.lastIndexOf("file://", 0) && prefix.indexOf("/node_modules/ComPosiX/") > 0) {
-		// NodeJS module
-		prefix = prefix.replace("/node_modules/ComPosiX/", "/");
-		searchpath.push(prefix.replace("/main/", "/test/"));
-		searchpath.push(prefix);
+	var searchpath, prefix = module.uri.substr(0, module.uri.indexOf("nl/agentsatwork/globals/Definition"));
+	if (prefix === "/javascript/") {
+		searchpath = [ prefix, "/base/src/main/javascript/", "/base/src/test/javascript/", "/base/node_modules/ComPosiX/src/main/javascript/" ];
+	} else {
+		searchpath = [ prefix.replace("/main/", "/test/"), prefix ];
+		if (!prefix.lastIndexOf("file://", 0) && prefix.indexOf("/node_modules/ComPosiX/") > 0) {
+			// NodeJS module
+			prefix = prefix.replace("/node_modules/ComPosiX/", "/");
+			searchpath.push(prefix.replace("/main/", "/test/"));
+			searchpath.push(prefix);
+		}
 	}
 
 	// API
@@ -299,7 +303,7 @@ define([ "module" ], function(module) {
 	Definition.prototype.import = function Definition$import(chain) {
 		return GLOBAL.define.classOf(chain);
 	};
-	
+
 	Definition.prototype.createDefinition =
 	/**
 	 * @param {Object}
