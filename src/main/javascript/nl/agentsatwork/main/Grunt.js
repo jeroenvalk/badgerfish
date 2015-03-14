@@ -73,11 +73,13 @@ define(
 					properties.setPrivate(this, {
 						grunt : grunt
 					});
+					GLOBAL.grunt = this;
 				};
 
 				this.configure = function Grunt$configure(config) {
 					var x = properties.getPrivate(this);
 					x.config = config;
+					this.configuration = config;
 					// TODO: remove this line below
 					x.executions = config.executions;
 					var grunt = x.grunt;
@@ -381,7 +383,8 @@ define(
 				};
 
 				this.taskServer = function Grunt$taskServer() {
-					var grunt = properties.getPrivate(this).grunt;
+					var x = properties.getPrivate(this);
+					var grunt = x.grunt;
 					var self = this;
 					return function(target) {
 						var done = this.async();
