@@ -202,7 +202,7 @@ module.exports = gruntConfig({
 		frameworks : [ 'jasmine', 'requirejs' ],
 
 		// list of files / patterns to load in the browser
-		files : [ 'src/main/scripts/shims.js', 'src/main/scripts/karma.js', {
+		files : [ '<%= properties.cpxdir %>/src/main/scripts/shims.js', '<%= properties.cpxdir %>/src/main/scripts/karma.js', {
 			pattern : 'src/test/javascript/nl/**/*.js',
 			included : false
 		}, {

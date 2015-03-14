@@ -79,7 +79,6 @@ define(
 				this.configure = function Grunt$configure(config) {
 					var x = properties.getPrivate(this);
 					x.config = config;
-					this.configuration = config;
 					// TODO: remove this line below
 					x.executions = config.executions;
 					var grunt = x.grunt;
@@ -165,6 +164,7 @@ define(
 					});
 
 					grunt.initConfig(config);
+					this.configuration = grunt.config();
 				};
 
 				this.exists = function Grunt$exists(name, local) {
