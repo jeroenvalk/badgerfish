@@ -15,10 +15,11 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var config = {};
+var path = require("path");
 var definition = require('../javascript/nl/agentsatwork/globals/Definition');
 require('../javascript/nl/agentsatwork/main/Grunt');
 var extend = require('node.extend');
+var config = {};
 
 var chain = ["nl.agentsatwork.main.Grunt"];
 function gruntConfig(gruntOrConfig) {
@@ -28,9 +29,8 @@ function gruntConfig(gruntOrConfig) {
 		}
 		var Grunt = definition.classOf(chain.join(":"));
 		var grunt = new Grunt(gruntOrConfig);
-		extend(true, config, grunt.readConfig());
-		grunt.setConfig(config);
-		grunt.grunt(gruntOrConfig);
+		extend(true, config, gruntOrConfig.file.readJSON(path.resolve('Gruntfile.json')));
+		grunt.configure(config);
 	} else {
 		extend(true, config, gruntOrConfig);
 		return gruntConfig;

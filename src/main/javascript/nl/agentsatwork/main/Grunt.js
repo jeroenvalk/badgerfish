@@ -75,7 +75,97 @@ define(
 					});
 				};
 
-				function Grunt$exists(name, local) {
+				this.configure = function Grunt$configure(config) {
+					var x = properties.getPrivate(this);
+					x.config = config;
+					// TODO: remove this line below
+					x.executions = config.executions;
+					var grunt = x.grunt;
+					
+					if (!config)
+						throw new Error("Grunt: config not set");
+					grunt.loadNpmTasks('grunt-curl');
+					grunt.loadNpmTasks('grunt-zip');
+					grunt.loadNpmTasks('grunt-contrib-clean');
+					grunt.loadNpmTasks('grunt-contrib-connect');
+					grunt.loadNpmTasks('grunt-contrib-jshint');
+					grunt.loadNpmTasks('grunt-contrib-uglify');
+					grunt.loadNpmTasks('grunt-contrib-compress');
+					// grunt.loadNpmTasks('grunt-bower-task');
+					require('time-grunt')(grunt);
+
+					var name = this.middleware();
+					var middleware = [];
+					for (var k = 0; k < name.length; ++k) {
+						middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() + name[k].substr(1));
+					}
+					config.connect.test.options.base = this.connectSearchPathMiddleware(config.connect.test.options.base);
+
+					var self = this;
+					config.connect.test.options.middleware = function(connect, options) {
+						var i, result = [ rewriteModule.getMiddleware(self.connectRewriteMiddleware()) ];
+						for (i = 0; i < middleware.length; ++i) {
+							result.push(self[middleware[i]](connect, options));
+						}
+						for (i = 0; i < options.base.length; ++i) {
+							result.push(connect.static(options.base[i]));
+						}
+						// TODO: HACK to get the text module working
+						result.push(connect.static("node_modules/text"));
+						return result;
+					};
+					config.pkg = this.getPackage();
+
+					for ( var prop in this) {
+						if (prop.substr(0, 4) === "task" && this[prop] instanceof Function) {
+							grunt.registerTask(prop, this[prop]());
+						}
+					}
+
+					var lifecycle = config.lifecycle;
+					lifecycle && Object.keys(lifecycle).forEach(function(phase) {
+						var tasks = config.executions[phase];
+						if (tasks) {
+							tasks = tasks.map(function(name) {
+								return name.split(":");
+							});
+						} else {
+							tasks = [];
+						}
+
+						grunt.registerTask(phase, _phase(grunt, digraph.getPostOrderTreeWalk(phase), tasks.map(function(task) {
+							if (lifecycle[task[0]]) {
+								var localTask = "task" + task[0].substr(0, 1).toUpperCase() + task[0].substr(1);
+								if (!self.exists(task[0], true)) {
+									if (self.exists(task[0])) {
+										console.assert(!grunt.task.exists(localTask));
+										console.assert(!config[localTask]);
+										grunt.log.ok("task '" + task[0] + "' has been redefined as '" + localTask + "' (local task)");
+										config[localTask] = config[task[0]];
+										delete config[task[0]];
+										grunt.task.renameTask(task[0], localTask);
+									} else {
+										grunt.log.error("task '" + task[0] + "' not defined");
+									}
+								}
+								return [ localTask ].concat(task.splice(1)).join(":");
+							} else {
+								if (self.exists(task[0], true)) {
+									return [ "task" + task[0].substr(0, 1).toUpperCase() + task[0].substr(1) ].concat(task.splice(1)).join(":");
+								} else {
+									if (self.exists(task[0])) {
+										return task.join(":");
+									}
+									grunt.log.error("task '" + task[0] + "' not defined");
+								}
+							}
+						})));
+					});
+
+					grunt.initConfig(config);
+				};
+
+				this.exists = function Grunt$exists(name, local) {
 					var grunt = properties.getPrivate(this).grunt;
 					var localName = "task" + name.substr(0, 1).toUpperCase() + name.substr(1);
 					if (this[localName]) {
@@ -84,9 +174,9 @@ define(
 					} else {
 						return !local && grunt.task.exists(name);
 					}
-				}
+				};
 
-				function Grunt$system(done, cmd, args, options) {
+				this.system = function Grunt$system(done, cmd, args, options) {
 					// if relative directory does not exist then try system path
 					if (cmd.substr(0, 2) === "./" && !(fs.existsSync(path.dirname(cmd)) && fs.statSync(path.dirname(cmd)).isDirectory())) {
 						cmd = path.basename(cmd);
@@ -102,25 +192,25 @@ define(
 						cli.stdin.end();
 						done();
 					});
-				}
+				};
 
-				function Grunt$getPackage() {
+				this.getPackage = function Grunt$getPackage() {
 					return properties.getPrivate(this).grunt.file.readJSON('package.json');
-				}
+				};
 
-				function Grunt$connectSearchPathMiddleware(path) {
+				this.connectSearchPathMiddleware = function Grunt$connectSearchPathMiddleware(path) {
 					return path;
-				}
+				};
 
-				function Grunt$connectRewriteMiddleware() {
+				this.connectRewriteMiddleware = function Grunt$connectRewriteMiddleware() {
 					return [];
-				}
+				};
 
-				function Grunt$middleware() {
+				this.middleware = function Grunt$middleware() {
 					return [ "cachedFiles", "syntaxHighlighter", "proxy" ];
-				}
+				};
 
-				function Grunt$middlewareCachedFiles() {
+				this.middlewareCachedFiles = function Grunt$middlewareCachedFiles() {
 					var x = properties.getPrivate(this);
 					var files = {
 						'/text.js' : [ 'node_modules/text/text.js' ],
@@ -151,9 +241,9 @@ define(
 						}
 					}
 					return Grunt$middlewareCachedFiles$serve;
-				}
+				};
 
-				function Grunt$middlewareSyntaxHighlighter() {
+				this.middlewareSyntaxHighlighter = function Grunt$middlewareSyntaxHighlighter() {
 					function Grunt$middlewareSyntaxHighlighter$serve(req, res, next) {
 						var parsed = url.parse(req.url, true);
 						console.assert(parsed.pathname.charAt(0) === '/');
@@ -196,121 +286,17 @@ define(
 						}
 					}
 					return Grunt$middlewareSyntaxHighlighter$serve;
-				}
+				};
 
-				function Grunt$middlewareProxy() {
+				this.middlewareProxy = function Grunt$middlewareProxy() {
 					function Grunt$middlewareProxy$serve(req, res, next) {
 						// console.log(req.url);
 						next();
 					}
 					return Grunt$middlewareProxy$serve;
-				}
+				};
 
-				function Grunt$readConfig() {
-					var grunt = properties.getPrivate(this).grunt;
-					return grunt.file.readJSON(path.resolve('Gruntfile.json'));
-				}
-
-				function Grunt$setConfig(config) {
-					var x = properties.getPrivate(this);
-					x.config = config;
-					x.executions = config.executions;
-				}
-
-				function Grunt$getConfig() {
-					var config = properties.getPrivate(this).config;
-					if (!config)
-						config = this.readConfig();
-					var self = this;
-					var name = self.middleware();
-					var middleware = [];
-					for (var k = 0; k < name.length; ++k) {
-						middleware.push("middleware" + name[k].substr(0, 1).toUpperCase() + name[k].substr(1));
-					}
-					config.connect.test.options.base = self.connectSearchPathMiddleware(config.connect.test.options.base);
-					config.connect.test.options.middleware = function(connect, options) {
-						var i, result = [ rewriteModule.getMiddleware(self.connectRewriteMiddleware()) ];
-						for (i = 0; i < middleware.length; ++i) {
-							result.push(self[middleware[i]](connect, options));
-						}
-						for (i = 0; i < options.base.length; ++i) {
-							result.push(connect.static(options.base[i]));
-						}
-						// TODO: HACK to get the text module working
-						result.push(connect.static("node_modules/text"));
-						return result;
-					};
-					return config;
-				}
-
-				function Grunt$grunt(grunt) {
-					var self = this;
-					var x = properties.getPrivate(this);
-					x.grunt = grunt;
-					grunt.loadNpmTasks('grunt-curl');
-					grunt.loadNpmTasks('grunt-zip');
-					grunt.loadNpmTasks('grunt-contrib-clean');
-					grunt.loadNpmTasks('grunt-contrib-connect');
-					grunt.loadNpmTasks('grunt-contrib-jshint');
-					grunt.loadNpmTasks('grunt-contrib-uglify');
-					grunt.loadNpmTasks('grunt-contrib-compress');
-					// grunt.loadNpmTasks('grunt-bower-task');
-					require('time-grunt')(grunt);
-
-					var config = this.getConfig();
-					x.config = config;
-					config.pkg = this.getPackage();
-
-					for ( var prop in this) {
-						if (prop.substr(0, 4) === "task" && this[prop] instanceof Function) {
-							grunt.registerTask(prop, this[prop]());
-						}
-					}
-
-					var lifecycle = config.lifecycle;
-					lifecycle && Object.keys(lifecycle).forEach(function(phase) {
-						var tasks = x.executions[phase];
-						if (tasks) {
-							tasks = tasks.map(function(name) {
-								return name.split(":");
-							});
-						} else {
-							tasks = [];
-						}
-
-						grunt.registerTask(phase, _phase(grunt, digraph.getPostOrderTreeWalk(phase), tasks.map(function(task) {
-							if (lifecycle[task[0]]) {
-								var localTask = "task" + task[0].substr(0, 1).toUpperCase() + task[0].substr(1);
-								if (!self.exists(task[0], true)) {
-									if (self.exists(task[0])) {
-										console.assert(!grunt.task.exists(localTask));
-										console.assert(!config[localTask]);
-										grunt.log.ok("task '" + task[0] + "' has been redefined as '" + localTask + "' (local task)");
-										config[localTask] = config[task[0]];
-										delete config[task[0]];
-										grunt.task.renameTask(task[0], localTask);
-									} else {
-										grunt.log.error("task '" + task[0] + "' not defined");
-									}
-								}
-								return [ localTask ].concat(task.splice(1)).join(":");
-							} else {
-								if (self.exists(task[0], true)) {
-									return [ "task" + task[0].substr(0, 1).toUpperCase() + task[0].substr(1) ].concat(task.splice(1)).join(":");
-								} else {
-									if (self.exists(task[0])) {
-										return task.join(":");
-									}
-									grunt.log.error("task '" + task[0] + "' not defined");
-								}
-							}
-						})));
-					});
-
-					grunt.initConfig(config);
-				}
-
-				function Grunt$taskValidate() {
+				this.taskValidate = function Grunt$taskValidate() {
 					var grunt = properties.getPrivate(this).grunt;
 					var pkg = this.getPackage();
 					return function() {
@@ -346,9 +332,9 @@ define(
 						}
 						fs.writeFileSync("target/grunt.properties", "grunt.cwd=" + process.cwd().replace(/\\/g, "/") + "\n");
 					};
-				}
+				};
 
-				function Grunt$taskInit() {
+				this.taskInit = function Grunt$taskInit() {
 					var self = this;
 					return function(target) {
 						var done = this.async();
@@ -360,9 +346,9 @@ define(
 							throw new Error("target '" + target + "' not defined");
 						}
 					};
-				}
+				};
 
-				function Grunt$taskDeploy() {
+				this.taskDeploy = function Grunt$taskDeploy() {
 					var grunt = properties.getPrivate(this).grunt;
 					var pkg = this.getPackage();
 					return function() {
@@ -371,9 +357,9 @@ define(
 							return false;
 						}
 					};
-				}
+				};
 
-				function Grunt$taskJasmine() {
+				this.taskJasmine = function Grunt$taskJasmine() {
 					var env, self = this;
 					var cpxdir = properties.getPrivate(this).config.properties.cpxdir;
 					var spec = path.join(cpxdir, "src/main/scripts/jasmine.spec.js");
@@ -392,9 +378,9 @@ define(
 							throw new Error("target '" + target + "' not defined");
 						}
 					};
-				}
+				};
 
-				function Grunt$taskServer() {
+				this.taskServer = function Grunt$taskServer() {
 					var grunt = properties.getPrivate(this).grunt;
 					var self = this;
 					return function(target) {
@@ -440,9 +426,9 @@ define(
 							throw new Error("target '" + target + "' not defined");
 						}
 					};
-				}
+				};
 
-				function Grunt$taskStop() {
+				this.taskStop = function Grunt$taskStop() {
 					var grunt = properties.getPrivate(this).grunt;
 					return function() {
 						if (fs.existsSync("target/lock.txt")) {
@@ -455,9 +441,9 @@ define(
 							return false;
 						}
 					};
-				}
+				};
 
-				function Grunt$taskWebdav() {
+				this.taskWebdav = function Grunt$taskWebdav() {
 					var self = this;
 					return function(target) {
 						var done = this.async();
@@ -488,9 +474,9 @@ define(
 											}
 										});
 					};
-				}
+				};
 
-				function Grunt$taskJison() {
+				this.taskJison = function Grunt$taskJison() {
 					var execute = function Grunt$taskJison$execute(target) {
 						if (target) {
 							var parser = new Generator(fs.readFileSync("src/main/resources/" + target + ".jison", {
@@ -512,29 +498,7 @@ define(
 						}
 					};
 					return execute;
-				}
-
-				this.exists = Grunt$exists;
-				this.system = Grunt$system;
-				this.getPackage = Grunt$getPackage;
-				this.connectSearchPathMiddleware = Grunt$connectSearchPathMiddleware;
-				this.connectRewriteMiddleware = Grunt$connectRewriteMiddleware;
-				this.middleware = Grunt$middleware;
-				this.middlewareCachedFiles = Grunt$middlewareCachedFiles;
-				this.middlewareSyntaxHighlighter = Grunt$middlewareSyntaxHighlighter;
-				this.middlewareProxy = Grunt$middlewareProxy;
-				this.readConfig = Grunt$readConfig;
-				this.setConfig = Grunt$setConfig;
-				this.getConfig = Grunt$getConfig;
-				this.grunt = Grunt$grunt;
-				this.taskValidate = Grunt$taskValidate;
-				this.taskInit = Grunt$taskInit;
-				this.taskDeploy = Grunt$taskDeploy;
-				this.taskJasmine = Grunt$taskJasmine;
-				this.taskServer = Grunt$taskServer;
-				this.taskStop = Grunt$taskStop;
-				this.taskWebdav = Grunt$taskWebdav;
-				this.taskJison = Grunt$taskJison;
+				};
 			}
 
 			// module.exports = Grunt;
