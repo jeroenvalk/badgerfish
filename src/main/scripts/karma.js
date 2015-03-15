@@ -17,27 +17,27 @@
 
 /* global location, DEBUG:true, __karma__, open */
 (function() {
-	require([ "/base/src/main/javascript/nl/agentsatwork/globals/Definition.js" ], function() {
-		var allTestFiles = [];
-		var TEST_REGEXP = /(spec|test)\.js$/i;
+	var allTestFiles = [];
+	var TEST_REGEXP = /(spec|test)\.js$/i;
 
-		var converted = {};
-		Object.keys(__karma__.files).forEach(function(file) {
-			if (TEST_REGEXP.test(file)) {
-				// Normalize paths to RequireJS module names.
-				allTestFiles.push(file);
-			} else {
-				// copy timestamps for proxied urls
-				var index = file.lastIndexOf('src/main/javascript/');
-				if (index > 0) {
-					converted["/base/src/test/javascript/" + file.substr(index + 20)] = __karma__.files[file];
-				}
+	var converted = {};
+	Object.keys(__karma__.files).forEach(function(file) {
+		if (TEST_REGEXP.test(file)) {
+			// Normalize paths to RequireJS module names.
+			allTestFiles.push(file);
+		} else {
+			// copy timestamps for proxied urls
+			var index = file.lastIndexOf('src/main/javascript/');
+			if (index > 0) {
+				converted["/base/src/test/javascript/" + file.substr(index + 20)] = __karma__.files[file];
 			}
-		});
-		Object.keys(converted).forEach(function(file) {
-			__karma__.files[file] = converted[file];
-		});
+		}
+	});
+	Object.keys(converted).forEach(function(file) {
+		__karma__.files[file] = converted[file];
+	});
 
+	require([ "/base/src/test/javascript/nl/agentsatwork/globals/Definition.js" ], function() {
 		require.config({
 			// Karma serves files under /base, which is the basePath from your
 			// config
