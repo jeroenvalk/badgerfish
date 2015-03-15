@@ -216,8 +216,8 @@ module.exports = gruntConfig({
 
 		// proxy to the grunt connect server
 		proxies : {
-			'/javascript/' : 'http://localhost:8080/javascript/',
-			'/resources/' : 'http://localhost:8080/resources/'
+			'/base/src/test/javascript/' : 'http://localhost:8080/javascript/',
+			'/base/src/test/resources/' : 'http://localhost:8080/resources/'
 		},
 
 		// list of files to exclude

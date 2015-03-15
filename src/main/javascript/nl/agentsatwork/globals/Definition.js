@@ -53,7 +53,7 @@ define([ "module" ], function(module) {
 	moduleURI(module);
 	var searchpath, prefix = module.uri.substr(0, module.uri.indexOf("nl/agentsatwork/globals/Definition"));
 	if (prefix === "/javascript/") {
-		searchpath = [ prefix, "/base/src/main/javascript/", "/base/src/test/javascript/", "/base/node_modules/ComPosiX/src/main/javascript/" ];
+		searchpath = [ prefix ];
 	} else {
 		searchpath = [ prefix.replace("/main/", "/test/"), prefix ];
 		if (!prefix.lastIndexOf("file://", 0) && prefix.indexOf("/node_modules/ComPosiX/") > 0) {
