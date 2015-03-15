@@ -212,6 +212,11 @@ define([ "module" ], function(module) {
 			current = null;
 		}
 		if (deps instanceof Array) {
+			deps.forEach(function(dep) {
+				if (dep.indexOf(".js", dep.length - 3) > -1) {
+					throw new Error("define: remove .js extension from: " + dep);
+				}
+			});
 			deps.unshift("module");
 			_define(deps, bootstrap(callback));
 		} else if (isFunction(deps)) {
