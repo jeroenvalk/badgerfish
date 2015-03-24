@@ -78,11 +78,15 @@ Modernizr.addTestWithShim("modernizr_load", function() {
 			var script = document.createElement('script');
 			script.setAttribute('type', 'application/javascript');
 			if (entity.test) {
-				script.setAttribute('src', entity.yep);
+				script.setAttribute('src', [ __dirname, entity.yep ].join("/"));
 			} else {
-				script.setAttribute('src', entity.nope);
+				script.setAttribute('src', [ __dirname, entity.nope ].join("/"));
 			}
-			document.body.appendChild(script);
+			if (document.body) {
+				document.body.appendChild(script);
+			} else {
+				document.head.appendChild(script);
+			}
 		}
 	};
 });
@@ -103,4 +107,27 @@ Modernizr.addTestWithShim("function_name", function() {
 			return name;
 		}
 	});
+});
+
+Modernizr.addTestWithShim("server", function() {
+	return typeof global === "object";
+}, function() {
+	Object.defineProperty(GLOBAL, '__filename', {
+		get : function() {
+			var scripts = document.getElementsByTagName("script");
+			var url = scripts[scripts.length - 1].src;
+			return url.substr(url.indexOf("/", url.indexOf(":") + 3));
+		}
+	});
+	Object.defineProperty(GLOBAL, '__dirname', {
+		get : function() {
+			return __filename.substr(0, __filename.lastIndexOf("/"));
+		}
+	});
+});
+
+Modernizr.load({
+	test : Modernizr.server,
+	yep : "serverOnly.js",
+	nope : "clientOnly.js"
 });

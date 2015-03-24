@@ -115,8 +115,8 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 						result = xsltProcessor.transformToDocument(x.node.ownerDocument);
 					}
 				}
-				console.assert(result.childElementCount === 1);
-				callback.call(this, argv.Context.initialize.call(new Context(), result.firstElementChild));
+				console.assert(result.childNodes.length === 1);
+				callback.call(this, argv.Context.initialize.call(new Context(), result.firstChild));
 			}
 			if (x.node.tagName === 'layout' || x.node.tagName === 'panel') {
 				doIt();
