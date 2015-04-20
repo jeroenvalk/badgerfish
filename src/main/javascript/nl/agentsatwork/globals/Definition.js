@@ -208,12 +208,20 @@ define([ "module" ], function(module) {
 	}
 	GLOBAL.define = function(deps, callback) {
 		if (current) {
+			if (deps instanceof Array) {
+				deps = deps.map(function(dep) {
+					if (!dep.lastIndexOf('javascript/')) {
+						dep = process.cwd() + '/src/main/' + dep + ".js";
+					}
+					return dep;
+				});
+			}
 			_define = require("amdefine")(current);
 			current = null;
 		}
 		if (deps instanceof Array) {
 			deps.forEach(function(dep) {
-				if (dep.indexOf(".js", dep.length - 3) > -1) {
+				if (dep.charAt(0) !== '/' && dep.indexOf(".js", dep.length - 3) > -1) {
 					throw new Error("define: remove .js extension from: " + dep);
 				}
 			});

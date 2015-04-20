@@ -15,11 +15,10 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals define, definition, DEBUG, expect, document, DOMParser, XMLSerializer */
+/* globals define, DEBUG, expect, document, DOMParser, XMLSerializer */
 /* jshint -W030 */
-define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
+define(function() {
 	function class_Badgerfish(properties) {
-		var Promise = definition.classOf("nl.agentsatwork.globals.Promise");
 		var xmlSerializer = new XMLSerializer();
 		var badgerfish;
 
@@ -83,9 +82,11 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 			};
 
 			var attr = node.attributes;
-			for (var i = 0; i < attr.length; ++i) {
-				if (attr[i].name.substr(0, 6) === "xmlns:") {
-					this.registerNamespace(attr[i].name.substr(6), attr[i].value);
+			if (attr) {
+				for (var i = 0; i < attr.length; ++i) {
+					if (attr[i].name.substr(0, 6) === "xmlns:") {
+						this.registerNamespace(attr[i].name.substr(6), attr[i].value);
+					}
 				}
 			}
 			this.registerNamespaces(xmlns);
@@ -217,7 +218,7 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 		};
 
 		this.isHTMLDocument = function Badgerfish$isHTMLDocument() {
-			return properties.getPrivate(this).node.ownerDocument === document;
+			return properties.getPrivate(this).node.ownerDocument === GLOBAL.document;
 		};
 
 		this.parseTagname = function Badgerfish$parseTagname(tagname) {
@@ -554,35 +555,35 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 					xi : "http://www.w3.org/2001/XInclude"
 				}, "xi:include");
 				if (nodes.length > 0) {
-				var modules = [];
-				for (var i = 0; i < nodes.length; ++i) {
-					modules.push(nodes[i].select("@href"));
-				}
-				x.includes = [];
-				Promise.when.apply(Promise, self.require(modules)).done(function(argvv) {
-					var argv = argvv;
-					if (!(argvv instanceof Array)) {
-						argv = arguments;
+					var modules = [];
+					for (var i = 0; i < nodes.length; ++i) {
+						modules.push(nodes[i].select("@href"));
 					}
-					for (var i = 0; i < argv.length; ++i) {
-						if (nodes[i].select("@parse") === "text") {
-							x.includes.push(argv[i].responseText);
-						} else {
-							var responseXML = argv[i].responseXML;
-							if (!responseXML) {
-								responseXML = new DOMParser().parseFromString(argv[i].responseText, "application/xml");
-							}
-							x.includes.push(new Badgerfish(responseXML.documentElement, self));
+					x.includes = [];
+					Promise.all(self.require(modules)).then(function(argvv) {
+						var argv = argvv;
+						if (!(argvv instanceof Array)) {
+							argv = arguments;
 						}
-					}
-					done(self);
-				});
+						for (var i = 0; i < argv.length; ++i) {
+							if (nodes[i].select("@parse") === "text") {
+								x.includes.push(argv[i].responseText);
+							} else {
+								var responseXML = argv[i].responseXML;
+								if (!responseXML) {
+									responseXML = new DOMParser().parseFromString(argv[i].responseText, "application/xml");
+								}
+								x.includes.push(new Badgerfish(responseXML.documentElement, self));
+							}
+						}
+						done(self);
+					});
 				} else {
 					callback();
 				}
 			}
-			var result = Promise.when(Context$requireXIncludes$closure);
-			result.done(function(value) {
+			var result = new Promise(Context$requireXIncludes$closure);
+			result.then(function(value) {
 				callback.call(value);
 			});
 			return result;

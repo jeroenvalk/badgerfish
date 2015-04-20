@@ -17,14 +17,13 @@
 
 /* jshint -W030 */
 
-/* global define */
+/* global define, Badgerfish, DOMParser */
 define(
-		[ "fs", "url", "path", "child_process", "glob", "xpath", "xmldom", "jison", "http-rewrite-middleware" ],
-		function(fs, url, path, child_process, glob, xpath, xmldom, jison, rewriteModule) {
+		[ "fs", "url", "path", "child_process", "mkdirp", "glob", "xpath", "jison", "http-rewrite-middleware" ],
+		function(fs, url, path, child_process, mkdirp, glob, xpath, jison, rewriteModule) {
 			function class_Grunt(properties) {
 
 				var spawn = child_process.spawn;
-				var DOMParser = xmldom.DOMParser;
 				var Generator = jison.Generator;
 
 				function endsWith(str, suffix) {
@@ -82,7 +81,7 @@ define(
 					// TODO: remove this line below
 					x.executions = config.executions;
 					var grunt = x.grunt;
-					
+
 					if (!config)
 						throw new Error("Grunt: config not set");
 					grunt.loadNpmTasks('grunt-curl');
@@ -348,6 +347,30 @@ define(
 							throw new Error("target '" + target + "' not defined");
 						}
 					};
+				};
+
+				this.taskClasspath = function Grunt$taskClasspath() {
+					var grunt = properties.getPrivate(this).grunt;
+					var execute = function Grunt$taskClasspath$execute() {
+						var bfish = new Badgerfish(new DOMParser().parseFromString(fs.readFileSync(".classpath", {
+							encoding : "utf8"
+						})));
+						var searchpath = bfish.getElementsByTagName('classpath/classpathentry').filter(function(entry) {
+							return entry.getElementByTagName("@kind") === "src";
+						}).map(function(entry) {
+							return entry.getElementByTagName("@path");
+						});
+						var prefix = {};
+						searchpath.forEach(function(srcdir) {
+							glob.sync("**/*.js", {
+								cwd : srcdir
+							}).forEach(function(srcfile) {
+								prefix[srcfile] = srcdir;
+							});
+						});
+						grunt.file.write("target/main/resources/classes.json", JSON.stringify(prefix));
+					};
+					return execute;
 				};
 
 				this.taskDeploy = function Grunt$taskDeploy() {

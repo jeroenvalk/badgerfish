@@ -15,6 +15,8 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+require("src/main/script/shims.js");
+
 if (typeof define !== "function") {
 	var path = require("path");
 	require("./main");

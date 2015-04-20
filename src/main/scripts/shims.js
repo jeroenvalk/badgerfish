@@ -67,6 +67,23 @@ Modernizr.addTestWithShim("is", function() {
 	};
 });
 
+Modernizr.addTestWithShim("server", function() {
+	return typeof global === "object";
+}, function() {
+	Object.defineProperty(GLOBAL, '__filename', {
+		get : function() {
+			var scripts = document.getElementsByTagName("script");
+			var url = scripts[scripts.length - 1].src;
+			return url.substr(url.indexOf("/", url.indexOf(":") + 3));
+		}
+	});
+	Object.defineProperty(GLOBAL, '__dirname', {
+		get : function() {
+			return __filename.substr(0, __filename.lastIndexOf("/"));
+		}
+	});
+});
+
 Modernizr.addTestWithShim("modernizr_load", function() {
 	return is.fn(Modernizr.load);
 }, function() {
@@ -75,17 +92,25 @@ Modernizr.addTestWithShim("modernizr_load", function() {
 			Modernizr.load(entity.shift());
 			Modernizr.load(entity);
 		} else if (isNaN(entity.length)) {
-			var script = document.createElement('script');
-			script.setAttribute('type', 'application/javascript');
-			if (entity.test) {
-				script.setAttribute('src', [ __dirname, entity.yep ].join("/"));
+			if (Modernizr.server) {
+				if (entity.test) {
+					require("./" + entity.yep);
+				} else {
+					require("./" + entity.nope);
+				}
 			} else {
-				script.setAttribute('src', [ __dirname, entity.nope ].join("/"));
-			}
-			if (document.body) {
-				document.body.appendChild(script);
-			} else {
-				document.head.appendChild(script);
+				var script = document.createElement('script');
+				script.setAttribute('type', 'application/javascript');
+				if (entity.test) {
+					script.setAttribute('src', [ __dirname, entity.yep ].join("/"));
+				} else {
+					script.setAttribute('src', [ __dirname, entity.nope ].join("/"));
+				}
+				if (document.body) {
+					document.body.appendChild(script);
+				} else {
+					document.head.appendChild(script);
+				}
 			}
 		}
 	};
@@ -105,23 +130,6 @@ Modernizr.addTestWithShim("function_name", function() {
 				value : name
 			});
 			return name;
-		}
-	});
-});
-
-Modernizr.addTestWithShim("server", function() {
-	return typeof global === "object";
-}, function() {
-	Object.defineProperty(GLOBAL, '__filename', {
-		get : function() {
-			var scripts = document.getElementsByTagName("script");
-			var url = scripts[scripts.length - 1].src;
-			return url.substr(url.indexOf("/", url.indexOf(":") + 3));
-		}
-	});
-	Object.defineProperty(GLOBAL, '__dirname', {
-		get : function() {
-			return __filename.substr(0, __filename.lastIndexOf("/"));
 		}
 	});
 });

@@ -15,9 +15,12 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+require('./shims.js');
 var path = require("path");
 var definition = require('../javascript/nl/agentsatwork/globals/Definition');
+require('../javascript/nl/agentsatwork/globals/Badgerfish');
 require('../javascript/nl/agentsatwork/main/Grunt');
+GLOBAL.Badgerfish = definition.classOf("nl.agentsatwork.globals.Badgerfish");
 var extend = require('node.extend');
 var config = {};
 

@@ -15,11 +15,10 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, definition, DEBUG, expect, XMLHttpRequest */
+/* global define, DEBUG, expect, XMLHttpRequest */
 /* jshint -W030 */
-define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
+define(function() {
 	function class_Require() {
-		var Promise = definition.classOf("nl.agentsatwork.globals.Promise");
 
 		this.constructor = function Require() {
 
@@ -34,7 +33,7 @@ define([ 'javascript/nl/agentsatwork/globals/Promise' ], function() {
 		 */
 		function Require$require(references) {
 			return references.map(function(ref) {
-				return Promise.when(function(done) {
+				return new Promise(function(done) {
 					var xhr, ext, i, j;
 					i = ref.indexOf(".");
 					if (i < 0)

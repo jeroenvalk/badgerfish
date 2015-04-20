@@ -114,6 +114,7 @@ module.exports = gruntConfig({
 		"validate" : [ "validate" ],
 		"initialize" : [ "curl-dir" ],
 		"generate-sources" : [ "jison" ],
+		"generate-resources" : [ "classpath" ],
 		"compile" : [ "uglify" ],
 		"test" : [ "jshint:all", "jasmine:node" ],
 		"package" : [ "compress" ],
@@ -202,14 +203,14 @@ module.exports = gruntConfig({
 		frameworks : [ 'jasmine', 'requirejs' ],
 
 		// list of files / patterns to load in the browser
-		files : [ '<%= properties.cpxdir %>/src/main/scripts/shims.js', '<%= properties.cpxdir %>/src/main/scripts/karma.js', {
+		files : [ '<%= properties.cpxdir %>/src/main/scripts/shims.js', '<%= properties.cpxdir %>/src/main/scripts/karma.js', '<%= properties.cpxdir %>/src/main/scripts/clientOnly.js', {
 			pattern : './src/test/javascript/nl/**/*.js',
 			included : false
 		}, {
-			pattern : './src/main/**/*.js',
+			pattern : './src/main/javascript/**/*.js',
 			included : false
 		}, {
-			pattern : '<%= properties.cpxdir %>/src/main/**/*.js',
+			pattern : '<%= properties.cpxdir %>/src/main/javascript/**/*.js',
 			watched : false,
 			included : false
 		} ],

@@ -92,8 +92,8 @@ define([ 'javascript/nl/agentsatwork/testing/AsyncJasmineTestCase' ], function(c
 					expect(success.calls.count()).toBe(1);
 					expect(failure.calls.count()).toBe(1);
 					done();					
-				}, 0);
-			}, 0);
+				}, 1);
+			}, 1);
 		};
 
 		this.testSuccesses = function PromiseTest$testSuccesses(done) {
@@ -146,9 +146,9 @@ define([ 'javascript/nl/agentsatwork/testing/AsyncJasmineTestCase' ], function(c
 					setTimeout(function() {
 						expect(failure).not.toHaveBeenCalled();
 						done();
-					}, 0);
-				}, 0);
-			}, 0);
+					}, 1);
+				}, 1);
+			}, 1);
 		};
 		
 		this.testChaining = function PromiseTest$then(done) {
@@ -156,7 +156,7 @@ define([ 'javascript/nl/agentsatwork/testing/AsyncJasmineTestCase' ], function(c
 			var chain = jasmine.createSpy("chain").and.callFake(function(value) {
 				return ++value;
 			});
-			Promise.accept(1).then(chain).then(chain).then(chain);
+			Promise.resolve(1).then(chain).then(chain).then(chain);
 			
 			Promise.reject(0).catch(chain).then(check);
 
@@ -176,8 +176,8 @@ define([ 'javascript/nl/agentsatwork/testing/AsyncJasmineTestCase' ], function(c
 					expect(check).not.toHaveBeenCalled();
 					expect(chain).not.toHaveBeenCalled();
 					done();
-				}, 0);
-			}, 0);
+				}, 1);
+			}, 1);
 		};
 	};
 });
