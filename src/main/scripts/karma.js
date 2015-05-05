@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global location, DEBUG:true, __karma__, open */
+/* global location, DEBUG:true, __karma__, open, Modernizr, URL */
 (function() {
 	var allTestFiles = [];
 	var TEST_REGEXP = /(spec|test)\.js$/i;
@@ -37,7 +37,16 @@
 		__karma__.files[file] = converted[file];
 	});
 
-	require([ "/base/src/test/javascript/nl/agentsatwork/globals/Definition.js" ], function() {
+	var a = document.createElement("a");
+	require(Modernizr.required.map(function(dep) {
+		a.href = "http://localhost/base/src/main/scripts/" + dep;
+		var result = a.pathname;
+		if (result.charAt(0) === "/") {
+			return result;
+		} else {
+			return "/" + result;
+		}
+	}), function() {
 		require.config({
 			// Karma serves files under /base, which is the basePath from your
 			// config

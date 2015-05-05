@@ -20,21 +20,13 @@ if (typeof define !== 'function') {
 	var define = require('amdefine')(module)
 }
 // jshint ignore: end
-/* global define, DEBUG, expect */
+/* global define, DEBUG, expect, Modernizr, is */
 /* jshint -W030 */
 define([ "module" ], function(module) {
 	"use strict";
 	GLOBAL.DEBUG = false;
 
 	var shift = Array.prototype.shift;
-
-	function isFunction(value) {
-		return typeof value === 'function';
-	}
-
-	function isClass(value) {
-		return (isFunction(value) && !value.name.lastIndexOf("class", 0));
-	}
 
 	function moduleURI(module) {
 		if (!module.uri) {
@@ -46,12 +38,10 @@ define([ "module" ], function(module) {
 		}
 	}
 
-	var getPrivate, defaultPackage = "nl.agentsatwork.globals", plugin, state = {
-		classdef : {},
-		classes : {}
-	};
 	moduleURI(module);
 	var searchpath, prefix = module.uri.substr(0, module.uri.indexOf("nl/agentsatwork/globals/Definition"));
+	if (prefix.indexOf("..") > 0)
+		prefix = "/javascript/";
 	if (prefix === "/javascript/") {
 		searchpath = [ prefix ];
 	} else {
@@ -64,17 +54,97 @@ define([ "module" ], function(module) {
 		}
 	}
 
+	var _define = GLOBAL.define;
+	var current = null;
+	if (Modernizr.server) {
+		var Module = require("module");
+		var fn = Module._extensions['.js'];
+		Module._extensions['.js'] = function(module) {
+			current = module;
+			_define = require("amdefine")(current);
+			fn.apply(this, arguments);
+		};
+	}
+
+	GLOBAL.define = function(deps, callback) {
+		var closure = function define$closure() {
+			var module = shift.call(arguments);
+			var entity = callback.apply(null, arguments);
+			if (is.fn(GLOBAL.define.onModule)) {
+				moduleURI(module);
+				GLOBAL.define.onModule(module, entity);
+			}
+			return entity;
+		};
+
+		if (deps instanceof Array) {
+			if (is.fn(GLOBAL.define.dependencyMap)) {
+				deps = deps.map(GLOBAL.define.dependencyMap);
+			}
+			deps.forEach(function(dep) {
+				if (dep.charAt(0) !== '/' && dep.indexOf(".js", dep.length - 3) > -1) {
+					throw new Error("define: remove .js extension from: " + dep);
+				}
+			});
+			deps.unshift("module");
+			_define(deps, closure);
+		} else if (is.fn(deps)) {
+			callback = deps;
+			deps = [ "module" ];
+			_define(deps, closure);
+		} else {
+			_define.apply(null, arguments);
+		}
+	};
+
+	// private
+	
+	function isClass(value) {
+		return (is.fn(value) && !value.name.lastIndexOf("class", 0));
+	}
+
+	var getPrivate, defaultPackage = "nl.agentsatwork.globals", plugin, state = {
+		classdef : {},
+		classes : {}
+	};
+		
 	// API
 
-	var definition =
+	GLOBAL.define.onModule = function definition$onModule(module, fn) {
+		if (isClass(fn)) {
+			var offset = 0, uri = module.uri;
+			for (var i = 0; i < searchpath.length; ++i) {
+				if (!uri.lastIndexOf(searchpath[i], 0)) {
+					offset = searchpath[i].length;
+				}
+			}
+			var qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
+			if (!offset) {
+				qname = '@' + qname;
+			}
+			var classdef = {};
+			classdef[qname] = fn;
+			fn.qname = qname;
+			GLOBAL.define.register(classdef);
+			GLOBAL.define.classOf(qname);
+		}
+	};
+
+	if (Modernizr.server) {
+		GLOBAL.define.dependencyMap = function definition$dependencyMap(dep) {
+			if (!dep.lastIndexOf('javascript/')) {
+				dep = process.cwd() + '/src/main/' + dep + ".js";
+			}
+			return dep;
+		};
+	}
+
+	GLOBAL.define.register =
 	/**
 	 * @param {Object}
 	 *            classdef
 	 */
-	function definition(classdef) {
-		if (this instanceof definition) {
-			throw new Error("definition: calling as constructor prohibited");
-		}
+	function definition$register(classdef) {
 		if (!(classdef instanceof Object)) {
 			throw new Error("definition: required object mapping qualified names into class definition functions");
 		}
@@ -87,9 +157,6 @@ define([ "module" ], function(module) {
 				}
 			}
 		}
-		if (definition.define) {
-			definition.define.apply(null, Array.prototype.slice.call(arguments));
-		}
 	};
 
 	var definitionOf =
@@ -100,7 +167,7 @@ define([ "module" ], function(module) {
 	 * 
 	 * @private
 	 */
-	function define$definitionOf(chain) {
+	function definition$definitionOf(chain) {
 		if (!chain) {
 			throw new Error("definition.classOf: empty inheritance chain");
 		}
@@ -170,71 +237,7 @@ define([ "module" ], function(module) {
 		return base;
 	};
 
-	function bootstrap(callback) {
-		return function closure() {
-			var module = shift.call(arguments);
-			var fn = callback.apply(null, arguments);
-			if (isClass(fn)) {
-				moduleURI(module);
-				var offset = 0, uri = module.uri;
-				for (var i = 0; i < searchpath.length; ++i) {
-					if (!uri.lastIndexOf(searchpath[i], 0)) {
-						offset = searchpath[i].length;
-					}
-				}
-				var qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
-				if (!offset) {
-					qname = '@' + qname;
-				}
-				var classdef = {};
-				classdef[qname] = fn;
-				fn.qname = qname;
-				definition(classdef);
-				definitionOf(qname);
-			}
-			return fn;
-		};
-	}
-
-	var _define = GLOBAL.define;
-	var current = null;
-	if (!_define) {
-		var Module = require("module");
-		var fn = Module._extensions['.js'];
-		Module._extensions['.js'] = function(module) {
-			current = module;
-			fn.apply(this, arguments);
-		};
-	}
-	GLOBAL.define = function(deps, callback) {
-		if (current) {
-			if (deps instanceof Array) {
-				deps = deps.map(function(dep) {
-					if (!dep.lastIndexOf('javascript/')) {
-						dep = process.cwd() + '/src/main/' + dep + ".js";
-					}
-					return dep;
-				});
-			}
-			_define = require("amdefine")(current);
-			current = null;
-		}
-		if (deps instanceof Array) {
-			deps.forEach(function(dep) {
-				if (dep.charAt(0) !== '/' && dep.indexOf(".js", dep.length - 3) > -1) {
-					throw new Error("define: remove .js extension from: " + dep);
-				}
-			});
-			deps.unshift("module");
-			_define(deps, bootstrap(callback));
-		} else if (isFunction(deps)) {
-			_define([ "module" ], bootstrap(deps));
-		} else {
-			_define.apply(null, arguments);
-		}
-	};
-
-	GLOBAL.define.classOf = definition.classOf =
+	GLOBAL.define.classOf =
 	/**
 	 * @param {string}
 	 *            chain - inheritance chain
@@ -247,7 +250,7 @@ define([ "module" ], function(module) {
 		throw new Error("definition.classOf: not yet configured");
 	};
 
-	definition.configure =
+	var configure =
 	/**
 	 * 
 	 */
@@ -552,7 +555,7 @@ define([ "module" ], function(module) {
 		DEFINED : 3
 	};
 
-	definition.configure(module.config ? module.config() : {});
+	configure(module.config ? module.config() : {});
 
-	return definition;
+	return null;
 });

@@ -22,7 +22,7 @@
 
 GLOBAL.DEBUG = false;
 
-GLOBAL.require([ '/javascript/nl/agentsatwork/globals/Definition.js' ], function(definition) {
+GLOBAL.require([ '/scripts/shims.js' ], function(definition) {
 	GLOBAL.definition = definition;
 	GLOBAL.requirejs.config({
 		baseUrl : "/",
@@ -89,17 +89,17 @@ GLOBAL.require([ '/javascript/nl/agentsatwork/globals/Definition.js' ], function
 											classdef = {};
 											classdef['nl.agentsatwork.globals.' + fn.name.substr(fn.name.lastIndexOf("_") + 1)] = fn;
 										}
-										definition(classdef);
+										define.register(classdef);
 									}
 									for (i = 0; i < elements.length; ++i) {
 										var j;
 										var chain = elements[i].getAttribute("chain");
 										var F = new Function("return function " + chain.replace(/\./g, "_").replace(/:/g, "$") + "(){};")();
-										F.prototype = definition.classOf(chain).prototype;
+										F.prototype = define.classOf(chain).prototype;
 										var instance = new F();
 										var qnames = chain.split(":");
 										for (j = 0; j < qnames.length; ++j) {
-											definition.classOf(qnames.slice(0, j + 1).join(":")).call(instance, elements[i]);
+											define.classOf(qnames.slice(0, j + 1).join(":")).call(instance, elements[i]);
 										}
 									}
 								});

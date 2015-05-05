@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global document, is, Modernizr */
+/* global document, is, requirejs, Modernizr */
 
 // compatibility reference to the global scope
 if (typeof global === 'object') {
@@ -45,7 +45,7 @@ Modernizr$addTestWithShim.call(null, "modernizr", function() {
 }, function() {
 	GLOBAL.Modernizr = {
 		addTest : function Modernizr$addTest(name, fn) {
-			Modernizr[name] = fn();
+			Modernizr[name] = !!fn();
 		}
 	};
 });
@@ -84,6 +84,57 @@ Modernizr.addTestWithShim("server", function() {
 	});
 });
 
+Modernizr.addTest("requirejs", function() {
+	return GLOBAL.requirejs && is.fn(requirejs.config);
+});
+
+Modernizr.addTest("karma", function() {
+	return !!GLOBAL.__karma__;
+});
+
+var deps = [];
+var _require = function Modernizr$require(dep) {
+	if (dep instanceof Array) {
+		dep.forEach(_require);
+	} else {
+		if (Modernizr.server) {
+			require("./" + dep);
+		} else {
+			if (Modernizr.requirejs) {
+				deps.push("./" + dep);
+			} else {
+				var script = document.createElement('script');
+				script.setAttribute('type', 'application/javascript');
+				script.setAttribute('src', [ __dirname, dep ].join("/"));
+				if (document.body) {
+					document.body.appendChild(script);
+				} else {
+					document.head.appendChild(script);
+				}
+			}
+		}
+	}
+};
+
+if (Modernizr.requirejs && !Modernizr.server && !Modernizr.karma) {
+	Modernizr.done = function Modernizr$done() {
+		require(deps.map(function(dep) {
+			return '/scripts/' + dep;
+		}), function() {
+
+		});
+	};
+} else {
+	if (Modernizr.karma) {
+		Modernizr.done = function Modernizr$done() {
+			Modernizr.required = deps;
+		};
+	} else {
+		Modernizr.done = function Modernizr$done() {
+		};
+	}
+}
+
 Modernizr.addTestWithShim("modernizr_load", function() {
 	return is.fn(Modernizr.load);
 }, function() {
@@ -92,46 +143,24 @@ Modernizr.addTestWithShim("modernizr_load", function() {
 			Modernizr.load(entity.shift());
 			Modernizr.load(entity);
 		} else if (isNaN(entity.length)) {
-			if (Modernizr.server) {
-				if (entity.test) {
-					require("./" + entity.yep);
-				} else {
-					require("./" + entity.nope);
-				}
+			if (entity.test) {
+				if (entity.yep)
+					_require(entity.yep);
 			} else {
-				var script = document.createElement('script');
-				script.setAttribute('type', 'application/javascript');
-				if (entity.test) {
-					script.setAttribute('src', [ __dirname, entity.yep ].join("/"));
-				} else {
-					script.setAttribute('src', [ __dirname, entity.nope ].join("/"));
-				}
-				if (document.body) {
-					document.body.appendChild(script);
-				} else {
-					document.head.appendChild(script);
-				}
+				if (entity.nope)
+					_require(entity.nope);
 			}
 		}
 	};
 });
 
-Modernizr.addTestWithShim("function_name", function() {
+Modernizr.addTest("function_name", function() {
 	return function f() {
 	}.name;
-}, function() {
-	// Fix Function#name on browsers that do not support it (IE) (Jürg Lehni):
-	Object.defineProperty(Function.prototype, 'name', {
-		get : function() {
-			var name = this.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
-			// For better performance only parse once, and then cache the
-			// result through a new accessor for repeated access.
-			Object.defineProperty(this, 'name', {
-				value : name
-			});
-			return name;
-		}
-	});
+});
+
+Modernizr.addTest("promise", function() {
+	return !!GLOBAL.Promise;
 });
 
 Modernizr.load({
@@ -139,3 +168,20 @@ Modernizr.load({
 	yep : "serverOnly.js",
 	nope : "clientOnly.js"
 });
+
+Modernizr.load({
+	test : Modernizr.function_name,
+	nope : "ieOnly.js"
+});
+
+Modernizr.load({
+	test : true,
+	yep : "../javascript/nl/agentsatwork/globals/Definition.js"
+});
+
+Modernizr.load({
+	test : Modernizr.promise,
+	nope : "../javascript/nl/agentsatwork/globals/Promise.js"
+});
+
+Modernizr.done();

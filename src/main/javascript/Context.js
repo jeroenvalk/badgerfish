@@ -20,7 +20,7 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 	// var xpath = require('xpath');
 	// var DOMParser = require('xmldom').DOMParser;
 	// var jsonpath = JSONPath.eval;
-	var Promise = definition.classOf("nl.agentsatwork.globals.Promise");
+	//var Promise = define.classOf("nl.agentsatwork.globals.Promise");
 
 	function class_Context($, argv, properties) {
 		var context;
@@ -82,7 +82,7 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 				}
 				x.node = xmlDoc.documentElement;
 			}
-			var Badgerfish = definition.classOf("Require:Badgerfish");
+			var Badgerfish = define.classOf("Require:Badgerfish");
 			x.badgerfish = new Badgerfish(x.node);
 			return this;
 		} ];
@@ -102,7 +102,7 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 				if (x.node.tagName !== 'layout' && x.node.tagName !== 'panel')
 					this.resolveXIncludes();
 				var result;
-				if (window.ActiveXObject) {
+				if (window.ActiveXObject || "ActiveXObject" in window) {
 					result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
 				}
 				// code for Chrome, Firefox, Opera, etc.

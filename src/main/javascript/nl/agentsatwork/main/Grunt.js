@@ -19,8 +19,8 @@
 
 /* global define, Badgerfish, DOMParser */
 define(
-		[ "fs", "url", "path", "child_process", "mkdirp", "glob", "xpath", "jison", "http-rewrite-middleware" ],
-		function(fs, url, path, child_process, mkdirp, glob, xpath, jison, rewriteModule) {
+		[ "fs", "url", "path", "child_process", "glob", "xpath", "jison", "http-rewrite-middleware" ],
+		function(fs, url, path, child_process, glob, xpath, jison, rewriteModule) {
 			function class_Grunt(properties) {
 
 				var spawn = child_process.spawn;
