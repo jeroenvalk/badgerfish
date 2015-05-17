@@ -119,7 +119,7 @@ module.exports = gruntConfig({
 		"test" : [ "jshint:all", "jasmine:node" ],
 		"package" : [ "compress" ],
 		"pre-integration-test" : [ "unzip" ],
-		"start" : [ "server:karma", "connect" ],
+		"start" : [ "lock", "server:karma", "connect" ],
 		"stop" : [ "stop" ]
 	},
 
@@ -145,7 +145,8 @@ module.exports = gruntConfig({
 					"src/main" : 0,
 					"dist" : 0,
 					"src" : 0,
-					"<%= properties.cpxdir %>/src/main" : 0
+					"<%= properties.cpxdir %>/src/main" : 0,
+					"<%= properties.cpxdir %>" : 0
 				})
 			}
 		}
@@ -251,7 +252,7 @@ module.exports = gruntConfig({
 		// start these browsers
 		// available browser launchers:
 		// https://npmjs.org/browse/keyword/karma-launcher
-		browsers : [ 'Chrome' ],
+		browsers : [ 'Chrome', 'Firefox', process.platform === 'darwin' ? 'Safari' : 'IE' ],
 
 		// Continuous Integration mode
 		// if true, Karma captures browsers, runs the tests and exits

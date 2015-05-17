@@ -32,8 +32,7 @@ GLOBAL.require([ '/scripts/shims.js' ], function(definition) {
 		}
 	});
 
-	GLOBAL.require([ 'jquery', 'javascript/nl/agentsatwork/globals/Badgerfish', 'javascript/nl/agentsatwork/globals/Promise',
-			'javascript/nl/agentsatwork/globals/Require' ], function(jQuery) {
+	GLOBAL.require([ 'jquery' ], function(jQuery) {
 		if (!jQuery) jQuery = $;
 		GLOBAL.require([ 'javascript/Context' ], function(Context) {
 

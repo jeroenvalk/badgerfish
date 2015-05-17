@@ -37,16 +37,7 @@
 		__karma__.files[file] = converted[file];
 	});
 
-	var a = document.createElement("a");
-	require(Modernizr.required.map(function(dep) {
-		a.href = "http://localhost/base/src/main/scripts/" + dep;
-		var result = a.pathname;
-		if (result.charAt(0) === "/") {
-			return result;
-		} else {
-			return "/" + result;
-		}
-	}), function() {
+	Modernizr.ready(function() {
 		require.config({
 			// Karma serves files under /base, which is the basePath from your
 			// config

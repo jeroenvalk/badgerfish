@@ -304,18 +304,6 @@ define(
 						var select = xpath.useNamespaces({
 							pom : "http://maven.apache.org/POM/4.0.0"
 						});
-						if (!fs.existsSync("target"))
-							fs.mkdirSync("target");
-						if (fs.existsSync("target/lock.txt")) {
-							var pid = parseInt(fs.readFileSync("target/lock.txt", {
-								encoding : "utf8"
-							}));
-							if (require("is-running")(pid)) {
-								grunt.log.error("Grunt build already running at " + pid);
-								return false;
-							}
-						}
-						fs.writeFileSync("target/lock.txt", process.pid + "\n");
 						var pom = new DOMParser().parseFromString(fs.readFileSync("pom.xml", {
 							encoding : "utf8"
 						}));
@@ -365,10 +353,23 @@ define(
 							glob.sync("**/*.js", {
 								cwd : srcdir
 							}).forEach(function(srcfile) {
-								prefix[srcfile] = srcdir;
+								var parts = srcfile.split(".");
+								if (parts.length === 2 && parts[1] === "js") {
+									parts = parts[0].split("/");
+									var classname = parts.pop();
+									var current = prefix;
+									parts.forEach(function(part) {
+										if (!current[part]) {
+											current[part] = {};
+										}
+										current = current[part];
+									});
+									current[classname] = srcdir;
+								}
 							});
 						});
 						grunt.file.write("target/main/resources/classes.json", JSON.stringify(prefix));
+						grunt.file.write("target/main/scripts/classes.js", "Modernizr.classes=" + JSON.stringify(prefix));
 					};
 					return execute;
 				};
@@ -451,6 +452,24 @@ define(
 						default:
 							throw new Error("target '" + target + "' not defined");
 						}
+					};
+				};
+
+				this.taskLock = function Grunt$taskLock() {
+					var grunt = properties.getPrivate(this).grunt;
+					return function() {
+						if (!fs.existsSync("target"))
+							fs.mkdirSync("target");
+						if (fs.existsSync("target/lock.txt")) {
+							var pid = parseInt(fs.readFileSync("target/lock.txt", {
+								encoding : "utf8"
+							}));
+							if (require("is-running")(pid)) {
+								grunt.log.error("Grunt build already running at " + pid);
+								return false;
+							}
+						}
+						fs.writeFileSync("target/lock.txt", process.pid + "\n");
 					};
 				};
 

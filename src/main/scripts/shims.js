@@ -92,7 +92,13 @@ Modernizr.addTest("karma", function() {
 	return !!GLOBAL.__karma__;
 });
 
-var deps = [];
+if (Modernizr.karma) {
+	Modernizr.baseUrl = "/base/";
+} else {
+	Modernizr.baseUrl = "/";
+}
+
+var deps = [], callbacks = [];
 var _require = function Modernizr$require(dep) {
 	if (dep instanceof Array) {
 		dep.forEach(_require);
@@ -116,24 +122,27 @@ var _require = function Modernizr$require(dep) {
 	}
 };
 
-if (Modernizr.requirejs && !Modernizr.server && !Modernizr.karma) {
-	Modernizr.done = function Modernizr$done() {
-		require(deps.map(function(dep) {
-			return '/scripts/' + dep;
-		}), function() {
-
-		});
-	};
-} else {
-	if (Modernizr.karma) {
-		Modernizr.done = function Modernizr$done() {
-			Modernizr.required = deps;
-		};
+Modernizr.ready = function Modernizr$ready(callback) {
+	if (callbacks === null) {
+		callback();
 	} else {
-		Modernizr.done = function Modernizr$done() {
-		};
+		callbacks.push(callback);
 	}
 }
+
+var _done = function Modernizr$done() {
+	if (deps.length) {
+		var currentDeps = deps.map(function(dep) {
+			return Modernizr.baseUrl + 'src/main/scripts/' + dep;
+		});
+		deps.length = 0;
+		require(currentDeps, _done);
+	} else {
+		callbacks.forEach(function(callback) {
+			callback();
+		});
+	}
+};
 
 Modernizr.addTestWithShim("modernizr_load", function() {
 	return is.fn(Modernizr.load);
@@ -184,4 +193,9 @@ Modernizr.load({
 	nope : "../javascript/nl/agentsatwork/globals/Promise.js"
 });
 
-Modernizr.done();
+_done();
+Modernizr.ready(function() {
+	if (!Modernizr.promise) {
+		GLOBAL.Promise = define.classOf("Promise");
+	}
+});
