@@ -15,18 +15,28 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// jshint ignore: start
-if (typeof define !== 'function') {
-	var define = require('amdefine')(module)
-}
-// jshint ignore: end
 /* global define, DEBUG, expect, Modernizr, is */
 /* jshint -W030 */
 define([ "module" ], function(module) {
 	"use strict";
-	GLOBAL.DEBUG = false;
 
-	var shift = Array.prototype.shift;
+	var srcdir = {};
+	function prefixes(pkg) {
+		var current = srcdir;
+		Object.keys(pkg).forEach(function(part) {
+			if (typeof part === 'string') {
+				part.split("/").forEach(function(part) {
+					if (!current[part]) {
+						current[part] = {};
+					}
+					current = current[part];
+				});
+			} else {
+				prefixes(pkg[part]);
+			}
+		});
+	}
+	prefixes(Modernizr.classes);
 
 	function moduleURI(module) {
 		if (!module.uri) {
@@ -54,51 +64,8 @@ define([ "module" ], function(module) {
 		}
 	}
 
-	var _define = GLOBAL.define;
-	var current = null;
-	if (Modernizr.server) {
-		var Module = require("module");
-		var fn = Module._extensions['.js'];
-		Module._extensions['.js'] = function(module) {
-			current = module;
-			_define = require("amdefine")(current);
-			fn.apply(this, arguments);
-		};
-	}
-
-	GLOBAL.define = function(deps, callback) {
-		var closure = function define$closure() {
-			var module = shift.call(arguments);
-			var entity = callback.apply(null, arguments);
-			if (is.fn(GLOBAL.define.onModule)) {
-				moduleURI(module);
-				GLOBAL.define.onModule(module, entity);
-			}
-			return entity;
-		};
-
-		if (deps instanceof Array) {
-			if (is.fn(GLOBAL.define.dependencyMap)) {
-				deps = deps.map(GLOBAL.define.dependencyMap);
-			}
-			deps.forEach(function(dep) {
-				if (dep.charAt(0) !== '/' && dep.indexOf(".js", dep.length - 3) > -1) {
-					throw new Error("define: remove .js extension from: " + dep);
-				}
-			});
-			deps.unshift("module");
-			_define(deps, closure);
-		} else if (is.fn(deps)) {
-			callback = deps;
-			deps = [ "module" ];
-			_define(deps, closure);
-		} else {
-			_define.apply(null, arguments);
-		}
-	};
-
 	// private
-	
+
 	function isClass(value) {
 		return (is.fn(value) && !value.name.lastIndexOf("class", 0));
 	}
@@ -107,20 +74,39 @@ define([ "module" ], function(module) {
 		classdef : {},
 		classes : {}
 	};
-		
+
 	// API
 
-	GLOBAL.define.onModule = function definition$onModule(module, fn) {
+	var definition = {};
+	
+	definition.onModule = function definition$onModule(module, fn) {
 		if (isClass(fn)) {
-			var offset = 0, uri = module.uri;
-			for (var i = 0; i < searchpath.length; ++i) {
-				if (!uri.lastIndexOf(searchpath[i], 0)) {
-					offset = searchpath[i].length;
+			var index, qname;
+			var current = srcdir;
+			var parts = module.uri.split("/");
+			parts.forEach(function(part, i) {
+				if (current) {
+					current = current[part];
+					if (current === null) {
+						index = i;
+						current = Modernizr.classes;
+					}
 				}
-			}
-			var qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
-			if (!offset) {
-				qname = '@' + qname;
+			});
+			if (parts.slice(0, index).join("/") === current) {
+				qname = parts.slice(index).join(".");
+			} else {
+				// TODO: remove this code
+				var offset = 0, uri = module.uri;
+				for (var i = 0; i < searchpath.length; ++i) {
+					if (!uri.lastIndexOf(searchpath[i], 0)) {
+						offset = searchpath[i].length;
+					}
+				}
+				qname = uri.substring(offset, uri.lastIndexOf(".")).replace(/\//g, ".");
+				if (!offset) {
+					qname = '@' + qname;
+				}
 			}
 			var classdef = {};
 			classdef[qname] = fn;
@@ -131,15 +117,32 @@ define([ "module" ], function(module) {
 	};
 
 	if (Modernizr.server) {
-		GLOBAL.define.dependencyMap = function definition$dependencyMap(dep) {
-			if (!dep.lastIndexOf('javascript/')) {
-				dep = process.cwd() + '/src/main/' + dep + ".js";
+		definition.dependencyMap = function definition$dependencyMap(dep) {
+			if (!dep.lastIndexOf('class!', 0)) {
+				dep = dep.substr(6);
+				var parts = dep.split(".");
+				var current = Modernizr.classes;
+				parts.forEach(function(part) {
+					current = current[part];
+					if (!current) {
+						throw new Error(dep + ": class not found");
+					}
+				});
+				if (typeof current !== "string") {
+					throw new Error(dep + ": incomplete classname");
+				}
+				dep = current + parts.replace('.', '/');
+			} else {
+				// TODO: remove this code
+				if (!dep.lastIndexOf('javascript/')) {
+					dep = process.cwd() + '/src/main/' + dep + ".js";
+				}
 			}
 			return dep;
 		};
 	}
 
-	GLOBAL.define.register =
+	definition.register =
 	/**
 	 * @param {Object}
 	 *            classdef
@@ -237,7 +240,7 @@ define([ "module" ], function(module) {
 		return base;
 	};
 
-	GLOBAL.define.classOf =
+	definition.classOf =
 	/**
 	 * @param {string}
 	 *            chain - inheritance chain
@@ -557,5 +560,5 @@ define([ "module" ], function(module) {
 
 	configure(module.config ? module.config() : {});
 
-	return null;
+	return definition;
 });

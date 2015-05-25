@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -79,6 +79,8 @@ define(function() {
 			function private_Promise$onFailure(e) {
 				if (e === undefined)
 					throw new Error("promise: udefined cannot resolve as error");
+				if (!onFailure)
+					throw e;
 				onFailure.call(null, e);
 				private_Promise$done(e, true);
 			}
@@ -121,14 +123,14 @@ define(function() {
 			return new Promise(this, onSuccess, onFailure);
 		};
 
-		Promise.when =
+		Promise.all =
 		/**
 		 * @param {Promise...|Function...}
 		 *            promises and asynchronous callbacks
 		 * @returns {Promise} promise that is done when all arguments are done
 		 * @static
 		 */
-		function definition$when() {
+		function definition$all(argv) {
 			function definition$when$error() {
 				throw new Error("promise$when: failed promise");
 			}
@@ -138,7 +140,7 @@ define(function() {
 				done = _done;
 			}
 
-			var count = arguments.length, result = new Array(count);
+			var count = argv.length, result = new Array(count);
 			if (!count)
 				throw new Error("definition$when: missing arguments");
 			function definition$when$done(i) {
@@ -157,11 +159,11 @@ define(function() {
 			}
 
 			var promise = new Promise(definition$when$closure);
-			for (var i = 0; i < arguments.length; ++i) {
-				if (arguments[i] instanceof Promise) {
-					arguments[i].done(definition$when$done(i), definition$when$error);
+			for (var i = 0; i < argv.length; ++i) {
+				if (argv[i] instanceof Promise) {
+					argv[i].done(definition$when$done(i), definition$when$error);
 				} else {
-					arguments[i].call(null, definition$when$done(i));
+					argv[i].call(null, definition$when$done(i));
 				}
 			}
 			return promise;

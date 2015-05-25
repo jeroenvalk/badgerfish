@@ -15,7 +15,14 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global document, is, requirejs, Modernizr */
+/* global document, is, requirejs, define, Modernizr, DEBUG, expect */
+/* jshint -W030 */
+
+// jshint ignore: start
+if (typeof define !== 'function') {
+	var define = require('amdefine')(module)
+}
+// jshint ignore: end
 
 // compatibility reference to the global scope
 if (typeof global === 'object') {
@@ -23,6 +30,7 @@ if (typeof global === 'object') {
 } else {
 	this.GLOBAL = this;
 }
+GLOBAL.DEBUG = false;
 
 function Modernizr$addTestWithShim(name, test, shim) {
 	if (GLOBAL.Modernizr) {
@@ -84,19 +92,28 @@ Modernizr.addTestWithShim("server", function() {
 	});
 });
 
-Modernizr.addTest("requirejs", function() {
+Modernizr.addTestWithShim("requirejs", function() {
 	return GLOBAL.requirejs && is.fn(requirejs.config);
+}, function() {
+	if (Modernizr.server) {
+		GLOBAL.requirejs = function Modernizr$requirejs(deps, callback) {
+			callback.apply(null, deps.map(function(dep) {
+				return require(dep);
+			}));
+		};
+	} else {
+		GLOBAL.requirejs = GLOBAL.require = function Modernizr$require(dep) {
+			var script = document.createElement('script');
+			script.setAttribute('type', 'application/javascript');
+			script.setAttribute('src', [ __dirname, dep ].join("/"));
+			if (document.body) {
+				document.body.appendChild(script);
+			} else {
+				document.head.appendChild(script);
+			}
+		};
+	}
 });
-
-Modernizr.addTest("karma", function() {
-	return !!GLOBAL.__karma__;
-});
-
-if (Modernizr.karma) {
-	Modernizr.baseUrl = "/base/";
-} else {
-	Modernizr.baseUrl = "/";
-}
 
 var deps = [], callbacks = [];
 var _require = function Modernizr$require(dep) {
@@ -104,20 +121,15 @@ var _require = function Modernizr$require(dep) {
 		dep.forEach(_require);
 	} else {
 		if (Modernizr.server) {
-			require("./" + dep);
-		} else {
-			if (Modernizr.requirejs) {
-				deps.push("./" + dep);
-			} else {
-				var script = document.createElement('script');
-				script.setAttribute('type', 'application/javascript');
-				script.setAttribute('src', [ __dirname, dep ].join("/"));
-				if (document.body) {
-					document.body.appendChild(script);
-				} else {
-					document.head.appendChild(script);
-				}
+			var def = require("./" + dep);
+			if (def.onModule) {
+				GLOBAL.define.onModule = def.onModule;
+				GLOBAL.define.dependencyMap = def.dependencyMap;
+				GLOBAL.define.register = def.register;
+				GLOBAL.define.classOf = def.classOf;
 			}
+		} else {
+			deps.push("./" + dep);
 		}
 	}
 };
@@ -128,7 +140,7 @@ Modernizr.ready = function Modernizr$ready(callback) {
 	} else {
 		callbacks.push(callback);
 	}
-}
+};
 
 var _done = function Modernizr$done() {
 	if (deps.length) {
@@ -163,6 +175,16 @@ Modernizr.addTestWithShim("modernizr_load", function() {
 	};
 });
 
+Modernizr.addTest("karma", function() {
+	return !!GLOBAL.__karma__;
+});
+
+if (Modernizr.karma) {
+	Modernizr.baseUrl = "/base/";
+} else {
+	Modernizr.baseUrl = "/";
+}
+
 Modernizr.addTest("function_name", function() {
 	return function f() {
 	}.name;
@@ -171,6 +193,58 @@ Modernizr.addTest("function_name", function() {
 Modernizr.addTest("promise", function() {
 	return !!GLOBAL.Promise;
 });
+
+var shift = Array.prototype.shift;
+var _define = GLOBAL.define;
+if (Modernizr.server) {
+	var Module = require("module");
+	var fn = Module._extensions['.js'];
+	Module._extensions['.js'] = function(module) {
+		_define = require("amdefine")(module);
+		fn.apply(this, arguments);
+	};
+}
+
+GLOBAL.define = function(deps, callback) {
+	var closure = function define$closure() {
+		var module = shift.call(arguments);
+		var entity = callback.apply(null, arguments);
+		if (is.fn(GLOBAL.define.onModule)) {
+			define.moduleURI(module);
+			GLOBAL.define.onModule(module, entity);
+		}
+		return entity;
+	};
+
+	if (deps instanceof Array) {
+		if (is.fn(GLOBAL.define.dependencyMap)) {
+			deps = deps.map(GLOBAL.define.dependencyMap);
+		}
+		deps.forEach(function(dep) {
+			if (dep.charAt(0) !== '/' && dep.indexOf(".js", dep.length - 3) > -1) {
+				throw new Error("define: remove .js extension from: " + dep);
+			}
+		});
+		deps.unshift("module");
+		_define(deps, closure);
+	} else if (is.fn(deps)) {
+		callback = deps;
+		deps = [ "module" ];
+		_define(deps, closure);
+	} else {
+		_define.apply(null, arguments);
+	}
+};
+
+define.moduleURI = function define$moduleURI(module) {
+	if (!module.uri) {
+		var filename = module.filename.replace(/\\/g, '/');
+		if (filename.charAt(0) === '/')
+			filename = filename.substr(1);
+		DEBUG && expect(filename.charAt(0)).not.toBe('/');
+		module.uri = [ 'file://', filename ].join('/');
+	}
+};
 
 Modernizr.load({
 	test : Modernizr.server,
@@ -183,19 +257,39 @@ Modernizr.load({
 	nope : "ieOnly.js"
 });
 
+Modernizr.classes = {};
 Modernizr.load({
 	test : true,
 	yep : "../javascript/nl/agentsatwork/globals/Definition.js"
 });
 
-Modernizr.load({
-	test : Modernizr.promise,
-	nope : "../javascript/nl/agentsatwork/globals/Promise.js"
+var currentDeps = deps.map(function(dep) {
+	return Modernizr.baseUrl + 'src/main/scripts/' + dep;
 });
-
-_done();
-Modernizr.ready(function() {
-	if (!Modernizr.promise) {
-		GLOBAL.Promise = define.classOf("Promise");
-	}
-});
+deps.length = 0;
+if (Modernizr.server) {
+	_done();
+} else {
+	requirejs(currentDeps, function() {
+		var definition = arguments[arguments.length - 1];
+		if (Modernizr.promise || Modernizr.server) {
+			GLOBAL.define.onModule = definition.onModule;
+			GLOBAL.define.dependencyMap = definition.dependencyMap;
+			GLOBAL.define.register = definition.register;
+			GLOBAL.define.classOf = definition.classOf;
+			_done();
+		} else {
+			requirejs([ Modernizr.baseUrl + 'src/main/javascript/nl/agentsatwork/globals/Promise.js' ], function(classPromise) {
+				definition.register({
+					'nl.agentsatwork.globals.Promise' : classPromise
+				});
+				GLOBAL.Promise = definition.classOf("Promise");
+				GLOBAL.define.onModule = definition.onModule;
+				GLOBAL.define.dependencyMap = definition.dependencyMap;
+				GLOBAL.define.register = definition.register;
+				GLOBAL.define.classOf = definition.classOf;
+				_done();
+			});
+		}
+	});
+}

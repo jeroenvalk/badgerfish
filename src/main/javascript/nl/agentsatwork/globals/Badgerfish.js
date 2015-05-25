@@ -560,7 +560,8 @@ define(function() {
 						modules.push(nodes[i].select("@href"));
 					}
 					x.includes = [];
-					Promise.all(self.require(modules)).then(function(argvv) {
+					var required = self.require(modules);
+					Promise.all(required).then(function(argvv) {
 						var argv = argvv;
 						if (!(argvv instanceof Array)) {
 							argv = arguments;
