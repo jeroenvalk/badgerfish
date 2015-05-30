@@ -342,8 +342,8 @@ define(
 					var execute = function Grunt$taskClasspath$execute() {
 						var bfish = new Badgerfish(new DOMParser().parseFromString(fs.readFileSync(".classpath", {
 							encoding : "utf8"
-						})));
-						var searchpath = bfish.getElementsByTagName('classpath/classpathentry').filter(function(entry) {
+						})).documentElement);
+						var searchpath = bfish.getElementsByTagName('classpathentry').filter(function(entry) {
 							return entry.getElementByTagName("@kind") === "src";
 						}).map(function(entry) {
 							return entry.getElementByTagName("@path");

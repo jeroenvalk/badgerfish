@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals define, DEBUG, expect, document, DOMParser, XMLSerializer */
+/* globals define, DEBUG, expect, DOMParser, XMLSerializer */
 /* jshint -W030 */
 define(function() {
 	function class_Badgerfish(properties) {
@@ -53,9 +53,8 @@ define(function() {
 		 * @constructor
 		 */
 		function Badgerfish(node, parent, xmlns) {
-			if (node.badgerfish) {
-				throw new Error("Badgerfish: node already decorated");
-			}
+			if (node.nodeType !== 1)
+				throw new Error('Badgerfish: only elements can be decorated');
 			var x = {
 				root : parent ? properties.getPrivate(parent).root : this,
 				source : node,
@@ -68,18 +67,10 @@ define(function() {
 				x.prefix = {};
 				x.badgerfish = [];
 				x.includes = [];
+				this.decorateRoot();
 			}
 
-			var y = properties.getPrivate(x.root);
-			var index = y.badgerfish.length;
-			y.badgerfish.push(this);
-			node['@'] = function Badgerfish$at(root) {
-				if (badgerfish !== null)
-					throw new Error("Badgerfish: integrity violation");
-				if (root && root !== x.root)
-					throw new Error("Badgerfish: foreign node");
-				badgerfish = y.badgerfish[index];
-			};
+			this.decorateNode();
 
 			var attr = node.attributes;
 			if (attr) {
@@ -92,12 +83,89 @@ define(function() {
 			this.registerNamespaces(xmlns);
 		};
 
-		this.getBadgerfish = function Badgerfish$getBadgerfish(node) {
-			if (!node['@'])
+		var getDecoration = function Badgerfish$getDecoration(node) {
+			var result = node.previousSibling;
+			switch (result ? result.nodeType : -1) {
+			case 7:
+			case 8:
+				return result;
+			default:
 				return null;
-			badgerfish = null;
-			node['@'](properties.getPrivate(this).root);
-			return badgerfish;
+			}
+		};
+
+		var getIndexFromDecoration = function Badgerfish$getIndexFromDecoration(decoration) {
+			decoration = decoration.nodeValue.split("=");
+			if (decoration[0].lastIndexOf("data-bfish-", 0) < 0) {
+				throw new Error("Badgerfish.getIndexFromDecoration: invalid decoration");
+			}
+			var index = parseInt(decoration[1]);
+			if (isNaN(index)) {
+				throw new Error("Badgerfish.getIndexFromDecoration: invalid decoration");
+			}
+			return index;
+		};
+
+		var createDecoration = function Badgerfish$createDecoration(node, key, value) {
+			var decoration = node.ownerDocument.createComment([ key, value ].join("="));
+			node.parentNode.insertBefore(decoration, node);
+		};
+
+		var roots = [];
+
+		this.decorateRoot = function Badgerfish$decorateRoot() {
+			var index = roots.length;
+			roots.push(this);
+			createDecoration(properties.getPrivate(this).node, 'data-bfish-root', index);
+		};
+
+		this.getBadgerfishFromRoot = function Badgerfish$getBadgerfishFromRoot(node) {
+			if (node === node.ownerDocument.documentElement) {
+				return this;
+			}
+			var decoration = getDecoration(node);
+			if (decoration) {
+				return properties.getPrivate(this).badgerfish[getIndexFromDecoration(decoration)];
+			}
+			return null;
+		};
+
+		Badgerfish.getRootByDocument = function Badgerfish$getRootByDocument(doc) {
+			var decoration = getDecoration(doc.documentElement);
+			if (decoration) {
+				return roots[getIndexFromDecoration(decoration)];
+			}
+			throw new Error("Badgerfish.getRootByDocument: node not decorated");
+		};
+
+		this.decorateNode = function Badgerfish$decorateNode() {
+			var x = properties.getPrivate(this);
+			var y = properties.getPrivate(x.root);
+			var index = y.badgerfish.length;
+			y.badgerfish.push(this);
+			if (false) {
+				x.node['@'] = function Badgerfish$at(root) {
+					if (badgerfish !== null)
+						throw new Error("Badgerfish: integrity violation");
+					if (root && root !== x.root)
+						throw new Error("Badgerfish: foreign node");
+					badgerfish = y.badgerfish[index];
+				};
+			} else {
+				if (x.node !== x.node.ownerDocument.documentElement)
+					createDecoration(x.node, 'data-bfish-index', index);
+			}
+		};
+
+		Badgerfish.getBadgerfishByNode = function Badgerfish$getBadgerfishByNode(node) {
+			if (false) {
+				badgerfish = null;
+				if (node['@']) {
+					node['@']();
+				}
+				return badgerfish;
+			}
+			return Badgerfish.getRootByDocument(node.ownerDocument).getBadgerfishFromRoot(node);
 		};
 
 		this.registerNamespaces =
@@ -405,7 +473,11 @@ define(function() {
 			if (this.isHTMLDocument()) {
 				return x.node.getElementsByTagName(tag.tagname);
 			}
-			return x.node.getElementsByTagNameNS(tag.ns, tag.local);
+			try {
+				return x.node.getElementsByTagNameNS(tag.ns, tag.local);
+			} catch (e) {
+				return x.node.getElementsByTagName(tag.tagname);
+			}
 		};
 
 		this.nativeElementsByTagNameNS =
@@ -438,14 +510,9 @@ define(function() {
 				var result = new Array(aux.length);
 				for (var i = 0; i < aux.length; ++i) {
 					var node = aux[i];
-					var parent = node.parentNode;
-					badgerfish = null;
-					if (parent['@']) {
-						parent['@']();
-					} else {
-						badgerfish = new Badgerfish(parent, x.root);
-					}
-					parent = badgerfish;
+					var parent = Badgerfish.getBadgerfishByNode(node.parentNode);
+					if (!parent)
+						parent = new Badgerfish(node.parentNode, x.root);
 
 					var cache = properties.getPrivate(parent).cache;
 					if (!cache[step.tagname]) {
@@ -453,14 +520,10 @@ define(function() {
 					} else {
 						cache = cache[step.tagname];
 					}
-					badgerfish = null;
-					if (node['@']) {
-						node['@']();
-					} else {
-						badgerfish = new Badgerfish(node, parent);
-					}
-					cache.push(badgerfish);
-					result[i] = badgerfish;
+					result[i] = Badgerfish.getBadgerfishByNode(node);
+					if (!result[i])
+						result[i] = new Badgerfish(node, parent);
+					cache.push(result[i]);
 				}
 				if (!step.axis)
 					return result;
@@ -594,13 +657,14 @@ define(function() {
 			var x = properties.getPrivate(this);
 			var nodes = this.nativeElementsByTagNameNS("http://www.w3.org/2001/XInclude", "include");
 			console.assert(x.includes.length === nodes.length);
+			var node = nodes[0];
 			for (var i = 0; i < x.includes.length; ++i) {
-				if (nodes[0].getAttribute("parse") === "text") {
+				if (node.getAttribute("parse") === "text") {
 					var parent = nodes[0].parentNode;
 					parent.removeChild(nodes[0]);
 					parent.innerText = x.includes[i];
 				} else {
-					nodes[0].parentNode.replaceChild(x.includes[i].toNode(), nodes[0]);
+					node.parentNode.replaceChild(x.includes[i].toNode(), node);
 				}
 			}
 			console.assert(nodes.length === 0);
