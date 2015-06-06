@@ -218,6 +218,9 @@ module.exports = gruntConfig({
 			pattern : '<%= properties.cpxdir %>/src/main/javascript/**/*.js',
 			watched : false,
 			included : false
+		}, {
+			pattern : './src/test/templates/*',
+			included : false
 		} ],
 
 		// proxy to the grunt connect server

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -24,6 +24,34 @@ define(function() {
 
 		};
 
+		var xhrForRef = function Promise$xhrForRef(ref) {
+			return new Promise(function(done) {
+				var xhr, ext, i, j;
+				i = ref.indexOf(".");
+				if (i < 0)
+					throw new Error("Definition: missing filename extension");
+				while ((j = ref.indexOf(".", ++i)) >= 0)
+					i = j;
+				ext = ref.substr(--i);
+				xhr = new XMLHttpRequest();
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState === 4 && xhr.status === 200) {
+						switch (ext) {
+						case ".xml":
+							DEBUG && expect(xhr.getResponseHeader('content-type')).toBe("application/xml");
+							break;
+						default:
+							break;
+						}
+						done(xhr);
+					}
+				};
+				xhr.open("GET", ref, true);
+				xhr.responseType = "msxml-document";
+				xhr.send();
+			});
+		};
+
 		this.require =
 		/**
 		 * @param {Array}
@@ -32,32 +60,10 @@ define(function() {
 		 *            callback
 		 */
 		function Require$require(references) {
-			return references.map(function(ref) {
-				return new Promise(function(done) {
-					var xhr, ext, i, j;
-					i = ref.indexOf(".");
-					if (i < 0)
-						throw new Error("Definition: missing filename extension");
-					while ((j = ref.indexOf(".", ++i)) >= 0)
-						i = j;
-					ext = ref.substr(--i);
-					xhr = new XMLHttpRequest();
-					xhr.onreadystatechange = function() {
-						if (xhr.readyState === 4 && xhr.status === 200) {
-							switch (ext) {
-							case ".xml":
-								DEBUG && expect(xhr.getResponseHeader('content-type')).toBe("application/xml");
-								break;
-							default:
-								break;
-							}
-							done(xhr);
-						}
-					};
-					xhr.open("GET", ref, true);
-					xhr.send();
-				});
-			});
+			if (references) {
+				return references.map(xhrForRef);
+			}
+
 		};
 	}
 	return class_Require;
