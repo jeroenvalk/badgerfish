@@ -64,7 +64,7 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 		 * @param {string|Node}
 		 *            content
 		 */
-		[ "string", function private_Context$initialize(content) {
+		[ "string", function private_Context$initialize(content, parent) {
 			var x = properties.getPrivate(this);
 			var xhr = {};
 			if (content.ownerDocument instanceof Document) {
@@ -82,7 +82,7 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 				x.node = xmlDoc.documentElement;
 			}
 			var Badgerfish = define.classOf("Require:Badgerfish");
-			x.badgerfish = new Badgerfish(x.node);
+			x.badgerfish = new Badgerfish(x.node, parent, -1);
 			return this;
 		} ];
 
@@ -102,7 +102,16 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 					this.resolveXIncludes();
 				var result;
 				if (window.ActiveXObject || "ActiveXObject" in window) {
-					result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
+					var s = new XMLSerializer();
+	                var xslt = new ActiveXObject("Msxml2.XSLTemplate");
+	                var xslDoc = new ActiveXObject("Msxml2.FreeThreadedDOMDocument");
+	                xslDoc.loadXML(s.serializeToString(y.node.ownerDocument));
+	                xslt.stylesheet = xslDoc;
+	                var xslProc = xslt.createProcessor();
+	                xslProc.input = x.node.ownerDocument;
+	                xslProc.transform();
+	                result = xslProc.output;
+					//result = x.node.ownerDocument.transformNode(y.node.ownerDocument);
 				}
 				// code for Chrome, Firefox, Opera, etc.
 				else if (document.implementation && document.implementation.createDocument) {
@@ -115,7 +124,7 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 					}
 				}
 				console.assert(result.childNodes.length === 1);
-				callback.call(this, argv.Context.initialize.call(new Context(), result.firstChild));
+				callback.call(this, argv.Context.initialize.call(new Context(), result.firstChild, this));
 			}
 			if (x.node.tagName === 'layout' || x.node.tagName === 'panel') {
 				doIt();

@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global window */
+/* global window, ActiveXObject */
 
 // Fix Function#name on browsers that do not support it (IE) (Jürg Lehni):
 Object.defineProperty(Function.prototype, 'name', {
@@ -30,8 +30,19 @@ Object.defineProperty(Function.prototype, 'name', {
 	}
 });
 
-//window.DOMParser = {
-//	parseFromString : function DOMParser$parseFromString() {
-//
-//	}
-//};
+function class_DOMParser() {
+	this.constructor = function DOMParser() {
+
+	};
+
+	this.parseFromString = function DOMParser$parseFromString(content) {
+		var result = new ActiveXObject("Microsoft.XMLDOM");
+		result.async = false;
+		result.loadXML(content);
+		return result;
+	};
+}
+
+var proto = {};
+window.DOMParser = class_DOMParser.call(proto);
+proto.constructor.prototype = proto;

@@ -21,13 +21,19 @@ define([ "./JasmineTestCase" ], function(classJasmineTestCase) {
 		properties.extends([ classJasmineTestCase ]);
 
 		this.constructor = function AsyncJasmineTestCase() {
-			properties.getPrototype(1).constructor.call(this);			
+			properties.getPrototype(1).constructor.call(this);
 		};
-		
+
 		this.getTestRunner = function AsyncJasmineTestCase$getTestRunner(prop) {
 			var self = this;
 			return function(done) {
-				self[prop](done);
+				if (is.fn(self.setup)) {
+					self.setup(function() {
+						self[prop](done);
+					});
+				} else {
+					self[prop](done);
+				}
 			};
 		};
 	}
