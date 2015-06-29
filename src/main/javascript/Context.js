@@ -86,6 +86,10 @@ define([ "./Argv", "./Path", 'javascript/nl/agentsatwork/globals/Badgerfish', 'j
 			return this;
 		} ];
 
+		$.require = function Context$require() {
+			return properties.getPrivate(this).badgerfish.require();
+		};
+		
 		$.toString = function Context$toString() {
 			return properties.getPrivate(this).path;
 		};

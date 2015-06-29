@@ -15,9 +15,6 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var definition = require("../javascript/nl/agentsatwork/globals/Definition");
-
 module.exports = {
-	Gruntfile : require("../../../Gruntfile"),
-	getClass : definition.getClass
+	Gruntfile : require("../../../Gruntfile")
 };

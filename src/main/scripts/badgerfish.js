@@ -1,5 +1,5 @@
 /**
- * Copyright © 2014 dr. ir. Jeroen M. Valk
+ * Copyright © 2014, 2015 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -55,7 +55,7 @@ GLOBAL.require([ '/scripts/shims.js' ], function(definition) {
 			}
 
 			function executeCPX(prefixes, cpx, xi) {
-				var nodes = html.getElementsByTagName(prefix + ":transform");
+				var nodes = html.getElementsByTagName(cpx + ":transform");
 
 				for (var i = 0; i < nodes.length; ++i) {
 					var node = nodes[i];
@@ -110,30 +110,8 @@ GLOBAL.require([ '/scripts/shims.js' ], function(definition) {
 						});
 					});
 				}
-
 			}
-
-			var prefixes = {};
-
-			var attr = html.attributes;
-			for (var i = 0; i < attr.length; ++i) {
-				if (attr[i].name.substr(0, 6) === "xmlns:") {
-					prefixes[attr[i].name.substr(6)] = attr[i].value;
-					switch (attr[i].value) {
-					case "http://www.w3.org/2001/XInclude":
-						xi = attr[i].name.substr(6);
-						break;
-					}
-				}
-			}
-
-			for ( var prefix in prefixes) {
-				switch (prefixes[prefix]) {
-				case "http://www.agentsatwork.nl/2014/cpx":
-					executeCPX(prefixes, prefix, xi);
-					break;
-				}
-			}
+			executeCPX(null, "cpx", "xi");
 		});
 	});
 });

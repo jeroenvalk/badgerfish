@@ -154,15 +154,16 @@ define(function() {
 							throw new Error("Badgerfish: cardinality of entity must be one");
 						object = object[0];
 					}
-					node = domParser.parseFromString([ "<", tagname, "/>" ].join(""), 'text/xml').documentElement;
 					xmlns = object['@xmlns'];
+					var parts = [];
 					for ( var prefix in xmlns) {
 						if (prefix === "$") {
-							node.setAttribute("xmlns", xmlns.$);
+							parts.push(' xmlns="' + xmlns.$ + '"');
 						} else {
-							node.setAttribute("xmlns:" + prefix, xmlns[prefix]);
+							parts.push(' xmlns:' + prefix + '="' + xmlns[prefix] + '"');
 						}
 					}
+					node = domParser.parseFromString([ "<", tagname, parts.join(""), "/>" ].join(""), 'text/xml').documentElement;
 				} else {
 					DEBUG && expect(entity.ownerDocument).toBeDefined();
 					if (entity.ownerDocument.documentElement !== entity)
@@ -194,6 +195,7 @@ define(function() {
 			};
 			properties.setPrivate(this, x);
 			if (this === x.root) {
+				x.baseUrl = '/';
 				x.namespace = {};
 				x.parent = parent;
 				x.prefix = {};
@@ -205,13 +207,38 @@ define(function() {
 			this.registerNamespaces(xmlns);
 		};
 
+		this.baseUrl = function Badgerfish$baseUrl() {
+			return properties.getPrivate(properties.getPrivate(this).root).baseUrl;
+		};
+
+		this.getTagName = function Badgerfish$getTagName() {
+			var x = properties.getPrivate(this);
+			return x.node.tagName;
+		};
+
+		this.qnameXInclude = function Badgerfish$qnameXInclude() {
+			var x = properties.getPrivate(this);
+			var y = properties.getPrivate(x.root);
+			if (y.namespace.hasOwnProperty("xi"))
+				return "xi:include";
+			else
+				return null;
+		};
+
 		this.require = function Badgerfish$require(references) {
 			if (references) {
 				return properties.getPrototype(1).require.call(this, references);
 			} else {
+				if (this.getTagName() !== this.qnameXInclude()) {
+					return Promise.resolve(this);
+				}
 				var self = this;
 				var bfish = this.toJSON(1);
-				return xhrForRef(bfish['@href']).then(function(xhr) {
+				var href = bfish['@href'];
+				if (href.charAt(0) !== '/') {
+					href = this.baseUrl() + href;
+				}
+				return xhrForRef(href).then(function(xhr) {
 					var x = properties.getPrivate(self);
 					if (bfish['@parse'] === 'text') {
 						x.include = xhr.responseText;
@@ -222,9 +249,26 @@ define(function() {
 							responseXML = domParser.parseFromString(xhr.responseText, "application/xml");
 						}
 						x.include = new Badgerfish(responseXML.documentElement, self, NaN);
+						properties.getPrivate(x.include).baseUrl = href.substr(0, href.lastIndexOf('/') + 1);
 						return x.include;
 					}
 				});
+			}
+		};
+
+		this.resolve = function Badgerfish$resolve() {
+			if (this.getTagName() === 'xi:include') {
+				var x = properties.getPrivate(this);
+				var target = this.toNode();
+				var parent = target.parentNode;
+				if (target.getAttribute("parse") === "text") {
+					parent.removeChild(target);
+					parent.innerText = x.include;
+				} else {
+					var source = x.include.toNode();
+					// Badgerfish.moveNode(source, target);
+					parent.replaceChild(source, target);
+				}
 			}
 		};
 
@@ -383,7 +427,7 @@ define(function() {
 				if (!(depth--) || x.source === x.node) {
 					return x.source;
 				} else {
-					if (x.node.hasAttributes() || x.node.hasChildNodes()) {
+					if ((x.node.hasAttributes() && x.root !== this) || x.node.hasChildNodes()) {
 						throw new Error("Badgerfish$synchronizeNode: target not empty");
 					}
 					this.registerNamespaces(x.source['@xmlns']);
@@ -838,80 +882,34 @@ define(function() {
 
 		this.requireXIncludes = function Context$requireXIncludes(callback) {
 			var self = this;
-			// return Promise.all(self.getElementsByTagNameNS({
-			// xi : "http://www.w3.org/2001/XInclude"
-			// }, "xi:include").map(function(bfish) {
-			// return bfish.require();
-			// })).then(function(includes) {
-			// var x = properties.getPrivate(self);
-			// x.includes = includes;
-			// if (callback) callback.call(self);
-			// return self;
-			// });
-			function Context$requireXIncludes$closure(done) {
-				var x = properties.getPrivate(self);
-				var nodes = self.getElementsByTagNameNS({
-					xi : "http://www.w3.org/2001/XInclude"
-				}, "xi:include");
-				if (nodes.length > 0) {
-					var modules = [];
-					for (var i = 0; i < nodes.length; ++i) {
-						modules.push(nodes[i].select("@href"));
+			var nodes = self.getElementsByTagNameNS({
+				xi : "http://www.w3.org/2001/XInclude"
+			}, "xi:include");
+			nodes.unshift(self);
+			return Promise.all(nodes.map(function(bfish) {
+				return bfish.require().then(function(include) {
+					if (bfish === include) {
+						return bfish;
+					} else {
+						return include.requireXIncludes();
 					}
-					x.includes = [];
-					var required = self.require(modules);
-					Promise.all(required).then(function(argvv) {
-						var argv = argvv;
-						if (!(argvv instanceof Array)) {
-							argv = arguments;
-						}
-						for (var i = 0; i < argv.length; ++i) {
-							if (nodes[i].select("@parse") === "text") {
-								x.includes.push(argv[i].responseText);
-							} else {
-								var responseXML = argv[i].responseXML;
-								if (!responseXML) {
-									responseXML = new DOMParser().parseFromString(argv[i].responseText, "application/xml");
-								}
-								x.includes.push(new Badgerfish(responseXML.documentElement, self, i));
-							}
-						}
-						done(self);
-					});
-				} else {
-					callback();
-				}
-			}
-			var result = new Promise(Context$requireXIncludes$closure);
-			result.then(function(value) {
-				callback.call(value);
+				});
+			})).then(function(includes) {
+				var x = properties.getPrivate(self);
+				x.includes = includes;
+				if (callback)
+					callback.call(self);
+				return self;
 			});
-			return result;
 		};
 
 		this.resolveXIncludes = function Context$resolveXIncludes() {
-			var x = properties.getPrivate(this);
-			var nodes = this.getElementsByTagNameNS({
+			this.resolve();
+			this.getElementsByTagNameNS({
 				xi : "http://www.w3.org/2001/XInclude"
-			}, "xi:include");
-
-			if (x.includes.length !== nodes.length)
-				throw new Error("Badgerfish.resolveXIncludes: include counts do not match");
-			for (var i = 0; i < x.includes.length; ++i) {
-				// elementByTagName array dynamically updates on removing
-				// <xi:include> nodes so always take first one
-				var target = nodes[i].toNode();
-				var parent = target.parentNode;
-				if (target.getAttribute("parse") === "text") {
-					parent.removeChild(target);
-					parent.innerText = x.includes[i];
-				} else {
-					var source = x.includes[i].toNode();
-					// Badgerfish.moveNode(source, target);
-					parent.replaceChild(source, target);
-				}
-			}
-			DEBUG && expect(nodes.length).toBe(0);
+			}, "xi:include").forEach(function(node) {
+				node.resolve();
+			});
 		};
 	}
 

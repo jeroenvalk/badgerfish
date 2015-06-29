@@ -319,6 +319,9 @@ define(
 							grunt.log.error("Version in POM does not match 'version' property in package.json");
 							return false;
 						}
+						if (!fs.existsSync("target")) {
+							fs.mkdirSync("target");
+						}
 						fs.writeFileSync("target/grunt.properties", "grunt.cwd=" + process.cwd().replace(/\\/g, "/") + "\n");
 					};
 				};

@@ -135,7 +135,7 @@ define([ "module" ], function(module) {
 			} else {
 				// TODO: remove this code
 				if (!dep.lastIndexOf('javascript/')) {
-					dep = process.cwd() + '/src/main/' + dep + ".js";
+					dep = process.cwd() + '/src/main/' + dep;
 				}
 			}
 			return dep;

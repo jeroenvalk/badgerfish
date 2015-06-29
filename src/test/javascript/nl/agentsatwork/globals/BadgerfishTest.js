@@ -54,6 +54,45 @@ define(
 					done();
 				};
 
+				this.testBaseUrl = function BadgerfishTest$testBaseUrl(done) {
+					var x = properties.getPrivate(this);
+					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
+						expect(bfish.baseUrl()).toBe('/');
+					});
+					var parent = new Badgerfish({
+						'xi:include' : {
+							'@xmlns' : {
+								xi : 'http://www.w3.org/2001/XInclude'
+							},
+							'@href' : '/base/src/test/templates/cd.xml'
+						}
+					});
+					expect(parent.baseUrl()).toBe('/');
+					parent.require().then(function(bfish) {
+						expect(bfish.baseUrl()).toBe('/base/src/test/templates/');
+						var nodes = bfish.getElementsByTagNameNS({
+							xi : "http://www.w3.org/2001/XInclude"
+						}, "xi:include");
+						Promise.all(nodes.map(function(bfish) {
+							var result = bfish.require();
+							result.then(function(bfish) {
+								expect(bfish.baseUrl()).toBe('/base/src/test/templates/');
+							});
+							return result;
+						})).then(function() {
+							done();
+						});
+					});
+				};
+
+				this.testQnameXInclude = function BadgerfishTest$testQnameXInclude(done) {
+					var x = properties.getPrivate(this);
+					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
+						expect(bfish.qnameXInclude()).toBeNull();
+					});
+					done();
+				};
+				
 				this.testToJSON = function BadgerfishTest$testToJSON(done) {
 					var parent = new Badgerfish({
 						'xi:include' : {
