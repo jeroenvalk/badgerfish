@@ -54,6 +54,19 @@ define(
 					done();
 				};
 
+				this.testAssign = function BadgerfishTest$testAssign(done) {
+					var x = properties.getPrivate(this);
+					var source = new Badgerfish(x.json);
+					var target = new Badgerfish({
+						dummy : {}
+					});
+					expect(source.toJSON()).toEqual(x.json.alice);
+					target.assign(source);
+					expect(target.toJSON()).toEqual(x.json.alice);
+					expect(source.toJSON()).toBeNull();
+					done();
+				};
+
 				this.testBaseUrl = function BadgerfishTest$testBaseUrl(done) {
 					var x = properties.getPrivate(this);
 					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
@@ -92,7 +105,7 @@ define(
 					});
 					done();
 				};
-				
+
 				this.testToJSON = function BadgerfishTest$testToJSON(done) {
 					var parent = new Badgerfish({
 						'xi:include' : {
@@ -197,7 +210,8 @@ define(
 						}
 					}).requireXIncludes().then(function(bfish) {
 						bfish.resolveXIncludes();
-						expect(bfish.toJSON().catalog.cd[0]).toEqual({
+						expect(bfish.getTagName()).toBe('catalog');
+						expect(bfish.toJSON().cd[0]).toEqual({
 							'@require' : 'javascript/Control',
 							'@chain' : 'Control',
 							title : {

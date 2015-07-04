@@ -207,13 +207,20 @@ define(function() {
 			this.registerNamespaces(xmlns);
 		};
 
+		this.destroy = function Badgerfish$destroy() {
+			var x = properties.getPrivate(this);
+			Object.keys(x).forEach(function(prop) {
+				delete x[prop];
+			});
+		};
+
 		this.baseUrl = function Badgerfish$baseUrl() {
 			return properties.getPrivate(properties.getPrivate(this).root).baseUrl;
 		};
 
 		this.getTagName = function Badgerfish$getTagName() {
 			var x = properties.getPrivate(this);
-			return x.node.tagName;
+			return x.node.ownerDocument === GLOBAL.document ? x.node.localName : x.node.tagName;
 		};
 
 		this.qnameXInclude = function Badgerfish$qnameXInclude() {
@@ -233,14 +240,13 @@ define(function() {
 					return Promise.resolve(this);
 				}
 				var self = this;
-				var bfish = this.toJSON(1);
-				var href = bfish['@href'];
+				var href = self.getElementByTagName('@href');
 				if (href.charAt(0) !== '/') {
 					href = this.baseUrl() + href;
 				}
 				return xhrForRef(href).then(function(xhr) {
 					var x = properties.getPrivate(self);
-					if (bfish['@parse'] === 'text') {
+					if (self.getElementByTagName('@parse') === 'text') {
 						x.include = xhr.responseText;
 						return self;
 					} else {
@@ -259,16 +265,12 @@ define(function() {
 		this.resolve = function Badgerfish$resolve() {
 			if (this.getTagName() === 'xi:include') {
 				var x = properties.getPrivate(this);
-				var target = this.toNode();
-				var parent = target.parentNode;
-				if (target.getAttribute("parse") === "text") {
-					parent.removeChild(target);
-					parent.innerText = x.include;
-				} else {
-					var source = x.include.toNode();
-					// Badgerfish.moveNode(source, target);
-					parent.replaceChild(source, target);
+				if (this.getElementByTagName("@parse") === "text") {
+					if (typeof x.include !== "string") {
+						throw new Error("Badgerfish$resolve: @parse=text requires string include");
+					}
 				}
+				this.assign(x.include);
 			}
 		};
 
@@ -469,6 +471,8 @@ define(function() {
 
 		this.toJSON = function Badgerfish$toJSON() {
 			var x = properties.getPrivate(this);
+			if (!x.source)
+				return null;
 			return synchronizeJSON.call(this, x.namespace, x.node, Infinity);
 		};
 
@@ -526,7 +530,7 @@ define(function() {
 				};
 			var prefix = tagname.substr(0, index);
 			var local = tagname.substr(++index);
-			var ns = x.namespace[prefix];
+			var ns = y.namespace[prefix];
 			if (!ns) {
 				ns = prefix;
 				prefix = x.prefix[ns];
@@ -632,7 +636,21 @@ define(function() {
 			});
 		};
 
+		var assignBadgerfish = function Badgerfish$assignBadgerfish(bfish) {
+			var x = properties.getPrivate(this);
+			var y = properties.getPrivate(bfish);
+			var parent = x.node.parentNode;
+			parent.replaceChild(y.node, x.node);
+			x.node = y.node;
+			x.object = y.object;
+			x.source = y.source;
+			bfish.destroy();
+		};
+
 		this.assign = function Badgerfish$assign(entity, tagname) {
+			if (entity instanceof Badgerfish) {
+				return assignBadgerfish.call(this, entity);
+			}
 			var x = properties.getPrivate(this);
 			if (!x.source)
 				throw new Error("Badgerfish$assign: assignment in detached state");
@@ -885,7 +903,8 @@ define(function() {
 			var nodes = self.getElementsByTagNameNS({
 				xi : "http://www.w3.org/2001/XInclude"
 			}, "xi:include");
-			nodes.unshift(self);
+			if (self.getTagName() === self.qnameXInclude())
+				nodes.unshift(self);
 			return Promise.all(nodes.map(function(bfish) {
 				return bfish.require().then(function(include) {
 					if (bfish === include) {
@@ -904,13 +923,57 @@ define(function() {
 		};
 
 		this.resolveXIncludes = function Context$resolveXIncludes() {
-			this.resolve();
-			this.getElementsByTagNameNS({
+			var x = properties.getPrivate(this);
+			var nodes = this.getElementsByTagNameNS({
 				xi : "http://www.w3.org/2001/XInclude"
-			}, "xi:include").forEach(function(node) {
+			}, "xi:include");
+			if (nodes.length < x.includes.length)
+				nodes.unshift(this);
+			x.includes.forEach(function(bfish) {
+				bfish.resolveXIncludes();
+			});
+			nodes.forEach(function(node) {
 				node.resolve();
 			});
 		};
+
+		this.transform = function Badgerfish$transform() {
+			var x = properties.getPrivate(this);
+			var pipeline = this.getElementsByTagName(this.qnameXInclude());
+			var result = properties.getPrivate(pipeline.shift()).include;
+			result.resolveXIncludes();
+			result = result.toNode();
+			var target = x.node.ownerDocument;
+			pipeline.forEach(function(bfishXSL) {
+				if (window.ActiveXObject || "ActiveXObject" in window) {
+					var s = new XMLSerializer();
+					var xslt = new ActiveXObject("Msxml2.XSLTemplate");
+					var xslDoc = new ActiveXObject("Msxml2.FreeThreadedDOMDocument");
+					xslDoc.loadXML(s.serializeToString(y.node.ownerDocument));
+					xslt.stylesheet = xslDoc;
+					var xslProc = xslt.createProcessor();
+					xslProc.input = x.node.ownerDocument;
+					xslProc.transform();
+					result = xslProc.output;
+					// result =
+					// x.node.ownerDocument.transformNode(y.node.ownerDocument);
+				}
+				// code for Chrome, Firefox, Opera, etc.
+				else if (document.implementation && document.implementation.createDocument) {
+					var xsltProcessor = new XSLTProcessor();
+					xsltProcessor.importStylesheet(properties.getPrivate(bfishXSL).include.toNode().ownerDocument);
+					if (target) {
+						result = xsltProcessor.transformToFragment(result, target);
+					} else {
+						result = xsltProcessor.transformToDocument(x.node.ownerDocument);
+					}
+				}
+				console.assert(result.childNodes.length === 1);
+			});
+			x.node.parentNode.replaceChild(result.firstChild, x.node);
+			x.node = x.source = result.firstChild;
+		};
+
 	}
 
 	return class_Badgerfish;

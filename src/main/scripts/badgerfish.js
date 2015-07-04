@@ -33,10 +33,12 @@ GLOBAL.require([ '/scripts/shims.js' ], function(definition) {
 	});
 
 	GLOBAL.require([ 'jquery' ], function(jQuery) {
-		if (!jQuery) jQuery = $;
+		if (!jQuery)
+			jQuery = $;
 		GLOBAL.require([ 'javascript/Context' ], function(Context) {
 
-			var html = Context.getHTMLDocument().toNode();
+			var Badgerfish = define.classOf("Require:Badgerfish");
+			var html = new Badgerfish(document.documentElement);
 
 			function transform(context, pipeline, callback) {
 				if (pipeline.length === 0) {
@@ -55,61 +57,43 @@ GLOBAL.require([ '/scripts/shims.js' ], function(definition) {
 			}
 
 			function executeCPX(prefixes, cpx, xi) {
-				var nodes = html.getElementsByTagName(cpx + ":transform");
-
-				for (var i = 0; i < nodes.length; ++i) {
-					var node = nodes[i];
-					var pipeline = [];
-					for (var j = 0; j < node.children.length; ++j) {
-						var child = node.children[j];
-						if (child.localName === xi + ":include") {
-							pipeline.push(Context.normalize(child.getAttribute("href")));
-						}
+				var context = html.getElementByTagName("body/" + cpx + ":transform");
+				context.requireXIncludes().then(function() {
+					context.transform();
+					var i;
+					var elements = jQuery("*[require]", context.toNode());
+					var resources = [];
+					for (i = 0; i < elements.length; ++i) {
+						resources = resources.concat(elements[i].getAttribute("require").split(/\s*,\s*/));
 					}
-					Context.requireAll(pipeline, function() {
-						var context = pipeline.shift();
-						transform(context, pipeline, function(result) {
-							node.parentNode.replaceChild(result.toNode(), node);
-							var context = Context.getHTMLDocument();
-							context.requireXIncludes(function() {
-								context.resolveXIncludes();
-								var i;
-								var elements = jQuery("*[require]", result.toNode());
-								var resources = [];
-								for (i = 0; i < elements.length; ++i) {
-									resources = resources.concat(elements[i].getAttribute("require").split(/\s*,\s*/));
-								}
-								require(resources, function() {
-									var i;
-									for (i = 0; i < arguments.length; ++i) {
-										var classdef = arguments[i];
-										if (classdef instanceof Function) {
-											var fn = classdef;
-											classdef = {};
-											classdef['nl.agentsatwork.globals.' + fn.name.substr(fn.name.lastIndexOf("_") + 1)] = fn;
-										}
-										define.register(classdef);
-									}
-									for (i = 0; i < elements.length; ++i) {
-										var j;
-										var chain = elements[i].getAttribute("chain");
-										var F = new Function("return function " + chain.replace(/\./g, "_").replace(/:/g, "$") + "(){};")();
-										F.prototype = define.classOf(chain).prototype;
-										var instance = new F();
-										var qnames = chain.split(":");
-										for (j = 0; j < qnames.length; ++j) {
-											define.classOf(qnames.slice(0, j + 1).join(":")).call(instance, elements[i]);
-										}
-									}
-								});
-								var nodes = document.getElementsByTagName("code");
-								for (i = 0; i < nodes.length; ++i) {
-									Prism.highlightElement(nodes[i]);
-								}
-							});
-						});
+					require(resources, function() {
+						var i;
+						for (i = 0; i < arguments.length; ++i) {
+							var classdef = arguments[i];
+							if (classdef instanceof Function) {
+								var fn = classdef;
+								classdef = {};
+								classdef['nl.agentsatwork.globals.' + fn.name.substr(fn.name.lastIndexOf("_") + 1)] = fn;
+							}
+							define.register(classdef);
+						}
+						for (i = 0; i < elements.length; ++i) {
+							var j;
+							var chain = elements[i].getAttribute("chain");
+							var F = new Function("return function " + chain.replace(/\./g, "_").replace(/:/g, "$") + "(){};")();
+							F.prototype = define.classOf(chain).prototype;
+							var instance = new F();
+							var qnames = chain.split(":");
+							for (j = 0; j < qnames.length; ++j) {
+								define.classOf(qnames.slice(0, j + 1).join(":")).call(instance, elements[i]);
+							}
+						}
 					});
-				}
+					var nodes = document.getElementsByTagName("code");
+					for (i = 0; i < nodes.length; ++i) {
+						Prism.highlightElement(nodes[i]);
+					}
+				});
 			}
 			executeCPX(null, "cpx", "xi");
 		});
