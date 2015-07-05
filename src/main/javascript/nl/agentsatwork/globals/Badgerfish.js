@@ -942,9 +942,10 @@ define(function() {
 			var pipeline = this.getElementsByTagName(this.qnameXInclude());
 			var result = properties.getPrivate(pipeline.shift()).include;
 			result.resolveXIncludes();
-			result = result.toNode();
+			result = result.toNode().ownerDocument;
 			var target = x.node.ownerDocument;
 			pipeline.forEach(function(bfishXSL) {
+				var xsl = properties.getPrivate(bfishXSL).include.toNode().ownerDocument;
 				if (window.ActiveXObject || "ActiveXObject" in window) {
 					var s = new XMLSerializer();
 					var xslt = new ActiveXObject("Msxml2.XSLTemplate");
@@ -961,7 +962,7 @@ define(function() {
 				// code for Chrome, Firefox, Opera, etc.
 				else if (document.implementation && document.implementation.createDocument) {
 					var xsltProcessor = new XSLTProcessor();
-					xsltProcessor.importStylesheet(properties.getPrivate(bfishXSL).include.toNode().ownerDocument);
+					xsltProcessor.importStylesheet(xsl);
 					if (target) {
 						result = xsltProcessor.transformToFragment(result, target);
 					} else {
