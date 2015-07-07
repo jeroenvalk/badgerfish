@@ -91,6 +91,7 @@ define(
 					grunt.loadNpmTasks('grunt-contrib-jshint');
 					grunt.loadNpmTasks('grunt-contrib-uglify');
 					grunt.loadNpmTasks('grunt-contrib-compress');
+					grunt.loadNpmTasks('grunt-if-missing');
 					// grunt.loadNpmTasks('grunt-bower-task');
 					require('time-grunt')(grunt);
 

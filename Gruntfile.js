@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict';
+/* global require, module, __dirname, process */
 
 var cpxpkg = JSON.parse(require('fs').readFileSync(require('path').resolve(__dirname, 'package.json')));
 var gruntConfig = require("./src/main/scripts/gruntConfig");
@@ -112,7 +112,7 @@ module.exports = gruntConfig({
 	executions : {
 		"clean" : [ "clean" ],
 		"validate" : [ "validate" ],
-		"initialize" : [ "curl-dir" ],
+		"initialize" : [ "if-missing:curl-dir" ],
 		"generate-sources" : [ "jison" ],
 		"generate-resources" : [ "classpath" ],
 		"compile" : [ "uglify" ],
