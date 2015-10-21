@@ -128,8 +128,7 @@ module.exports = gruntConfig({
 	'curl-dir' : {
 		'dist/lib' : [ "http://requirejs.org/docs/release/2.1.11/comments/require.js", "https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.0/jquery.js",
 				"http://code.angularjs.org/1.2.13/angular.js", "https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/js/foundation/foundation.js",
-				"https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css", "http://modernizr.com/downloads/modernizr-latest.js",
-				"http://requirejs.org/docs/release/1.0.5/minified/order.js" ]
+				"https://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.3/css/foundation.css", "http://requirejs.org/docs/release/1.0.5/minified/order.js" ]
 	},
 
 	connect : {
@@ -255,7 +254,7 @@ module.exports = gruntConfig({
 		// start these browsers
 		// available browser launchers:
 		// https://npmjs.org/browse/keyword/karma-launcher
-		browsers : [ 'Chrome', 'Firefox', process.platform === 'darwin' ? 'Safari' : 'IE' ],
+		browsers : [ 'Chrome' ],
 
 		// Continuous Integration mode
 		// if true, Karma captures browsers, runs the tests and exits
