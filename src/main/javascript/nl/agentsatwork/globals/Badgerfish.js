@@ -95,7 +95,7 @@ define(function() {
 				if (x.object) {
 					throw new Error("Badgerfish$synchronizeJSON: target not empty");
 				}
-				return x.object = xmlToBfish(node);
+				return (x.object = xmlToBfish(node));
 			}
 		};
 

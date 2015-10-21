@@ -44,5 +44,6 @@ function class_DOMParser() {
 }
 
 var proto = {};
-window.DOMParser = class_DOMParser.call(proto);
+class_DOMParser.call(proto);
+window.DOMParser = proto.constructor;
 proto.constructor.prototype = proto;

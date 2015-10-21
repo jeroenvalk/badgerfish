@@ -1,3 +1,3 @@
 eclipse.preferences.version=1
-included=*.js\:src/main/javascript/Grunt.js\:src/main/javascript/nl/agentsatwork//*.js\:src/main/karma/*.js\:src/main/scripts/*.js\:src/test/javascript/nl/agentsatwork//*.js
+included=*.js\:src/main/javascript//*.js\:src/main/karma/*.js\:src/main/scripts/*.js\:src/test/javascript/nl/agentsatwork//*.js
 projectSpecificOptions=true

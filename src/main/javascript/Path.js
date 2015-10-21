@@ -60,7 +60,7 @@ define([ "./Private", "./Argv", "path" ], function(Private, Argv, parser) {
 			argv.arrange(arguments);
 			properties.setPrivate(this, {});
 			parser.parse(path);
-		}
+		};
 		properties = new Private(Path);
 
 		argv.define([ "number" ],

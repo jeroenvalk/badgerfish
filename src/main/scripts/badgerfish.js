@@ -16,6 +16,7 @@
  */
 
 /* global document, $, Prism */
+/*jshint -W054 */
 (function() {
 	this.GLOBAL = this;
 }).call(this);

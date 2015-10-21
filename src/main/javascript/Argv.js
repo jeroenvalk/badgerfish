@@ -13,6 +13,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+/* global DEBUG */
+/* jshint -W030,-W054 */
 define([ "./EXPECT", "./Private" ], function(expect, Private) {
 	var __extends = function Argv$extends(d, b) {
 		for ( var p in b)
@@ -57,7 +59,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 				return previous | 1 << current;
 			});
 		} else {
-			expect && expect(value).toBe(Object);
+			DEBUG && expect(value).toBe(Object);
 			for ( var prop in value) {
 				if (value.hasOwnProperty(prop)) {
 					value[prop] = Argv$maskOf(value[prop]);
@@ -85,13 +87,12 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 		function Argv$getModuleForEntity$extendedBy(subclass) {
 			__extends(subclass, entity.Private.$);
 		}
-		;
 
-		var result = entity["Public"].$, proto;
+		var result = entity.Public.$, proto;
 		if (result) {
 			proto = result.prototype;
 		} else {
-			result = entity["Private"].$;
+			result = entity.Private.$;
 			if (result) {
 				proto = result.prototype;
 				result = new Function('return function ' + classname + '() {throw new Error("cannot call private constructor");}')();
@@ -101,15 +102,15 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 			}
 		}
 
-		var methods = entity["Static"];
-		for ( var methodname in methods) {
+		var methodname, methods = entity.Static;
+		for (methodname in methods) {
 			if (methods.hasOwnProperty(methodname)) {
 				result[methodname] = methods[methodname];
 				proto[methodname] = methods[methodname];
 			}
 		}
-		methods = entity["Public"];
-		for ( var methodname in methods) {
+		methods = entity.Public;
+		for (methodname in methods) {
 			proto[methodname] = methods[methodname];
 		}
 
@@ -232,6 +233,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 			} else {
 				return argv;
 			}
+			break;
 		case "static":
 			keyword = "Static";
 			break;
@@ -249,7 +251,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 		if (this === Argv) {
 			throw new Error("classes can only be defined statically: use 'Argv.define(signature, function class_MyClass() { ... });'");
 		}
-		var x = properties.getPrivate(argv);
+		x = properties.getPrivate(argv);
 		x.currentKeyword = keyword;
 		if (classname !== x.currentClassname) {
 			throw new Error("current class '" + classname + "' does not match method '" + definition.name + "'");
@@ -269,10 +271,10 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 			// return argv.signature(types);
 			var method = x.currentMethod;
 			var classes = x.classes;
-			var keyword = x.currentKeyword;
+			keyword = x.currentKeyword;
 			console.assert(keyword !== "class");
-			var classname = x.currentClassname;
-			var methodname = x.currentMethodname;
+			classname = x.currentClassname;
+			methodname = x.currentMethodname;
 			if (!classname) {
 				throw new Error("function name must include classname: e.g., Class$initialize");
 			}
@@ -289,7 +291,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 		} else {
 			return argv;
 		}
-	}
+	};
 
 	Argv.prototype.extends =
 	/**
@@ -314,7 +316,7 @@ define([ "./EXPECT", "./Private" ], function(expect, Private) {
 			this.bootstrap();
 		}
 		return this.getModule();
-	}
+	};
 
 	Argv.prototype.bootstrap = function Argv$bootstrap() {
 		var x = properties.getPrivate(this);

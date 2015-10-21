@@ -43,7 +43,7 @@ define([ './Private' ], function(Private) {
 	 */
 	function Serializable$fromJSON(string) {
 		var x = properties.getPrivate(this);
-		var prop = undefined;
+		var prop;
 		for (prop in x) {
 			if (x.hasOwnProperty(prop)) {
 				delete x[prop];
@@ -106,7 +106,7 @@ define([ './Private' ], function(Private) {
 	 * @static
 	 */
 	function Serializable$areEqualObjects(a, b, skip) {
-		var prop = undefined;
+		var prop;
 		if (!skip)
 			skip = {};
 		for (prop in b)
