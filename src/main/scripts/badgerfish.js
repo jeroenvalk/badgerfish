@@ -15,49 +15,33 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global document, $, Prism */
-/*jshint -W054 */
+/* global Modernizr, define, document, $, Prism */
+/* jshint -W054 */
 (function() {
 	this.GLOBAL = this;
 }).call(this);
 
 GLOBAL.DEBUG = false;
 
-GLOBAL.require([ '/scripts/shims.js' ], function(definition) {
+GLOBAL.requirejs.config({
+	baseUrl : "/",
+	paths : {
+		jquery : "lib/jquery",
+		grammar_path : "../grammar_path"
+	}
+});
+
+GLOBAL.require([ '/scripts/shims.js', 'jquery' ], function(definition, jQuery) {
+	if (!jQuery)
+		jQuery = $;
+
 	GLOBAL.definition = definition;
-	GLOBAL.requirejs.config({
-		baseUrl : "/",
-		paths : {
-			jquery : "lib/jquery",
-			grammar_path : "../grammar_path"
-		}
-	});
-
-	GLOBAL.require([ 'jquery' ], function(jQuery) {
-		if (!jQuery)
-			jQuery = $;
-		GLOBAL.require([ 'javascript/Context' ], function(Context) {
-
+	Modernizr.ready(function() {
+		GLOBAL.require([ 'javascript/nl/agentsatwork/globals/Require', 'javascript/nl/agentsatwork/globals/Badgerfish' ], function() {
 			var Badgerfish = define.classOf("Require:Badgerfish");
 			var html = new Badgerfish(document.documentElement);
 
-			function transform(context, pipeline, callback) {
-				if (pipeline.length === 0) {
-					throw new Error("cannot transform an empty pipeline");
-				}
-				if (pipeline.length === 1) {
-					context.transform(pipeline.shift(), function(result) {
-						console.assert(pipeline.length === 0);
-						callback(result);
-					}, Context.getHTMLDocument());
-				} else {
-					context.transform(pipeline.shift(), function(result) {
-						transform(result, pipeline, callback);
-					});
-				}
-			}
-
-			function executeCPX(prefixes, cpx, xi) {
+			function executeCPX(prefixes, cpx) {
 				var context = html.getElementByTagName("body/" + cpx + ":transform");
 				context.requireXIncludes().then(function() {
 					context.transform();
