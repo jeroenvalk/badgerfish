@@ -79,9 +79,8 @@ define(function() {
 			function private_Promise$onFailure(e) {
 				if (e === undefined)
 					throw new Error("promise: udefined cannot resolve as error");
-				if (!onFailure)
-					throw e;
-				onFailure.call(null, e);
+				if (onFailure)
+					onFailure.call(null, e);
 				private_Promise$done(e, true);
 			}
 
@@ -104,7 +103,11 @@ define(function() {
 			} else {
 				DEBUG && expect(onSuccess).not.toBeDefined();
 				DEBUG && expect(onFailure).not.toBeDefined();
-				value.call(null, private_Promise$done);
+				try {
+					value.call(null, private_Promise$onSuccess, private_Promise$onFailure);
+				} catch (e) {
+					private_Promise$onFailure(e);
+				}
 			}
 		};
 
@@ -123,6 +126,15 @@ define(function() {
 			return new Promise(this, onSuccess, onFailure);
 		};
 
+		this['catch'] =
+		/**
+		 * @param {Function}
+		 *            onFailure
+		 */
+		function Promise$catch(onFailure) {
+			this.done(null, onFailure);
+		};
+
 		Promise.all =
 		/**
 		 * @param {Promise...|Function...}
@@ -130,7 +142,7 @@ define(function() {
 		 * @returns {Promise} promise that is done when all arguments are done
 		 * @static
 		 */
-		function definition$all(argv) {
+		function Promise$all(argv) {
 			function definition$when$error() {
 				throw new Error("promise$when: failed promise");
 			}
@@ -141,8 +153,6 @@ define(function() {
 			}
 
 			var count = argv.length, result = new Array(count);
-			if (!count)
-				throw new Error("definition$when: missing arguments");
 			function definition$when$done(i) {
 				return function definition$when$done$done(value) {
 					result[i] = value;
@@ -159,7 +169,9 @@ define(function() {
 			}
 
 			var promise = new Promise(definition$when$closure);
-			for (var i = 0; i < argv.length; ++i) {
+			if (!count)
+				done(result);
+			for (var i = 0; i < count; ++i) {
 				if (argv[i] instanceof Promise) {
 					argv[i].done(definition$when$done(i), definition$when$error);
 				} else {

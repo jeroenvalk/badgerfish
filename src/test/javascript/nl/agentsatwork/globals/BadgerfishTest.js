@@ -173,6 +173,14 @@ define(
 						expect(bfish.nativeElementsByTagName("bob").length).toBe(1);
 						expect(bfish.nativeElementsByTagName("charlie:edgar").length).toBe(1);
 					});
+					var bfish = new Badgerfish({
+						'xi:include' : {
+							'@href' : '/base/src/test/templates/cd.xml'
+						}
+					});
+					expect(function() {
+						bfish.nativeElementsByTagName("xi:include")
+					}).toThrowError(Error);
 					done();
 				};
 
