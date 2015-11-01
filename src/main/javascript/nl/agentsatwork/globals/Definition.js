@@ -17,9 +17,8 @@
 
 /* global define, DEBUG, expect, Modernizr, is */
 /* jshint -W030 */
-define([ "module" ], function(module) {
+define([ "module", "chai.expect" ], function(module, expect) {
 	"use strict";
-
 	var srcdir = {};
 	function prefixes(pkg) {
 		var current = srcdir;
@@ -43,7 +42,7 @@ define([ "module" ], function(module) {
 			var filename = module.filename.replace(/\\/g, '/');
 			if (filename.charAt(0) === '/')
 				filename = filename.substr(1);
-			DEBUG && expect(filename.charAt(0)).not.toBe('/');
+			DEBUG && expect(filename.charAt(0)).not.to.equal('/');
 			module.uri = [ 'file://', filename ].join('/');
 		}
 	}
@@ -285,7 +284,7 @@ define([ "module" ], function(module) {
 	 * @constructor
 	 */
 	function Definition(qname) {
-		DEBUG && expect(this instanceof Definition).toBe(true);
+		DEBUG && expect(this instanceof Definition).to.be.true;
 		var at = properties.length;
 
 		function Definition$at() {
@@ -351,7 +350,7 @@ define([ "module" ], function(module) {
 			}
 			break;
 		case this.State.INITIALIZED:
-			DEBUG && expect(x.base).toBeUndefined();
+			DEBUG && expect(x.base).to.be.undefined;
 			break;
 		case this.State.BASED:
 			define.call(this, x);
@@ -372,7 +371,7 @@ define([ "module" ], function(module) {
 			chain = definitionOf(chain);
 		}
 		if (chain === Object || chain instanceof Definition) {
-			DEBUG && expect(chain === Object || chain instanceof Definition).toBe(true);
+			DEBUG && expect(chain === Object || chain instanceof Definition).to.be.true;
 			switch (x.state) {
 			case this.State.CREATED:
 				break;
@@ -433,7 +432,7 @@ define([ "module" ], function(module) {
 					throw new Error("Definition$getConstructor: " + x.qname + ": missing constructor");
 				}
 			} else {
-				DEBUG && expect(x.qname).toBe('nl.agentsatwork.globals.Definition');
+				DEBUG && expect(x.qname).to.equal('nl.agentsatwork.globals.Definition');
 				return Definition;
 			}
 		}
@@ -507,7 +506,7 @@ define([ "module" ], function(module) {
 	 * @private
 	 */
 	function Definition$initialize(x) {
-		DEBUG && expect(x.state).toBe(this.State.CREATED);
+		DEBUG && expect(x.state).to.equal(this.State.CREATED);
 		var classdef = state.classdef[x.qname];
 		x.result = classdef.call(x.proto, this);
 	};

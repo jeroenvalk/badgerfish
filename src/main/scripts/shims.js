@@ -179,10 +179,18 @@ Modernizr.addTest("karma", function() {
 	return !!GLOBAL.__karma__;
 });
 
+Modernizr.addTest("testing", function() {
+	return Modernizr.karma;
+});
+
 if (Modernizr.karma) {
 	Modernizr.baseUrl = "/base/";
 } else {
 	Modernizr.baseUrl = "/";
+}
+
+if (Modernizr.testing) {
+	GLOBAL.DEBUG = true;
 }
 
 Modernizr.addTest("function_name", function() {
@@ -205,9 +213,22 @@ if (Modernizr.server) {
 	};
 }
 
+var predefined = {
+		"module": null,
+		"chai.expect": GLOBAL.chai ? GLOBAL.chai.expect : null
+};
+
 GLOBAL.define = function(deps, callback) {
+	var predefs = [];
 	var closure = function define$closure() {
 		var module = shift.call(arguments);
+		deps.shift();
+		predefined.module = module;
+		for (var i=0; i<deps.length; ++i) {
+			if (deps[i] === "module") {
+				arguments[i] = predefined[predefs.shift()];
+			}
+		}
 		var entity = callback.apply(null, arguments);
 		if (is.fn(GLOBAL.define.onModule)) {
 			define.moduleURI(module);
@@ -220,6 +241,13 @@ GLOBAL.define = function(deps, callback) {
 		if (is.fn(GLOBAL.define.dependencyMap)) {
 			deps = deps.map(GLOBAL.define.dependencyMap);
 		}
+		deps = deps.map(function(dep) {
+			if (predefined[dep] !== undefined) {
+				predefs.push(dep);
+				return "module";
+			}
+			return dep;
+		});
 		deps.forEach(function(dep) {
 			if (dep.charAt(0) !== '/' && dep.indexOf(".js", dep.length - 3) > -1) {
 				throw new Error("define: remove .js extension from: " + dep);
@@ -245,6 +273,11 @@ define.moduleURI = function define$moduleURI(module) {
 		module.uri = [ 'file://', filename ].join('/');
 	}
 };
+
+Modernizr.load({
+	test: DEBUG,
+	yep: "../../../node_modules/chai/chai.js"
+});
 
 Modernizr.load({
 	test : Modernizr.server,

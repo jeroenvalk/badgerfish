@@ -1,4 +1,4 @@
-Copyright © 2010-2013 dr. ir. Jeroen M. Valk
+Copyright © 2010-2015 dr. ir. Jeroen M. Valk
 
 ComPosiX uses:
 - NodeJS:      http://nodejs.org/ (Joyent, Inc)
@@ -13,6 +13,7 @@ ComPosiX uses:
    +grunt-contrib-jshint   https://github.com/gruntjs/grunt-contrib-jshint (Ben Alman)
 - Karma:       http://karma-runner.github.io/ (Vojta Jina, et al.)
 - Jasmine:     http://jasmine.github.io/
+- Chai:        http://chaijs.com/
 - JQuery:      http://jquery.org/
 - node-glob:   http://github.com/isaacs/node-glob (Isaac Z. Schlueter)
 - xpath:       http://github.com/goto100/xpath (Cameron McCormack, Yaron Naveh)

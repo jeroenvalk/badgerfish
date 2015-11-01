@@ -201,7 +201,7 @@ module.exports = gruntConfig({
 
 		// frameworks to use
 		// available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-		frameworks : [ 'jasmine', 'requirejs' ],
+		frameworks : [ 'jasmine', 'requirejs', 'chai' ],
 
 		// list of files / patterns to load in the browser
 		files : [ '<%= properties.cpxdir %>/src/main/scripts/shims.js', '<%= properties.cpxdir %>/src/main/scripts/karma.js', {
@@ -220,7 +220,7 @@ module.exports = gruntConfig({
 		}, {
 			pattern : './src/test/templates/*',
 			included : false
-		} ],
+		}],
 
 		// proxy to the grunt connect server
 		proxies : {
