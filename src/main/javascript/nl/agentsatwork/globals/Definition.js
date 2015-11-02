@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, DEBUG, expect, Modernizr, is */
+/* global define, DEBUG, Modernizr, is */
 /* jshint -W030 */
 define([ "module", "chai.expect" ], function(module, expect) {
 	"use strict";
@@ -65,10 +65,22 @@ define([ "module", "chai.expect" ], function(module, expect) {
 
 	// private
 
+	function isConstructor(value) {
+		return is.fn(value) && !value.name.lastIndexOf(value.name.charAt(0).toUpperCase(), 0);
+	}
+	
 	function isClass(value) {
 		return (is.fn(value) && !value.name.lastIndexOf("class", 0));
 	}
 
+	function Definition$setPrototypeOf() {
+		// jshint ignore: start
+		arguments[0].__proto__ = arguments[1];
+		// jshint ignore: end
+	}
+	
+	var setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf : Definition$setPrototypeOf;
+	
 	var getPrivate, defaultPackage = "nl.agentsatwork.globals", plugin, state = {
 		classdef : {},
 		classes : {}
@@ -368,10 +380,10 @@ define([ "module", "chai.expect" ], function(module, expect) {
 	function Definition$extends(chain) {
 		var x = getPrivate.call(this);
 		if (chain instanceof Array) {
+			DEBUG && expect(chain.every(isClass)).to.be.true;
 			chain = definitionOf(chain);
 		}
-		if (chain === Object || chain instanceof Definition) {
-			DEBUG && expect(chain === Object || chain instanceof Definition).to.be.true;
+		if (chain instanceof Definition || isConstructor(chain)) {
 			switch (x.state) {
 			case this.State.CREATED:
 				break;
@@ -386,7 +398,7 @@ define([ "module", "chai.expect" ], function(module, expect) {
 			x.base = chain;
 			return this;
 		} else {
-			throw new Error("Definition.extend: " + x.qname + ": specify inheritance chain as an array");
+				throw new Error("Definition.extend: " + x.qname + ": specify constructor or inheritance chain as an array");				
 		}
 	};
 
@@ -528,16 +540,14 @@ define([ "module", "chai.expect" ], function(module, expect) {
 		}
 		var Constructor = prototype.constructor;
 		Constructor.prototype = prototype;
-		// jshint ignore: start
-		var y = getPrivate.call(x.base);
-		if (Object.setPrototypeOf) {
-			Object.setPrototypeOf(prototype, y.proto);
-			Object.setPrototypeOf(Constructor, y.proto.constructor);
+		var proto;
+		if (x.base instanceof Definition) {
+			proto = getPrivate.call(x.base).proto;
 		} else {
-			prototype.__proto__ = y.proto;
-			Constructor.__proto__ = y.proto.constructor;
+			proto = x.base.prototype;
 		}
-		// jshint ignore: end
+		setPrototypeOf(prototype, proto);
+		setPrototypeOf(Constructor, proto.constructor);
 		var methods = state.classdef[x.qname];
 		var prop;
 		for (prop in methods) {

@@ -17,7 +17,7 @@
 
 /* globals define, DEBUG, expect, DOMParser, XMLSerializer, XMLHttpRequest */
 /* jshint -W030 */
-define(function() {
+define(["./Exception"], function() {
 	function class_Badgerfish(properties) {
 		var domParser = new DOMParser();
 		var xmlSerializer = new XMLSerializer();
