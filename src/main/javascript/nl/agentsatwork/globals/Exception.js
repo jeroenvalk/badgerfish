@@ -26,8 +26,10 @@ define(function() {
 		 *            msg - strict message that will be prepended with the
 		 *            method name
 		 */
-		function Exception() {
-
+		function Exception(msg) {
+		    this.name = 'Exception';
+		    this.message = [Exception.caller.name, msg].join(": ");
+		    this.stack = (new Error()).stack;
 		};
 	}
 

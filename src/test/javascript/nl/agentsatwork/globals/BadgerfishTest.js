@@ -83,18 +83,7 @@ define(
 					expect(parent.baseUrl()).toBe('/');
 					parent.require().then(function(bfish) {
 						expect(bfish.baseUrl()).toBe('/base/src/test/templates/');
-						var nodes = bfish.getElementsByTagNameNS({
-							xi : "http://www.w3.org/2001/XInclude"
-						}, "xi:include");
-						Promise.all(nodes.map(function(bfish) {
-							var result = bfish.require();
-							result.then(function(bfish) {
-								expect(bfish.baseUrl()).toBe('/base/src/test/templates/');
-							});
-							return result;
-						})).then(function() {
-							done();
-						});
+						done();
 					});
 				};
 
@@ -196,6 +185,20 @@ define(
 							bfish.getElementsByTagName("charlie:edgar/$");
 						}).toThrow();
 					});
+					done();
+				};
+
+				this.testGetElementsByTagNameNS = function BadgerfishTest$testGetElementsByTagNameNS(done) {
+					var x = properties.getPrivate(this);
+					var bfish = new Badgerfish(x.xml);
+					expect(function() {
+						bfish.getElementsByTagNameNS("http://mynamespace/", "bob");
+					}).toThrowError("Badgerfish$getElementsByTagNameNS: namespace 'http://mynamespace/' not declared in documentElement");
+					expect(function() {
+						bfish.getElementsByTagNameNS({
+							bob : "http://mynamespace/"
+						}, "bob");
+					}).toThrowError("Badgerfish$getElementsByTagNameNS: namespace 'http://mynamespace/' not declared in documentElement");
 					done();
 				};
 

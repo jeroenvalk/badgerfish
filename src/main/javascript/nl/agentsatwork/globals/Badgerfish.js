@@ -17,8 +17,9 @@
 
 /* globals define, DEBUG, expect, DOMParser, XMLSerializer, XMLHttpRequest */
 /* jshint -W030 */
-define(["./Exception"], function() {
+define([ "./Exception" ], function(classException) {
 	function class_Badgerfish(properties) {
+		var Exception = properties.import([ classException ]);
 		var domParser = new DOMParser();
 		var xmlSerializer = new XMLSerializer();
 		var badgerfish;
@@ -113,72 +114,71 @@ define(["./Exception"], function() {
 		 */
 		function Badgerfish(entity, parent, index) {
 			var y, source, node, object, xmlns = {};
-			if (parent) {
-				if (entity.constructor === Object)
-					throw new Error("Badgerfish: descendants must be created from a node");
-				if (!(parent instanceof Badgerfish))
-					throw new Error("Badgerfish: parent must be instance of Badgerfish");
-				if (typeof index !== "number")
-					throw new Error("Badgerfish: index must be a number");
-				source = node = entity;
-				y = properties.getPrivate(parent);
-				if (y.source === y.object) {
-					if (node.ownerDocument.documentElement !== node) {
-						if (isNaN(index) || index < 0)
-							throw new Error("Badgerfish: invalid index");
-						source = node.tagName;
-						if (y.source.hasOwnProperty(source)) {
-							object = y.source[source];
-							if (object instanceof Array) {
-								object = object[index];
-							}
-							source = object;
-						} else {
-							throw new Error("Badgerfish: integrity error");
-						}
+			if (entity.constructor === Object) {
+				var tagname = null;
+				for ( var prop in entity) {
+					if (tagname)
+						throw new Error("Badgerfish: multiple properties not allowed on entity");
+					tagname = prop;
+				}
+				if (!tagname)
+					throw new Error("Badgerfish: empty entity");
+				source = object = entity[tagname];
+				if (object instanceof Array) {
+					if (object.length !== 1)
+						throw new Error("Badgerfish: cardinality of entity must be one");
+					object = object[0];
+				}
+				xmlns = object['@xmlns'];
+				var parts = [];
+				for ( var prefix in xmlns) {
+					if (prefix === "$") {
+						parts.push(' xmlns="' + xmlns.$ + '"');
+					} else {
+						parts.push(' xmlns:' + prefix + '="' + xmlns[prefix] + '"');
 					}
 				}
+				node = domParser.parseFromString([ "<", tagname, parts.join(""), "/>" ].join(""), 'text/xml').documentElement;
 			} else {
-				if (entity.constructor === Object) {
-					var tagname = null;
-					for ( var prop in entity) {
-						if (tagname)
-							throw new Error("Badgerfish: multiple properties not allowed on entity");
-						tagname = prop;
-					}
-					if (!tagname)
-						throw new Error("Badgerfish: empty entity");
-					source = object = entity[tagname];
-					if (object instanceof Array) {
-						if (object.length !== 1)
-							throw new Error("Badgerfish: cardinality of entity must be one");
-						object = object[0];
-					}
-					xmlns = object['@xmlns'];
-					var parts = [];
-					for ( var prefix in xmlns) {
-						if (prefix === "$") {
-							parts.push(' xmlns="' + xmlns.$ + '"');
-						} else {
-							parts.push(' xmlns:' + prefix + '="' + xmlns[prefix] + '"');
+				DEBUG && expect(entity.ownerDocument).toBeDefined();
+				source = node = entity;
+				if (parent) {
+					if (entity.constructor === Object)
+						throw new Error("Badgerfish: descendants must be created from a node");
+					if (!(parent instanceof Badgerfish))
+						throw new Error("Badgerfish: parent must be instance of Badgerfish");
+					if (typeof index !== "number")
+						throw new Error("Badgerfish: index must be a number");
+					y = properties.getPrivate(parent);
+					if (y.source === y.object) {
+						if (node.ownerDocument.documentElement !== node) {
+							if (isNaN(index) || index < 0)
+								throw new Error("Badgerfish: invalid index");
+							source = node.tagName;
+							if (y.source.hasOwnProperty(source)) {
+								object = y.source[source];
+								if (object instanceof Array) {
+									object = object[index];
+								}
+								source = object;
+							} else {
+								throw new Error("Badgerfish: integrity error");
+							}
 						}
 					}
-					node = domParser.parseFromString([ "<", tagname, parts.join(""), "/>" ].join(""), 'text/xml').documentElement;
 				} else {
-					DEBUG && expect(entity.ownerDocument).toBeDefined();
 					if (entity.ownerDocument.documentElement !== entity)
 						throw new Error("Badgerfish: root node must be on a documentElement");
-					source = node = entity;
-					var attr = node.attributes;
-					if (attr) {
-						for (var i = 0; i < attr.length; ++i) {
-							var name = attr[i].name;
-							if (!name.lastIndexOf("xmlns", 0)) {
-								if (name.charAt(5) === ':') {
-									xmlns[attr[i].name.substr(6)] = attr[i].value;
-								} else {
-									xmlns.$ = attr[i].value;
-								}
+				}
+				var attr = node.attributes;
+				if (attr) {
+					for (var i = 0; i < attr.length; ++i) {
+						var name = attr[i].name;
+						if (!name.lastIndexOf("xmlns", 0)) {
+							if (name.charAt(5) === ':') {
+								xmlns[attr[i].name.substr(6)] = attr[i].value;
+							} else {
+								xmlns.$ = attr[i].value;
 							}
 						}
 					}
@@ -870,17 +870,36 @@ define(["./Exception"], function() {
 
 		this.getElementsByTagNameNS =
 		/**
+		 * Badgerfish.getElementsByTagNameNS
+		 * 
+		 * Gets namespace descandants for defined namespaces. By default, the
+		 * defined namespaces must be declared in the root of the document or an
+		 * exception is thrown (see forced parameter).
+		 * 
 		 * @param {string|Object}
-		 *            xmlns
+		 *            xmlns - defined namespaces to interpret in the xpath
 		 * @param {string}
-		 * path @
+		 *            path - xpath with namespace steps in defined namespaces
+		 * @param {boolean}
+		 *            [forced] - return results even if some namespaces are not
+		 *            declared
 		 */
-		function Badgerfish$getElementsByTagNameNS(xmlns, path) {
+		function Badgerfish$getElementsByTagNameNS(xmlns, path, forced) {
 			if (!(xmlns instanceof Object))
 				xmlns = {
 					"$" : xmlns
 				};
 			var x = properties.getPrivate(this);
+			if (!forced) {
+				var prefixes = properties.getPrivate(x.root).prefix;
+				if (!prefixes)
+					prefixes = {};
+				var prefix = Object.keys(xmlns).find(function(prefix) {
+					return !prefixes[xmlns[prefix]];
+				});
+				if (prefix)
+					throw new Exception("namespace '" + xmlns[prefix] + "' not declared in documentElement");
+			}
 			x.root.registerNamespaces(xmlns);
 			return this.getElementsByTagName(path);
 		};
@@ -902,7 +921,7 @@ define(["./Exception"], function() {
 			var self = this;
 			var nodes = self.getElementsByTagNameNS({
 				xi : "http://www.w3.org/2001/XInclude"
-			}, "xi:include");
+			}, "xi:include", true);
 			if (self.getTagName() === self.qnameXInclude())
 				nodes.unshift(self);
 			return Promise.all(nodes.map(function(bfish) {
@@ -922,11 +941,11 @@ define(["./Exception"], function() {
 			});
 		};
 
-		this.resolveXIncludes = function Context$resolveXIncludes() {
+		this.resolveXIncludes = function Badgerfish$resolveXIncludes() {
 			var x = properties.getPrivate(this);
 			var nodes = this.getElementsByTagNameNS({
 				xi : "http://www.w3.org/2001/XInclude"
-			}, "xi:include");
+			}, "xi:include", true);
 			if (nodes.length < x.includes.length)
 				nodes.unshift(this);
 			x.includes.forEach(function(bfish) {
