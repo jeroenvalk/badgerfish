@@ -17,7 +17,7 @@
 
 /* globals define, DEBUG, expect, DOMParser, XMLSerializer, XMLHttpRequest */
 /* jshint -W030 */
-define([ "./Exception" ], function(classException) {
+define([ "../core/Exception" ], function(classException) {
 	function class_Badgerfish(properties) {
 		var Exception = properties.import([ classException ]);
 		var domParser = new DOMParser();
@@ -549,17 +549,12 @@ define([ "./Exception" ], function(classException) {
 		};
 
 		this.parseStep = function Badgerfish$parseStep(step) {
-			step = step.split("::");
-			switch (step.length) {
-			case 1:
-				return this.parseTagname(step[0]);
-			case 2:
-				break;
-			default:
-				throw new Error("Badgerfish$parseStep: syntax error");
-			}
-			var result = this.parseTagname(step[1]);
-			result.axis = true;
+			var i = step.lastIndexOf("::", 20);
+			i = i < 0 ? 0 : i + 2;
+			var j = step.indexOf("[", i);
+			j = j < 0 ? step.length : j;
+			var result = this.parseTagname(step.substring(i, j));
+			result.axis = !!i;
 			return result;
 		};
 
