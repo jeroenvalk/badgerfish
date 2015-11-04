@@ -37,8 +37,8 @@ GLOBAL.require([ '/scripts/shims.js', 'jquery' ], function(definition, jQuery) {
 
 	GLOBAL.definition = definition;
 	Modernizr.ready(function() {
-		GLOBAL.require([ 'javascript/nl/agentsatwork/globals/Require', 'javascript/nl/agentsatwork/globals/Badgerfish' ], function() {
-			var Badgerfish = define.classOf("Require:Badgerfish");
+		GLOBAL.require([ 'javascript/nl/agentsatwork/core/ElementNode' ], function() {
+			var Badgerfish = define.classOf("nl.agentsatwork.core.ElementNode");
 			var html = new Badgerfish(document.documentElement);
 
 			function executeCPX(prefixes, cpx) {

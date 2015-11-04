@@ -19,9 +19,7 @@
 
 require('./shims.js');
 var path = require("path");
-require('../javascript/nl/agentsatwork/globals/Badgerfish');
 require('../javascript/nl/agentsatwork/main/Grunt');
-GLOBAL.Badgerfish = define.classOf("nl.agentsatwork.globals.Badgerfish");
 var extend = require('node.extend');
 var config = {};
 

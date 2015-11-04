@@ -17,11 +17,12 @@
 
 /* jshint -W030 */
 
-/* global define, Badgerfish, DOMParser */
+/* global define, DOMParser */
 define(
-		[ "fs", "url", "path", "child_process", "glob", "xpath", "jison", "http-rewrite-middleware" ],
-		function(fs, url, path, child_process, glob, xpath, jison, rewriteModule) {
+		[ "fs", "url", "path", "child_process", "glob", "xpath", "jison", "http-rewrite-middleware", "../core/Element" ],
+		function(fs, url, path, child_process, glob, xpath, jison, rewriteModule, classElement) {
 			function class_Grunt(properties) {
+				var Badgerfish = properties.import([ classElement ]);
 
 				var spawn = child_process.spawn;
 				var Generator = jison.Generator;
