@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals define, DEBUG, expect, DOMParser, XMLSerializer, XMLHttpRequest */
+/* globals define, DEBUG, expect, DOMParser, XMLSerializer */
 /* jshint -W030 */
 define([ "../core/Exception" ], function(classException) {
 	function class_Badgerfish(properties) {
@@ -23,34 +23,6 @@ define([ "../core/Exception" ], function(classException) {
 		var domParser = new DOMParser();
 		var xmlSerializer = new XMLSerializer();
 		var badgerfish;
-
-		var xhrForRef = function Badgerfish$xhrForRef(ref) {
-			return new Promise(function(done) {
-				var xhr, ext, i, j;
-				i = ref.indexOf(".");
-				if (i < 0)
-					throw new Error("Definition: missing filename extension");
-				while ((j = ref.indexOf(".", ++i)) >= 0)
-					i = j;
-				ext = ref.substr(--i);
-				xhr = new XMLHttpRequest();
-				xhr.onreadystatechange = function() {
-					if (xhr.readyState === 4 && xhr.status === 200) {
-						switch (ext) {
-						case ".xml":
-							DEBUG && expect(xhr.getResponseHeader('content-type')).toBe("application/xml");
-							break;
-						default:
-							break;
-						}
-						done(xhr);
-					}
-				};
-				xhr.open("GET", ref, true);
-				xhr.responseType = "msxml-document";
-				xhr.send();
-			});
-		};
 
 		var xmlToBfish = function Badgerfish$xmlToBfish(node) {
 			var i, result = {}, text = [];
@@ -190,14 +162,11 @@ define([ "../core/Exception" ], function(classException) {
 				root : node.ownerDocument.documentElement === node ? this : y.root,
 				source : source,
 				node : node,
-				object : object,
-				cache : {}
+				object : object
 			};
 			properties.setPrivate(this, x);
 			if (this === x.root) {
-				x.baseUrl = '/';
 				x.namespace = {};
-				x.parent = parent;
 				x.prefix = {};
 				x.badgerfish = [];
 				x.includes = [];
@@ -214,10 +183,10 @@ define([ "../core/Exception" ], function(classException) {
 			});
 		};
 
-		this.baseUrl = function Badgerfish$baseUrl() {
-			return properties.getPrivate(properties.getPrivate(this).root).baseUrl;
+		this.getDocumentElement = function Badgerfish$getDocumentElement() {
+			return properties.getPrivate(this).root;
 		};
-
+		
 		this.getTagName = function Badgerfish$getTagName() {
 			var x = properties.getPrivate(this);
 			return x.node.ownerDocument === GLOBAL.document ? x.node.localName : x.node.tagName;
@@ -230,48 +199,6 @@ define([ "../core/Exception" ], function(classException) {
 				return "xi:include";
 			else
 				return null;
-		};
-
-		this.require = function Badgerfish$require(references) {
-			if (references) {
-				return properties.getPrototype(1).require.call(this, references);
-			} else {
-				if (this.getTagName() !== this.qnameXInclude()) {
-					return Promise.resolve(this);
-				}
-				var self = this;
-				var href = self.getElementByTagName('@href');
-				if (href.charAt(0) !== '/') {
-					href = this.baseUrl() + href;
-				}
-				return xhrForRef(href).then(function(xhr) {
-					var x = properties.getPrivate(self);
-					if (self.getElementByTagName('@parse') === 'text') {
-						x.include = xhr.responseText;
-						return self;
-					} else {
-						var responseXML = xhr.responseXML;
-						if (!responseXML) {
-							responseXML = domParser.parseFromString(xhr.responseText, "application/xml");
-						}
-						x.include = new Badgerfish(responseXML.documentElement, self, NaN);
-						properties.getPrivate(x.include).baseUrl = href.substr(0, href.lastIndexOf('/') + 1);
-						return x.include;
-					}
-				});
-			}
-		};
-
-		this.resolve = function Badgerfish$resolve() {
-			if (this.getTagName() === 'xi:include') {
-				var x = properties.getPrivate(this);
-				if (this.getElementByTagName("@parse") === "text") {
-					if (typeof x.include !== "string") {
-						throw new Error("Badgerfish$resolve: @parse=text requires string include");
-					}
-				}
-				this.assign(x.include);
-			}
 		};
 
 		var importNodeIE = function Badgerfish$importNodeIE(doc, node) {
@@ -670,24 +597,12 @@ define([ "../core/Exception" ], function(classException) {
 			}
 		};
 
-		this.getParent = function Badgerfish$getParent() {
+		this.replaceWith = function Badgerfish$replaceWith(element) {
 			var x = properties.getPrivate(this);
-			if (x.root === this) {
-				if (x.parent) {
-					var y = properties.getPrivate(x.parent);
-					if (y.include !== this) {
-						throw new Error("Badgerfish.getParent: parent should be <xi:include>");
-					}
-					return x.parent;
-				} else {
-					return null;
-				}
-			} else {
-				// TODO: implement this
-				throw new Error("not implemented");
-			}
+			x.node.parentNode.replaceChild(element, x.node);
+			x.node = x.source = element;			
 		};
-
+		
 		this.getTextContent = function Badgerfish$getTextContent() {
 			var x = properties.getPrivate(this);
 			if (x.source === x.object) {
@@ -768,99 +683,6 @@ define([ "../core/Exception" ], function(classException) {
 		 */
 		function Badgerfish$nativeElementsByTagNameNS(ns, name) {
 			return this.nativeElementsByTagName(ns + ":" + name);
-		};
-
-		this.getElementsByTagName =
-		/**
-		 * @param {string}
-		 *            path
-		 * @returns {Array<Badgerfish>}
-		 */
-		function Badgerfish$getElementsByTagName(path) {
-			var self = this, index = path.lastIndexOf("/");
-			if (index >= 0)
-				self = self.getElementByTagName(path.substr(0, index));
-			var step = self.parseStep(path.substr(++index));
-			switch (step.tagname.charAt(0)) {
-			case '$':
-			case '@':
-				throw new Error("Badgerfish.getElementsByTagName: invalid step: " + step.tagname);
-			}
-			var x = properties.getPrivate(self);
-			if (!step.axis || !x.cache[step.tagname]) {
-				x.cache[step.tagname] = [];
-				var aux = self.nativeElementsByTagName(step.tagname);
-				var result = new Array(aux.length);
-				for (var i = 0; i < aux.length; ++i) {
-					var node = aux[i];
-					var parent = Badgerfish.getBadgerfishByNode(node.parentNode);
-					if (!parent)
-						parent = new Badgerfish(node.parentNode, x.root, -1);
-
-					var cache = properties.getPrivate(parent).cache;
-					if (!cache[step.tagname]) {
-						cache = cache[step.tagname] = [];
-					} else {
-						cache = cache[step.tagname];
-					}
-					result[i] = Badgerfish.getBadgerfishByNode(node);
-					if (!result[i])
-						result[i] = new Badgerfish(node, parent, i);
-					cache.push(result[i]);
-				}
-				if (!step.axis)
-					return result;
-			}
-			DEBUG && expect(step.axis).not.toBe(Badgerfish.Axis.DESCENDANT);
-			// TODO: support for other axis than child::
-			DEBUG && expect(step.axis).toBe(Badgerfish.Axis.CHILD);
-			return x.cache[step.tagname];
-		};
-
-		this.getElementByTagName =
-		/**
-		 * @param {string}
-		 *            path
-		 * @returns {Badgerfish}
-		 */
-		function Badgerfish$getElementByTagName(path) {
-			path = path.split("/");
-			var result;
-			switch (path.length) {
-			case 1:
-				break;
-			default:
-				result = this;
-				for (var i = 0; i < path.length; ++i) {
-					result = result.getElementByTagName(path[i]);
-				}
-				return result;
-			}
-			var step = this.parseStep(path[0]);
-			// TODO: use axis
-			switch (step.tagname.charAt(0)) {
-			case '@':
-				result = [ this.getAttribute(step.tagname.substr(1)) ];
-				break;
-			case '$':
-				result = [ this.getTextContent() ];
-				break;
-			default:
-				var x = properties.getPrivate(this);
-				if (!x.cache[step.tagname]) {
-					this.getElementsByTagName(path[0]);
-				}
-				result = x.cache[step.tagname];
-				break;
-			}
-			switch (result.length) {
-			case 0:
-				throw new Error("Badgerfish$getElementByTagName: not found");
-			case 1:
-				return result[0];
-			default:
-				throw new Error("Badgerfish$getElementByTagName: not unique");
-			}
 		};
 
 		this.getElementsByTagNameNS =
@@ -949,44 +771,6 @@ define([ "../core/Exception" ], function(classException) {
 			nodes.forEach(function(node) {
 				node.resolve();
 			});
-		};
-
-		this.transform = function Badgerfish$transform() {
-			var x = properties.getPrivate(this);
-			var pipeline = this.getElementsByTagName(this.qnameXInclude());
-			var result = properties.getPrivate(pipeline.shift()).include;
-			result.resolveXIncludes();
-			result = result.toNode().ownerDocument;
-			var target = x.node.ownerDocument;
-			pipeline.forEach(function(bfishXSL) {
-				var xsl = properties.getPrivate(bfishXSL).include.toNode().ownerDocument;
-				if (window.ActiveXObject || "ActiveXObject" in window) {
-					var s = new XMLSerializer();
-					var xslt = new ActiveXObject("Msxml2.XSLTemplate");
-					var xslDoc = new ActiveXObject("Msxml2.FreeThreadedDOMDocument");
-					xslDoc.loadXML(s.serializeToString(y.node.ownerDocument));
-					xslt.stylesheet = xslDoc;
-					var xslProc = xslt.createProcessor();
-					xslProc.input = x.node.ownerDocument;
-					xslProc.transform();
-					result = xslProc.output;
-					// result =
-					// x.node.ownerDocument.transformNode(y.node.ownerDocument);
-				}
-				// code for Chrome, Firefox, Opera, etc.
-				else if (document.implementation && document.implementation.createDocument) {
-					var xsltProcessor = new XSLTProcessor();
-					xsltProcessor.importStylesheet(xsl);
-					if (target) {
-						result = xsltProcessor.transformToFragment(result, target);
-					} else {
-						result = xsltProcessor.transformToDocument(x.node.ownerDocument);
-					}
-				}
-				console.assert(result.childNodes.length === 1);
-			});
-			x.node.parentNode.replaceChild(result.firstChild, x.node);
-			x.node = x.source = result.firstChild;
 		};
 
 	}

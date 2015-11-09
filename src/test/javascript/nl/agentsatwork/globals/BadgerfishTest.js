@@ -17,7 +17,7 @@
 
 /* global define, expect, DOMParser */
 define(
-		[ "javascript/nl/agentsatwork/testing/AsyncJasmineTestCase", "javascript/nl/agentsatwork/globals/Badgerfish" ],
+		[ "javascript/nl/agentsatwork/testing/AsyncJasmineTestCase", "javascript/nl/agentsatwork/core/ElementNode" ],
 		function(classAsyncJasmineTestCase, classBadgerfish) {
 			function class_BadgerfishTest(properties) {
 				properties.extends([ classAsyncJasmineTestCase ]);
@@ -208,7 +208,40 @@ define(
 						expect(bfish.getElementByTagName("bob/$")).toBe("david");
 						expect(bfish.getElementByTagName("charlie:edgar/$")).toBe("frank");
 					});
-					done();
+
+					new Badgerfish({
+						'xi:include' : {
+							'@xmlns' : {
+								xi : 'http://www.w3.org/2001/XInclude'
+							},
+							'@href' : '/base/src/test/templates/cdcatalog.xml'
+						}
+					}).requireXIncludes().then(function(bfish) {
+						bfish.resolveXIncludes();
+						expect(bfish.getElementByTagName("cd[@chain]").toJSON()).toEqual({
+							'@require' : 'javascript/Control',
+							'@chain' : 'Control',
+							title : {
+								$ : 'Cold fact'
+							},
+							artist : {
+								$ : 'Sixto Rodriguez'
+							},
+							country : {
+								$ : 'USA'
+							},
+							company : {
+								$ : 'Searching for sugerman'
+							},
+							price : {
+								$ : '10.90'
+							},
+							year : {
+								$ : '1985'
+							}							
+						});
+						done();
+					});
 				};
 
 				this.testXIncludes = function BadgerfishTest$testXIncludes(done) {

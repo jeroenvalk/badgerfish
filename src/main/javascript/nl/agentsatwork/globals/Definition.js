@@ -465,6 +465,9 @@ define([ "module", "chai.expect" ], function(module, expect) {
 		if (!self.properties) {
 			self.properties = {};
 		}
+		if (!x.classname) {
+			x.classname = x.qname.substr(x.qname.lastIndexOf(".")+1);
+		}
 		if (self.properties[x.classname]) {
 			throw new Error("Definition: " + x.classname + ": private properties to be set only once");
 		}
