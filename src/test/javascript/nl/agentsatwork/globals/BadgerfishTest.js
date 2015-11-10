@@ -151,20 +151,6 @@ define(
 					done();
 				};
 
-				this.testGetElementsByTagNameNS = function BadgerfishTest$testGetElementsByTagNameNS(done) {
-					var x = properties.getPrivate(this);
-					var bfish = new Badgerfish(x.xml);
-					expect(function() {
-						bfish.getElementsByTagNameNS("http://mynamespace/", "bob");
-					}).toThrowError("Badgerfish$getElementsByTagNameNS: namespace 'http://mynamespace/' not declared in documentElement");
-					expect(function() {
-						bfish.getElementsByTagNameNS({
-							bob : "http://mynamespace/"
-						}, "bob");
-					}).toThrowError("Badgerfish$getElementsByTagNameNS: namespace 'http://mynamespace/' not declared in documentElement");
-					done();
-				};
-
 			}
 			return class_BadgerfishTest;
 		});

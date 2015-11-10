@@ -17,7 +17,7 @@
 
 /* globals define, DEBUG, expect, DOMParser, XMLSerializer */
 /* jshint -W030 */
-define([ "../core/Exception" ], function(classException) {
+define([ "./Exception" ], function(classException) {
 	function class_Badgerfish(properties) {
 		var Exception = properties.import([ classException ]);
 		var domParser = new DOMParser();
@@ -144,10 +144,7 @@ define([ "../core/Exception" ], function(classException) {
 			};
 			properties.setPrivate(this, x);
 			if (this === x.root) {
-				x.namespace = {};
-				x.prefix = {};
 				x.badgerfish = [];
-				x.includes = [];
 				this.decorateRoot();
 			}
 			this.decorateNode();
@@ -167,15 +164,6 @@ define([ "../core/Exception" ], function(classException) {
 		this.getTagName = function Badgerfish$getTagName() {
 			var x = properties.getPrivate(this);
 			return x.node.ownerDocument === GLOBAL.document ? x.node.localName : x.node.tagName;
-		};
-
-		this.qnameXInclude = function Badgerfish$qnameXInclude() {
-			var x = properties.getPrivate(this);
-			var y = properties.getPrivate(x.root);
-			if (y.namespace.hasOwnProperty("xi"))
-				return "xi:include";
-			else
-				return null;
 		};
 
 		var importNodeIE = function Badgerfish$importNodeIE(doc, node) {
@@ -299,31 +287,6 @@ define([ "../core/Exception" ], function(classException) {
 			return source;
 		};
 
-		this.registerNamespaces =
-		/**
-		 * @param {Object}
-		 *            xmlns - mapping of prefixes into namespace URIs
-		 * @private
-		 */
-		function Badgerfish$registerNamespaces(xmlns) {
-			for ( var prefix in xmlns) {
-				if (xmlns.hasOwnProperty(prefix)) {
-					this.registerNamespace(prefix, xmlns[prefix]);
-				}
-			}
-		};
-
-		this.registerNamespace = function Badgerfish$registerNamespace(prefix, ns) {
-			var x = properties.getPrivate(this);
-			if (this === x.root) {
-				if ((x.namespace[prefix] && x.namespace[prefix] !== ns) || (x.prefix[ns] && x.prefix[ns] !== prefix)) {
-					throw new Error("Badgerfish$registerNamespace: namespace conflict");
-				}
-				x.namespace[prefix] = ns;
-				x.prefix[ns] = prefix;
-			}
-		};
-
 		this.toNode = function Badgerfish$toNode(depth) {
 			if (isNaN(depth))
 				depth = Infinity;
@@ -427,59 +390,6 @@ define([ "../core/Exception" ], function(classException) {
 
 		this.isHTMLDocument = function Badgerfish$isHTMLDocument() {
 			return properties.getPrivate(this).node.ownerDocument === GLOBAL.document;
-		};
-
-		this.parseTagname = function Badgerfish$parseTagname(tagname) {
-			var x = properties.getPrivate(this);
-			var y = properties.getPrivate(this.getDocumentElement());
-			var index = tagname.lastIndexOf(":");
-			if (index < 0)
-				return {
-					tagname : tagname,
-					local : tagname,
-					ns : y.namespace.$
-				};
-			var prefix = tagname.substr(0, index);
-			var local = tagname.substr(++index);
-			var ns = y.namespace[prefix];
-			if (!ns) {
-				ns = prefix;
-				prefix = x.prefix[ns];
-				if (prefix) {
-					tagname = prefix + ":" + local;
-				} else {
-					throw new Error("Badgerfish$parseTagname: namespace not registered");
-				}
-			}
-			return {
-				tagname : tagname,
-				local : local,
-				prefix : prefix,
-				ns : ns
-			};
-		};
-
-		this.parseStep = function Badgerfish$parseStep(step) {
-			var i = step.lastIndexOf("::", 20);
-			i = i < 0 ? 0 : i + 2;
-			var j = step.indexOf("[", i);
-			j = j < 0 ? step.length : j;
-			var result = this.parseTagname(step.substring(i, j));
-			result.axis = !!i;
-			return result;
-		};
-
-		this.parsePath = function Badgerfish$parsePath(path) {
-			var self = this;
-			var step = path.split('/');
-			switch (step.length) {
-			case 1:
-				return self.parseStep(step[0]);
-			default:
-				return step.map(function(step) {
-					return self.parseStep(step);
-				});
-			}
 		};
 
 		this.createElements = function Badgerfish$createElements(tagname, amount, result) {
@@ -695,94 +605,6 @@ define([ "../core/Exception" ], function(classException) {
 					return [];
 				}
 			}
-		};
-
-		this.getElementsByTagNameNS =
-		/**
-		 * Badgerfish.getElementsByTagNameNS
-		 * 
-		 * Gets namespace descandants for defined namespaces. By default, the
-		 * defined namespaces must be declared in the root of the document or an
-		 * exception is thrown (see forced parameter).
-		 * 
-		 * @param {string|Object}
-		 *            xmlns - defined namespaces to interpret in the xpath
-		 * @param {string}
-		 *            path - xpath with namespace steps in defined namespaces
-		 * @param {boolean}
-		 *            [forced] - return results even if some namespaces are not
-		 *            declared
-		 */
-		function Badgerfish$getElementsByTagNameNS(xmlns, path, forced) {
-			if (!(xmlns instanceof Object))
-				xmlns = {
-					"$" : xmlns
-				};
-			var x = properties.getPrivate(this);
-			if (!forced) {
-				var prefixes = properties.getPrivate(x.root).prefix;
-				if (!prefixes)
-					prefixes = {};
-				var prefix = Object.keys(xmlns).find(function(prefix) {
-					return !prefixes[xmlns[prefix]];
-				});
-				if (prefix)
-					throw new Exception("namespace '" + xmlns[prefix] + "' not declared in documentElement");
-			}
-			x.root.registerNamespaces(xmlns);
-			return this.getElementsByTagName(path);
-		};
-
-		this.select = function Badgerfish$select(path) {
-			var index = path.lastIndexOf("/");
-			switch (path.charAt(++index)) {
-			case '@':
-			case '$':
-				return this.getElementByTagName(path);
-			default:
-				return this.getElementsByTagName(path).map(function(badgerfish) {
-					return badgerfish.toJSON();
-				});
-			}
-		};
-
-		this.requireXIncludes = function Context$requireXIncludes(callback) {
-			var self = this;
-			var nodes = self.getElementsByTagNameNS({
-				xi : "http://www.w3.org/2001/XInclude"
-			}, "xi:include", true);
-			if (self.getTagName() === self.qnameXInclude())
-				nodes.unshift(self);
-			return Promise.all(nodes.map(function(bfish) {
-				return bfish.require().then(function(include) {
-					if (bfish === include) {
-						return bfish;
-					} else {
-						return include.requireXIncludes();
-					}
-				});
-			})).then(function(includes) {
-				var x = properties.getPrivate(self);
-				x.includes = includes;
-				if (callback)
-					callback.call(self);
-				return self;
-			});
-		};
-
-		this.resolveXIncludes = function Badgerfish$resolveXIncludes() {
-			var x = properties.getPrivate(this);
-			var nodes = this.getElementsByTagNameNS({
-				xi : "http://www.w3.org/2001/XInclude"
-			}, "xi:include", true);
-			if (nodes.length < x.includes.length)
-				nodes.unshift(this);
-			x.includes.forEach(function(bfish) {
-				bfish.resolveXIncludes();
-			});
-			nodes.forEach(function(node) {
-				node.resolve();
-			});
 		};
 
 	}

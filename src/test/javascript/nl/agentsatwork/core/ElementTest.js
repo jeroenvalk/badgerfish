@@ -147,6 +147,20 @@ define(
 					});
 				};
 
+				this.testGetElementsByTagNameNS = function ElementTest$testGetElementsByTagNameNS(done) {
+					var x = properties.getPrivate(this);
+					var bfish = new Element(x.xml);
+					expect(function() {
+						bfish.getElementsByTagNameNS("http://mynamespace/", "bob");
+					}).toThrowError("Element$getElementsByTagNameNS: namespace 'http://mynamespace/' not declared in documentElement");
+					expect(function() {
+						bfish.getElementsByTagNameNS({
+							bob : "http://mynamespace/"
+						}, "bob");
+					}).toThrowError("Element$getElementsByTagNameNS: namespace 'http://mynamespace/' not declared in documentElement");
+					done();
+				};
+
 				this.testXIncludes = function BadgerfishTest$testXIncludes(done) {
 					new Element({
 						'xi:include' : {

@@ -16,13 +16,14 @@
  */
 
 /* global define, XMLHttpRequest */
-define([ "./Badgerfish" ], function(classBadgerfish) {
+define([ "./Badgerfish", "./Exception" ], function(classBadgerfish, classException) {
 	function class_Element(properties) {
+		var Exception = properties.import([ classException ]);
 		properties.extends([ classBadgerfish ]);
 
 		var Badgerfish = properties.import([ classBadgerfish ]);
 
-		var xhrForRef = function Badgerfish$xhrForRef(ref) {
+		var xhrForRef = function Element$xhrForRef(ref) {
 			return new Promise(function(done) {
 				var xhr, ext, i, j;
 				i = ref.indexOf(".");
@@ -57,7 +58,7 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 			properties.getPrototype(1).constructor.call(this, entity, parent, index);
 			var xmlns = {};
 			if (entity.constructor === Object) {
-				xmlns = entity[this.getTagName()]['@xmlns'];				
+				xmlns = entity[this.getTagName()]['@xmlns'];
 			} else {
 				var attr = entity.attributes;
 				if (attr) {
@@ -71,7 +72,7 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 							}
 						}
 					}
-				}				
+				}
 			}
 			var x = {
 				cache : {}
@@ -82,15 +83,103 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 				x.parent = parent;
 				x.namespace = {};
 				x.prefix = {};
+				x.includes = [];
 			}
 			this.registerNamespaces(xmlns);
 		};
 
-		this.baseUrl = function Badgerfish$baseUrl() {
+		this.qnameXInclude = function Element$qnameXInclude() {
+			var x = properties.getPrivate(this);
+			var y = properties.getPrivate(this.getDocumentElement());
+			if (y.namespace.hasOwnProperty("xi"))
+				return "xi:include";
+			else
+				return null;
+		};
+
+		this.registerNamespaces =
+		/**
+		 * @param {Object}
+		 *            xmlns - mapping of prefixes into namespace URIs
+		 * @private
+		 */
+		function Element$registerNamespaces(xmlns) {
+			for ( var prefix in xmlns) {
+				if (xmlns.hasOwnProperty(prefix)) {
+					this.registerNamespace(prefix, xmlns[prefix]);
+				}
+			}
+		};
+
+		this.registerNamespace = function Element$registerNamespace(prefix, ns) {
+			var x = properties.getPrivate(this);
+			if (this === this.getDocumentElement()) {
+				if ((x.namespace[prefix] && x.namespace[prefix] !== ns) || (x.prefix[ns] && x.prefix[ns] !== prefix)) {
+					throw new Error("Element$registerNamespace: namespace conflict");
+				}
+				x.namespace[prefix] = ns;
+				x.prefix[ns] = prefix;
+			}
+		};
+
+		this.parseTagname = function Element$parseTagname(tagname) {
+			var x = properties.getPrivate(this);
+			var y = properties.getPrivate(this.getDocumentElement());
+			var index = tagname.lastIndexOf(":");
+			if (index < 0)
+				return {
+					tagname : tagname,
+					local : tagname,
+					ns : y.namespace.$
+				};
+			var prefix = tagname.substr(0, index);
+			var local = tagname.substr(++index);
+			var ns = y.namespace[prefix];
+			if (!ns) {
+				ns = prefix;
+				prefix = x.prefix[ns];
+				if (prefix) {
+					tagname = prefix + ":" + local;
+				} else {
+					throw new Error("Element$parseTagname: namespace not registered");
+				}
+			}
+			return {
+				tagname : tagname,
+				local : local,
+				prefix : prefix,
+				ns : ns
+			};
+		};
+
+		this.parseStep = function Element$parseStep(step) {
+			var i = step.lastIndexOf("::", 20);
+			i = i < 0 ? 0 : i + 2;
+			var j = step.indexOf("[", i);
+			j = j < 0 ? step.length : j;
+			var result = this.parseTagname(step.substring(i, j));
+			result.axis = !!i;
+			return result;
+		};
+
+		this.parsePath = function Element$parsePath(path) {
+			var self = this;
+			var step = path.split('/');
+			switch (step.length) {
+			case 1:
+				return self.parseStep(step[0]);
+			default:
+				return step.map(function(step) {
+					return self.parseStep(step);
+				});
+			}
+		};
+
+		this.baseUrl = function Element$baseUrl() {
 			return properties.getPrivate(this.getDocumentElement()).baseUrl;
 		};
-		
-		this.getParent = function Badgerfish$getParent() {
+
+		this.getParent = function Element$getParent() {
 			var x = properties.getPrivate(this);
 			if (this.getDocumentElement() === this) {
 				if (x.parent) {
@@ -127,7 +216,7 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 			var x = properties.getPrivate(self);
 			if (!step.axis || !x.cache[step.tagname]) {
 				x.cache[step.tagname] = [];
-				//var aux = self.nativeElementsByTagName(step.tagname);
+				// var aux = self.nativeElementsByTagName(step.tagname);
 				var aux = self.nativeElementsByTagNameNS(step.ns, step.local, step.axis, step.prefix);
 				var result = new Array(aux.length);
 				for (var i = 0; i < aux.length; ++i) {
@@ -194,15 +283,64 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 			}
 			switch (result.length) {
 			case 0:
-				throw new Error("Badgerfish$getElementByTagName: not found");
+				throw new Error("Element$getElementByTagName: not found");
 			case 1:
 				return result[0];
 			default:
-				throw new Error("Badgerfish$getElementByTagName: not unique");
+				throw new Error("Element$getElementByTagName: not unique");
 			}
 		};
 
-		this.require = function Badgerfish$require(references) {
+		this.getElementsByTagNameNS =
+		/**
+		 * Badgerfish.getElementsByTagNameNS
+		 * 
+		 * Gets namespace descandants for defined namespaces. By default, the
+		 * defined namespaces must be declared in the root of the document or an
+		 * exception is thrown (see forced parameter).
+		 * 
+		 * @param {string|Object}
+		 *            xmlns - defined namespaces to interpret in the xpath
+		 * @param {string}
+		 *            path - xpath with namespace steps in defined namespaces
+		 * @param {boolean}
+		 *            [forced] - return results even if some namespaces are not
+		 *            declared
+		 */
+		function Element$getElementsByTagNameNS(xmlns, path, forced) {
+			if (!(xmlns instanceof Object))
+				xmlns = {
+					"$" : xmlns
+				};
+			var x = properties.getPrivate(this);
+			if (!forced) {
+				var prefixes = properties.getPrivate(this.getDocumentElement()).prefix;
+				if (!prefixes)
+					prefixes = {};
+				var prefix = Object.keys(xmlns).find(function(prefix) {
+					return !prefixes[xmlns[prefix]];
+				});
+				if (prefix)
+					throw new Exception("namespace '" + xmlns[prefix] + "' not declared in documentElement");
+			}
+			this.getDocumentElement().registerNamespaces(xmlns);
+			return this.getElementsByTagName(path);
+		};
+
+		this.select = function Element$select(path) {
+			var index = path.lastIndexOf("/");
+			switch (path.charAt(++index)) {
+			case '@':
+			case '$':
+				return this.getElementByTagName(path);
+			default:
+				return this.getElementsByTagName(path).map(function(badgerfish) {
+					return badgerfish.toJSON();
+				});
+			}
+		};
+
+		this.require = function Element$require(references) {
 			if (references) {
 				return properties.getPrototype(1).require.call(this, references);
 			} else {
@@ -232,19 +370,58 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 			}
 		};
 
-		this.resolve = function Badgerfish$resolve() {
+		this.resolve = function Element$resolve() {
 			if (this.getTagName() === 'xi:include') {
 				var x = properties.getPrivate(this);
 				if (this.getElementByTagName("@parse") === "text") {
 					if (typeof x.include !== "string") {
-						throw new Error("Badgerfish$resolve: @parse=text requires string include");
+						throw new Error("Element$resolve: @parse=text requires string include");
 					}
 				}
 				this.assign(x.include);
 			}
 		};
 
-		this.transform = function Badgerfish$transform() {
+		this.requireXIncludes = function Context$requireXIncludes(callback) {
+			var self = this;
+			var nodes = self.getElementsByTagNameNS({
+				xi : "http://www.w3.org/2001/XInclude"
+			}, "xi:include", true);
+			if (self.getTagName() === self.qnameXInclude())
+				nodes.unshift(self);
+			return Promise.all(nodes.map(function(bfish) {
+				return bfish.require().then(function(include) {
+					if (bfish === include) {
+						return bfish;
+					} else {
+						return include.requireXIncludes();
+					}
+				});
+			})).then(function(includes) {
+				var x = properties.getPrivate(self);
+				x.includes = includes;
+				if (callback)
+					callback.call(self);
+				return self;
+			});
+		};
+
+		this.resolveXIncludes = function Element$resolveXIncludes() {
+			var x = properties.getPrivate(this);
+			var nodes = this.getElementsByTagNameNS({
+				xi : "http://www.w3.org/2001/XInclude"
+			}, "xi:include", true);
+			if (nodes.length < x.includes.length)
+				nodes.unshift(this);
+			x.includes.forEach(function(bfish) {
+				bfish.resolveXIncludes();
+			});
+			nodes.forEach(function(node) {
+				node.resolve();
+			});
+		};
+
+		this.transform = function Element$transform() {
 			var x = properties.getPrivate(this);
 			var pipeline = this.getElementsByTagName(this.qnameXInclude());
 			var result = properties.getPrivate(pipeline.shift()).include;
