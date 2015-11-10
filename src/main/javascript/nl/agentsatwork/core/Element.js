@@ -16,9 +16,10 @@
  */
 
 /* global define, XMLHttpRequest */
-define([ "./Badgerfish", "./Exception" ], function(classBadgerfish, classException) {
+define([ "./Badgerfish", "./TagName", "./Exception" ], function(classBadgerfish, classTagName, classException) {
 	function class_Element(properties) {
 		var Exception = properties.import([ classException ]);
+		var TagName = properties.import([ classTagName ]);
 		properties.extends([ classBadgerfish ]);
 
 		var Badgerfish = properties.import([ classBadgerfish ]);
@@ -74,9 +75,7 @@ define([ "./Badgerfish", "./Exception" ], function(classBadgerfish, classExcepti
 					}
 				}
 			}
-			var x = {
-				cache : {}
-			};
+			var x = {};
 			properties.setPrivate(this, x);
 			if (this === this.getDocumentElement()) {
 				x.baseUrl = '/';
@@ -213,36 +212,7 @@ define([ "./Badgerfish", "./Exception" ], function(classBadgerfish, classExcepti
 			case '@':
 				throw new Error("Badgerfish.getElementsByTagName: invalid step: " + step.tagname);
 			}
-			var x = properties.getPrivate(self);
-			if (!step.axis || !x.cache[step.tagname]) {
-				x.cache[step.tagname] = [];
-				// var aux = self.nativeElementsByTagName(step.tagname);
-				var aux = self.nativeElementsByTagNameNS(step.ns, step.local, step.axis, step.prefix);
-				var result = new Array(aux.length);
-				for (var i = 0; i < aux.length; ++i) {
-					var node = aux[i];
-					var parent = Badgerfish.getBadgerfishByNode(node.parentNode);
-					if (!parent)
-						parent = new Element(node.parentNode, x.root, -1);
-
-					var cache = properties.getPrivate(parent).cache;
-					if (!cache[step.tagname]) {
-						cache = cache[step.tagname] = [];
-					} else {
-						cache = cache[step.tagname];
-					}
-					result[i] = Badgerfish.getBadgerfishByNode(node);
-					if (!result[i])
-						result[i] = new Element(node, parent, i);
-					cache.push(result[i]);
-				}
-				if (!step.axis)
-					return result;
-			}
-			DEBUG && expect(step.axis).not.toBe(Badgerfish.Axis.DESCENDANT);
-			// TODO: support for other axis than child::
-			DEBUG && expect(step.axis).toBe(Badgerfish.Axis.CHILD);
-			return x.cache[step.tagname];
+			return properties.getPrototype(1).getElementsByTagName.call(this, new TagName(step.ns, step.local, step.prefix), step.axis);
 		};
 
 		this.getElementByTagName =
@@ -274,11 +244,7 @@ define([ "./Badgerfish", "./Exception" ], function(classBadgerfish, classExcepti
 				result = [ this.getTextContent() ];
 				break;
 			default:
-				var x = properties.getPrivate(this);
-				if (!x.cache[step.tagname]) {
-					this.getElementsByTagName(path[0]);
-				}
-				result = x.cache[step.tagname];
+				result = this.getElementsByTagName(path[0]);
 				break;
 			}
 			switch (result.length) {

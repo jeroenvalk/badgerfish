@@ -140,7 +140,8 @@ define([ "./Exception" ], function(classException) {
 				root : node.ownerDocument.documentElement === node ? this : y.root,
 				source : source,
 				node : node,
-				object : object
+				object : object,
+				cache : {}
 			};
 			properties.setPrivate(this, x);
 			if (this === x.root) {
@@ -569,33 +570,28 @@ define([ "./Exception" ], function(classException) {
 
 		this.nativeElementsByTagNameNS =
 		/**
-		 * @param {string}
-		 *            ns - full namespace url
-		 * @param {string}
-		 *            local - local name
-		 * @param {number}
-		 *            [axis] - axis on which to search (defaults to descendant)
-		 * @param {string}
-		 *            [prefix] - namespace prefix (optionally provided when
-		 *            namespaces not supported)
+		 * @param {TagName}
+		 *            tagName - fully qualified tag name
+		 * @param {boolean}
+		 *            [childAxis] - flag to search on child axis only instead of all descendants
 		 * @returns {NodeList}
 		 */
-		function Badgerfish$nativeElementsByTagNameNS(ns, local, axis, prefix) {
-			var tagname = [ prefix, local ].join(prefix ? ":" : "");
+		function Badgerfish$nativeElementsByTagNameNS(tagName, childAxis) {
+			var tagname = tagName.getTagName();
 			var x = properties.getPrivate(this);
 			if (x.source === x.node) {
 				if (this.isHTMLDocument()) {
-					switch (axis) {
+					switch (childAxis) {
 					default:
 						return x.node.getElementsByTagName(tagname);
 					}
 				}
-				switch (axis) {
+				switch (childAxis) {
 				default:
-					if (ns) {
-						return x.node.getElementsByTagNameNS(ns, local);						
+					if (tagName.ns) {
+						return x.node.getElementsByTagNameNS(tagName.ns, tagName.local);						
 					}
-					return x.node.getElementsByTagName(local);
+					return x.node.getElementsByTagName(tagName.local);
 				}
 			} else {
 				var children = x.source[tagname];
@@ -607,6 +603,38 @@ define([ "./Exception" ], function(classException) {
 			}
 		};
 
+		this.getElementsByTagName = function Badgerfish$getElementsByTagName(tagName, childAxis) {
+			var tagname = tagName.getTagName();
+			var x = properties.getPrivate(this);
+			if (!childAxis || !x.cache[tagname]) {
+				x.cache[tagname] = [];
+				var aux = this.nativeElementsByTagNameNS(tagName, childAxis);
+				var result = new Array(aux.length);
+				for (var i = 0; i < aux.length; ++i) {
+					var node = aux[i];
+					var parent = Badgerfish.getBadgerfishByNode(node.parentNode);
+					if (!parent)
+						parent = new (this.constructor)(node.parentNode, x.root, -1);
+
+					var cache = properties.getPrivate(parent).cache;
+					if (!cache[tagname]) {
+						cache = cache[tagname] = [];
+					} else {
+						cache = cache[tagname];
+					}
+					result[i] = Badgerfish.getBadgerfishByNode(node);
+					if (!result[i])
+						result[i] = new (this.constructor)(node, parent, i);
+					cache.push(result[i]);
+				}
+				if (!childAxis)
+					return result;
+			}
+			DEBUG && expect(step.axis).not.toBe(Badgerfish.Axis.DESCENDANT);
+			// TODO: support for other axis than child::
+			DEBUG && expect(step.axis).toBe(Badgerfish.Axis.CHILD);
+			return x.cache[tagname];			
+		};
 	}
 
 	return class_Badgerfish;
