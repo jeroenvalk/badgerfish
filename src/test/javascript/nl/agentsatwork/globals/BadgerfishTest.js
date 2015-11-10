@@ -26,7 +26,7 @@ define(
 
 				var domParser = new DOMParser();
 
-				this.constructor = function AsyncJasmineTestCase() {
+				this.constructor = function BadgerfishTest() {
 					properties.getPrototype(1).constructor.call(this);
 					properties.setPrivate(this, {});
 				};
@@ -54,6 +54,20 @@ define(
 					done();
 				};
 
+				this.testToNode = function Badgerfish$testToNode(done) {
+					var x = properties.getPrivate(this);
+					var bfish = new Badgerfish(x.json);
+					var node = bfish.toNode(0);
+					expect(node.tagName).toBe("alice");
+					expect(node.getAttribute('xmlns')).toBe("http://some-namespace");
+					expect(node.getAttribute('xmlns:charlie')).toBe("http://some-other-namespace");
+					expect(node.childNodes.length).toBe(0);
+
+					// var result = bfish.toNode();
+					// expect(new Badgerfish(result).toJSON()).toEqual(x.json);
+					done();
+				};
+
 				this.testAssign = function BadgerfishTest$testAssign(done) {
 					var x = properties.getPrivate(this);
 					var source = new Badgerfish(x.json);
@@ -64,34 +78,6 @@ define(
 					target.assign(source);
 					expect(target.toJSON()).toEqual(x.json.alice);
 					expect(source.toJSON()).toBeNull();
-					done();
-				};
-
-				this.testBaseUrl = function BadgerfishTest$testBaseUrl(done) {
-					var x = properties.getPrivate(this);
-					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
-						expect(bfish.baseUrl()).toBe('/');
-					});
-					var parent = new Badgerfish({
-						'xi:include' : {
-							'@xmlns' : {
-								xi : 'http://www.w3.org/2001/XInclude'
-							},
-							'@href' : '/base/src/test/templates/cd.xml'
-						}
-					});
-					expect(parent.baseUrl()).toBe('/');
-					parent.require().then(function(bfish) {
-						expect(bfish.baseUrl()).toBe('/base/src/test/templates/');
-						done();
-					});
-				};
-
-				this.testQnameXInclude = function BadgerfishTest$testQnameXInclude(done) {
-					var x = properties.getPrivate(this);
-					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
-						expect(bfish.qnameXInclude()).toBeNull();
-					});
 					done();
 				};
 
@@ -130,29 +116,6 @@ define(
 						expect(bfish.getParent()).toBe(parent);
 						done();
 					});
-				};
-
-				this.testParseTagname = function Badgerfish$testParseTagname(done) {
-					var x = properties.getPrivate(this);
-					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
-						expect(bfish.parseTagname("alice")).toEqual({
-							tagname : "alice",
-							local : "alice",
-							ns : "http://some-namespace"
-						});
-						expect(bfish.parseTagname("bob")).toEqual({
-							tagname : "bob",
-							local : "bob",
-							ns : "http://some-namespace"
-						});
-						expect(bfish.parseTagname("charlie:edgar")).toEqual({
-							tagname : "charlie:edgar",
-							local : "edgar",
-							prefix : "charlie",
-							ns : "http://some-other-namespace"
-						});
-					});
-					done();
 				};
 
 				this.testNativeElementsByTagName = function BadgerfishTest$testNativeElementsByTagName(done) {
@@ -202,85 +165,6 @@ define(
 					done();
 				};
 
-				this.testGetElementByTagName = function Badgerfish$testGetElementByTagName(done) {
-					var x = properties.getPrivate(this);
-					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
-						expect(bfish.getElementByTagName("bob/$")).toBe("david");
-						expect(bfish.getElementByTagName("charlie:edgar/$")).toBe("frank");
-					});
-
-					new Badgerfish({
-						'xi:include' : {
-							'@xmlns' : {
-								xi : 'http://www.w3.org/2001/XInclude'
-							},
-							'@href' : '/base/src/test/templates/cdcatalog.xml'
-						}
-					}).requireXIncludes().then(function(bfish) {
-						bfish.resolveXIncludes();
-						expect(bfish.getElementByTagName("cd[@chain]").toJSON()).toEqual({
-							'@require' : 'javascript/Control',
-							'@chain' : 'Control',
-							title : {
-								$ : 'Cold fact'
-							},
-							artist : {
-								$ : 'Sixto Rodriguez'
-							},
-							country : {
-								$ : 'USA'
-							},
-							company : {
-								$ : 'Searching for sugerman'
-							},
-							price : {
-								$ : '10.90'
-							},
-							year : {
-								$ : '1985'
-							}							
-						});
-						done();
-					});
-				};
-
-				this.testXIncludes = function BadgerfishTest$testXIncludes(done) {
-					new Badgerfish({
-						'xi:include' : {
-							'@xmlns' : {
-								xi : 'http://www.w3.org/2001/XInclude'
-							},
-							'@href' : '/base/src/test/templates/cdcatalog.xml'
-						}
-					}).requireXIncludes().then(function(bfish) {
-						bfish.resolveXIncludes();
-						expect(bfish.getTagName()).toBe('catalog');
-						expect(bfish.toJSON().cd[0]).toEqual({
-							'@require' : 'javascript/Control',
-							'@chain' : 'Control',
-							title : {
-								$ : 'Cold fact'
-							},
-							artist : {
-								$ : 'Sixto Rodriguez'
-							},
-							country : {
-								$ : 'USA'
-							},
-							company : {
-								$ : 'Searching for sugerman'
-							},
-							price : {
-								$ : '10.90'
-							},
-							year : {
-								$ : '1985'
-							}
-						});
-						done();
-					});
-				};
 			}
-
 			return class_BadgerfishTest;
 		});

@@ -85,7 +85,7 @@ define([ "../core/Exception" ], function(classException) {
 		 * @constructor
 		 */
 		function Badgerfish(entity, parent, index) {
-			var y, source, node, object, xmlns = {};
+			var y, source, node, object;
 			if (entity.constructor === Object) {
 				var tagname = null;
 				for ( var prop in entity) {
@@ -101,16 +101,7 @@ define([ "../core/Exception" ], function(classException) {
 						throw new Error("Badgerfish: cardinality of entity must be one");
 					object = object[0];
 				}
-				xmlns = object['@xmlns'];
-				var parts = [];
-				for ( var prefix in xmlns) {
-					if (prefix === "$") {
-						parts.push(' xmlns="' + xmlns.$ + '"');
-					} else {
-						parts.push(' xmlns:' + prefix + '="' + xmlns[prefix] + '"');
-					}
-				}
-				node = domParser.parseFromString([ "<", tagname, parts.join(""), "/>" ].join(""), 'text/xml').documentElement;
+				node = domParser.parseFromString([ "<", tagname, "/>" ].join(""), 'text/xml').documentElement;
 			} else {
 				DEBUG && expect(entity.ownerDocument).toBeDefined();
 				source = node = entity;
@@ -142,19 +133,6 @@ define([ "../core/Exception" ], function(classException) {
 					if (entity.ownerDocument.documentElement !== entity)
 						throw new Error("Badgerfish: root node must be on a documentElement");
 				}
-				var attr = node.attributes;
-				if (attr) {
-					for (var i = 0; i < attr.length; ++i) {
-						var name = attr[i].name;
-						if (!name.lastIndexOf("xmlns", 0)) {
-							if (name.charAt(5) === ':') {
-								xmlns[attr[i].name.substr(6)] = attr[i].value;
-							} else {
-								xmlns.$ = attr[i].value;
-							}
-						}
-					}
-				}
 			}
 			if (node.nodeType !== 1)
 				throw new Error('Badgerfish: only elements can be decorated');
@@ -173,7 +151,6 @@ define([ "../core/Exception" ], function(classException) {
 				this.decorateRoot();
 			}
 			this.decorateNode();
-			this.registerNamespaces(xmlns);
 		};
 
 		this.destroy = function Badgerfish$destroy() {
@@ -186,7 +163,7 @@ define([ "../core/Exception" ], function(classException) {
 		this.getDocumentElement = function Badgerfish$getDocumentElement() {
 			return properties.getPrivate(this).root;
 		};
-		
+
 		this.getTagName = function Badgerfish$getTagName() {
 			var x = properties.getPrivate(this);
 			return x.node.ownerDocument === GLOBAL.document ? x.node.localName : x.node.tagName;
@@ -352,34 +329,41 @@ define([ "../core/Exception" ], function(classException) {
 				depth = Infinity;
 			var self = this;
 			var x = properties.getPrivate(this);
-			if (x.source) {
-				if (!(depth--) || x.source === x.node) {
-					return x.source;
-				} else {
-					if ((x.node.hasAttributes() && x.root !== this) || x.node.hasChildNodes()) {
-						throw new Error("Badgerfish$synchronizeNode: target not empty");
-					}
-					this.registerNamespaces(x.source['@xmlns']);
-					var tagnames = Object.keys(x.source).filter(function(name) {
-						if (name.charAt(0) === '@') {
-							x.node.setAttribute(name.slice(1), x.source[name]);
-							return false;
-						}
-						return true;
-					});
-					tagnames.forEach(function(tagname) {
-						var elements = x.source[tagname];
-						if (!(elements instanceof Array)) {
-							elements = [ elements ];
-						}
-						self.createChildren(tagname, elements.length).forEach(function(badgerfish, i) {
-							badgerfish.assign(elements[i]);
-							badgerfish.toNode(depth);
-						});
-					});
-					return x.node;
-				}
+			if (x.source === x.node)
+				return x.node;
+			if (x.node.hasAttributes() || x.node.hasChildNodes()) {
+				throw new Error("Badgerfish$synchronizeNode: target not empty");
 			}
+			var tagnames = Object.keys(x.source).filter(function(name) {
+				if (name.charAt(0) === '@') {
+					if (name === '@xmlns') {
+						Object.keys(x.source[name]).forEach(function(prefix) {
+							if (prefix === '$') {
+								x.node.setAttribute("xmlns", x.source[name].$);
+							} else {
+								x.node.setAttribute([ name.slice(1), prefix ].join(":"), x.source[name][prefix])
+							}
+						});
+					} else {
+						x.node.setAttribute(name.slice(1), x.source[name]);
+					}
+					return false;
+				}
+				return true;
+			});
+			if (depth--) {
+				tagnames.forEach(function(tagname) {
+					var elements = x.source[tagname];
+					if (!(elements instanceof Array)) {
+						elements = [ elements ];
+					}
+					self.createChildren(tagname, elements.length).forEach(function(badgerfish, i) {
+						badgerfish.assign(elements[i]);
+						badgerfish.toNode(depth);
+					});
+				});
+			}
+			return x.node;
 		};
 
 		this.toNodePromise = function Badgerfish$toNodePromise() {
@@ -447,7 +431,7 @@ define([ "../core/Exception" ], function(classException) {
 
 		this.parseTagname = function Badgerfish$parseTagname(tagname) {
 			var x = properties.getPrivate(this);
-			var y = properties.getPrivate(x.root);
+			var y = properties.getPrivate(this.getDocumentElement());
 			var index = tagname.lastIndexOf(":");
 			if (index < 0)
 				return {
@@ -600,9 +584,9 @@ define([ "../core/Exception" ], function(classException) {
 		this.replaceWith = function Badgerfish$replaceWith(element) {
 			var x = properties.getPrivate(this);
 			x.node.parentNode.replaceChild(element, x.node);
-			x.node = x.source = element;			
+			x.node = x.source = element;
 		};
-		
+
 		this.getTextContent = function Badgerfish$getTextContent() {
 			var x = properties.getPrivate(this);
 			if (x.source === x.object) {
@@ -645,13 +629,13 @@ define([ "../core/Exception" ], function(classException) {
 			}
 		};
 
-		this.nativeElementsByTagName =
+		this.xnativeElementsByTagName =
 		/**
 		 * @param {string}
 		 *            tagname
 		 * @returns {NodeList}
 		 */
-		function Badgerfish$nativeElementsByTagName(tagname) {
+		function Badgerfish$xnativeElementsByTagName(tagname) {
 			var x = properties.getPrivate(this);
 			var tag = this.parseTagname(tagname);
 			if (this.isHTMLDocument()) {
@@ -676,13 +660,41 @@ define([ "../core/Exception" ], function(classException) {
 		this.nativeElementsByTagNameNS =
 		/**
 		 * @param {string}
-		 *            ns
+		 *            ns - full namespace url
 		 * @param {string}
-		 *            name
+		 *            local - local name
+		 * @param {number}
+		 *            [axis] - axis on which to search (defaults to descendant)
+		 * @param {string}
+		 *            [prefix] - namespace prefix (optionally provided when
+		 *            namespaces not supported)
 		 * @returns {NodeList}
 		 */
-		function Badgerfish$nativeElementsByTagNameNS(ns, name) {
-			return this.nativeElementsByTagName(ns + ":" + name);
+		function Badgerfish$nativeElementsByTagNameNS(ns, local, axis, prefix) {
+			var tagname = [ prefix, local ].join(prefix ? ":" : "");
+			var x = properties.getPrivate(this);
+			if (x.source === x.node) {
+				if (this.isHTMLDocument()) {
+					switch (axis) {
+					default:
+						return x.node.getElementsByTagName(tagname);
+					}
+				}
+				switch (axis) {
+				default:
+					if (ns) {
+						return x.node.getElementsByTagNameNS(ns, local);						
+					}
+					return x.node.getElementsByTagName(local);
+				}
+			} else {
+				var children = x.source[tagname];
+				if (children) {
+					return this.createChildren(tagname, children instanceof Array ? children.length : 1);
+				} else {
+					return [];
+				}
+			}
 		};
 
 		this.getElementsByTagNameNS =

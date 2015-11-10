@@ -55,6 +55,24 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 		 */
 		function Element(entity, parent, index) {
 			properties.getPrototype(1).constructor.call(this, entity, parent, index);
+			var xmlns = {};
+			if (entity.constructor === Object) {
+				xmlns = entity[this.getTagName()]['@xmlns'];				
+			} else {
+				var attr = entity.attributes;
+				if (attr) {
+					for (var i = 0; i < attr.length; ++i) {
+						var name = attr[i].name;
+						if (!name.lastIndexOf("xmlns", 0)) {
+							if (name.charAt(5) === ':') {
+								xmlns[attr[i].name.substr(6)] = attr[i].value;
+							} else {
+								xmlns.$ = attr[i].value;
+							}
+						}
+					}
+				}				
+			}
 			var x = {
 				cache : {}
 			};
@@ -62,7 +80,10 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 			if (this === this.getDocumentElement()) {
 				x.baseUrl = '/';
 				x.parent = parent;
+				x.namespace = {};
+				x.prefix = {};
 			}
+			this.registerNamespaces(xmlns);
 		};
 
 		this.baseUrl = function Badgerfish$baseUrl() {
@@ -106,7 +127,8 @@ define([ "./Badgerfish" ], function(classBadgerfish) {
 			var x = properties.getPrivate(self);
 			if (!step.axis || !x.cache[step.tagname]) {
 				x.cache[step.tagname] = [];
-				var aux = self.nativeElementsByTagName(step.tagname);
+				//var aux = self.nativeElementsByTagName(step.tagname);
+				var aux = self.nativeElementsByTagNameNS(step.ns, step.local, step.axis, step.prefix);
 				var result = new Array(aux.length);
 				for (var i = 0; i < aux.length; ++i) {
 					var node = aux[i];
