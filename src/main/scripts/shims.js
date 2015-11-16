@@ -214,8 +214,8 @@ if (Modernizr.server) {
 }
 
 var predefined = {
-		"module": null,
-		"chai.expect": GLOBAL.chai ? GLOBAL.chai.expect : null
+	"module" : null,
+	"chai.expect" : GLOBAL.chai ? GLOBAL.chai.expect : null
 };
 
 GLOBAL.define = function(deps, callback) {
@@ -224,7 +224,7 @@ GLOBAL.define = function(deps, callback) {
 		var module = shift.call(arguments);
 		deps.shift();
 		predefined.module = module;
-		for (var i=0; i<deps.length; ++i) {
+		for (var i = 0; i < deps.length; ++i) {
 			if (deps[i] === "module") {
 				arguments[i] = predefined[predefs.shift()];
 			}
@@ -275,8 +275,8 @@ define.moduleURI = function define$moduleURI(module) {
 };
 
 Modernizr.load({
-	test: DEBUG,
-	yep: "../../../node_modules/chai/chai.js"
+	test : DEBUG,
+	yep : "../../../node_modules/chai/chai.js"
 });
 
 Modernizr.load({
@@ -326,3 +326,35 @@ if (Modernizr.server) {
 		}
 	});
 }
+
+Modernizr.addTestWithShim("modernizr_xhr", function() {
+	return is.fn(Modernizr.xhrForRef);
+}, function() {
+	Modernizr.xhrForRef = function Modernizr$xhrForRef(ref) {
+		return new Promise(function(done) {
+			var xhr, ext, i, j;
+			i = ref.indexOf(".");
+			if (i < 0)
+				throw new Error("Definition: missing filename extension");
+			while ((j = ref.indexOf(".", ++i)) >= 0)
+				i = j;
+			ext = ref.substr(--i);
+			xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === 4 && xhr.status === 200) {
+					switch (ext) {
+					case ".xml":
+						DEBUG && expect(xhr.getResponseHeader('content-type')).toBe("application/xml");
+						break;
+					default:
+						break;
+					}
+					done(xhr);
+				}
+			};
+			xhr.open("GET", ref, true);
+			xhr.responseType = "msxml-document";
+			xhr.send();
+		});
+	};
+});
