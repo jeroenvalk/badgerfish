@@ -29,7 +29,11 @@ define([ "./JasmineTestCase" ], function(classJasmineTestCase) {
 			return function(done) {
 				if (is.fn(self.setup)) {
 					self.setup(function() {
-						self[prop](done);
+						try {
+							self[prop](done);							
+						} catch(e) {
+							console.error(e.message + '\n' + e.stack);
+						}
 					});
 				} else {
 					self[prop](done);

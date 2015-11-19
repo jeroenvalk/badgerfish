@@ -241,7 +241,7 @@ define([ "./Badgerfish", "./TagName", "./Exception" ], function(classBadgerfish,
 				result = [ this.getAttribute(step.tagname.substr(1)) ];
 				break;
 			case '$':
-				result = [ this.getTextContent() ];
+				result = [ this.getText() ];
 				break;
 			default:
 				result = this.getElementsByTagName(path[0]);

@@ -16,8 +16,9 @@
  */
 
 /* global define */
-define(function() {
+define([ "./Exception" ], function(classException) {
 	function class_TagName(properties) {
+		var Exception = properties.import([ classException ]);
 
 		this.constructor =
 		/**
@@ -26,17 +27,32 @@ define(function() {
 			this.ns = ns;
 			this.local = local;
 			properties.setPrivate(this, {
-				prefix: prefix
+				prefix : prefix
 			});
 		};
-		
+
 		this.getPrefix = function TagName$getPrefix() {
 			return properties.getPrivate(this).prefix;
 		};
-		
+
 		this.getTagName = function TagName$getTagName() {
 			var prefix = this.getPrefix();
-			return [ prefix, this.local ].join(prefix ? ":" : "");
+			return !prefix || prefix === "$" ? this.local : [ prefix, this.local ].join(":");
+		};
+
+		this.attach = function TagName$attach(bfish) {
+			var x = properties.getPrivate(this);
+			if (this.ns)
+				x.prefix = bfish.getPrefixOfNS(this.ns);
+			x.bfish = bfish;
+		};
+
+		this.createElement = function TagName$createElement() {
+			var bfish = properties.getPrivate(this).bfish;
+			if (!bfish)
+				throw new Exception("must be attached to create elements");
+			var doc = bfish.toNode(0).ownerDocument;
+			return this.ns ? doc.createElementNS(this.ns, this.local) : doc.createElement(this.local);
 		};
 	}
 

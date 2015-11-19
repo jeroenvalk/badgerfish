@@ -17,9 +17,10 @@
 
 /* globals define, DEBUG, expect, DOMParser, XMLSerializer */
 /* jshint -W030 */
-define([ "./Exception" ], function(classException) {
+define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 	function class_Badgerfish(properties) {
 		var Exception = properties.import([ classException ]);
+		var TagName = properties.import([ classTagName ]);
 		var domParser = new DOMParser();
 		var xmlSerializer = new XMLSerializer();
 		var badgerfish;
@@ -81,28 +82,43 @@ define([ "./Exception" ], function(classException) {
 		 * @param {number}
 		 *            [index] - index at which the entity occurs under the
 		 *            tagname
+		 * @param {TagName}
+		 *            [tagname] - tagname for JSON objects
 		 * 
 		 * @constructor
 		 */
-		function Badgerfish(entity, parent, index) {
+		function Badgerfish(entity, parent, index, tagName) {
 			var y, source, node, object;
+			if (!entity) {
+				throw new Exception("argument 'entity' required");
+			}
 			if (entity.constructor === Object) {
-				var tagname = null;
-				for ( var prop in entity) {
-					if (tagname)
-						throw new Error("Badgerfish: multiple properties not allowed on entity");
-					tagname = prop;
+				if (parent) {
+					y = properties.getPrivate(parent);
+					node = tagName.createElement();
+					y.node.appendChild(node);
+					source = object = entity;
+				} else {
+					var tagname;
+					for ( var prop in entity) {
+						if (tagname)
+							throw new Error("Badgerfish: multiple properties not allowed on entity");
+						tagname = prop;
+					}
+					if (!tagname)
+						throw new Error("Badgerfish: empty entity");
+					source = object = entity[tagname];
+					if (object instanceof Array) {
+						if (object.length !== 1)
+							throw new Error("Badgerfish: cardinality of entity must be one");
+						object = object[0];
+					}
+					node = domParser.parseFromString([ "<", tagname, "/>" ].join(""), 'text/xml').documentElement;
 				}
-				if (!tagname)
-					throw new Error("Badgerfish: empty entity");
-				source = object = entity[tagname];
-				if (object instanceof Array) {
-					if (object.length !== 1)
-						throw new Error("Badgerfish: cardinality of entity must be one");
-					object = object[0];
-				}
-				node = domParser.parseFromString([ "<", tagname, "/>" ].join(""), 'text/xml').documentElement;
 			} else {
+				if (!entity.ownerDocument) {
+					throw new Exception("object or XML node required");
+				}
 				DEBUG && expect(entity.ownerDocument).toBeDefined();
 				source = node = entity;
 				if (parent) {
@@ -128,10 +144,13 @@ define([ "./Exception" ], function(classException) {
 								throw new Error("Badgerfish: integrity error");
 							}
 						}
+					} else {
+						object = {};
 					}
 				} else {
 					if (entity.ownerDocument.documentElement !== entity)
 						throw new Error("Badgerfish: root node must be on a documentElement");
+					object = {};
 				}
 			}
 			if (node.nodeType !== 1)
@@ -140,7 +159,8 @@ define([ "./Exception" ], function(classException) {
 				root : node.ownerDocument.documentElement === node ? this : y.root,
 				source : source,
 				node : node,
-				object : object,
+				object : object ? object : {},
+				children : {},
 				cache : {}
 			};
 			properties.setPrivate(this, x);
@@ -165,6 +185,22 @@ define([ "./Exception" ], function(classException) {
 		this.getTagName = function Badgerfish$getTagName() {
 			var x = properties.getPrivate(this);
 			return x.node.ownerDocument === GLOBAL.document ? x.node.localName : x.node.tagName;
+		};
+
+		this.getPrefixOfNS = function Badgerfish$getPrefixOfNS(ns) {
+			var x = properties.getPrivate(this);
+			if (this !== x.root) {
+				throw new Exception("prefix can only be requested at document element");
+			}
+			var result, xmlns = this.toJSON(0)['@xmlns'];
+			if (xmlns) {
+				result = Object.keys(xmlns).find(function(prefix) {
+					return xmlns[prefix] === ns;
+				});
+			}
+			if (!result)
+				throw new Exception("namespace '" + ns + "' not found");
+			return result;
 		};
 
 		var importNodeIE = function Badgerfish$importNodeIE(doc, node) {
@@ -273,19 +309,150 @@ define([ "./Exception" ], function(classException) {
 			return Badgerfish.getRootByDocument(node.ownerDocument).getBadgerfishFromRoot(node);
 		};
 
-		this.moveTo = function Badgerfish$moveTo(target) {
-			if (source.nodeType !== 1 || target.nodeType !== 1) {
-				throw new Error("Badgerfish.moveNode: invalid argument; must be a DOM element");
-			}
-			var dest = target.ownerDocument;
-			if (source.ownerDocument !== dest) {
-				if (dest.importNode) {
-					source = dest.importNode(source);
-				} else {
-					source = importNodeIE(dest, source);
+		var getAttributeObject = function Badgerfish$getAttributeObject(all) {
+			var x = properties.getPrivate(this);
+			var i, attr, name, attrs, result = {};
+			if (x.source === x.node) {
+				attrs = x.node.attributes;
+				for (i = 0; i < attrs.length; ++i) {
+					attr = attrs.item(i);
+					name = attr.name;
+					if (all || name.lastIndexOf("xmlns", 0)) {
+						result[name] = attr.value;
+					}
+				}
+			} else {
+				Object.keys(x.object).forEach(function(name) {
+					if (name.charAt(0) === "@" && name.lastIndexOf("@xmlns", 0)) {
+						result[name.substr(1)] = x.object[name];
+					}
+				});
+				var xmlns = x.object['@xmlns'];
+				if (all && xmlns) {
+					Object.keys(xmlns).forEach(function(name) {
+						result[name === "$" ? "xmlns" : "xmlns:" + name] = xmlns[name];
+					});
 				}
 			}
-			return source;
+			return result;
+		};
+
+		this.getText = function Badgerfish$getText() {
+			var x = properties.getPrivate(this);
+			var result;
+			if (x.source === x.object) {
+				result = x.object.$;
+				if (result) {
+					if (x.children && x.children.length)
+						throw new Exception("mixed nodes not supported");
+					x.node.textContent = result;
+				}
+			} else {
+				if (!x.node.childElementCount) {
+					result = x.object.$ = x.node.textContent;
+				}
+			}
+			return result;
+		};
+
+		this.getAttribute = function Badgerfish$getAttribute(name) {
+			var x = properties.getPrivate(this);
+			if (x.source === x.object) {
+				return x.object['@' + name];
+			} else {
+				return x.node.getAttribute(name);
+			}
+		};
+
+		this.attr =
+		/**
+		 * @param {Object}
+		 *            [attr] - attributes to be assigned
+		 * @param {boolean}
+		 *            all - true if xmlns attributes must be included
+		 */
+		function Badgerfish$attr(attr, all) {
+			var x;
+			if (attr && attr.constructor === Object) {
+				if (!all) {
+					Object.keys(attr).forEach(function(name) {
+						if (!attr[name].lastIndexOf("xmlns", 0)) {
+							delete attr[name];
+						}
+					});
+				}
+				x = properties.getPrivate(this);
+				if (x.source === x.node) {
+					var i, name, attrs = x.node.attributes, remove = [];
+					for (i = 0; i < attrs.length; ++i) {
+						name = attrs.item(i).localName;
+						if (attr[name] === undefined) {
+							remove.push(name);
+						}
+					}
+					remove.forEach(function(name) {
+						x.node.removeAttribute(name);
+					});
+					Object.keys(attr).forEach(function(name) {
+						var value = attr[name];
+						if (x.node.getAttribute(name) !== value) {
+							x.node.setAttribute(name, value);
+						}
+					});
+				} else {
+					var xmlns;
+					Object.keys(attr).forEach(function(name) {
+						if (name.lastIndexOf("xmlns", 0)) {
+							x.object['@' + name] = attr[name];
+						} else {
+							if (!xmlns)
+								xmlns = x.object['@xmlns'] = {};
+							if (name.length === 5) {
+								xmlns.$ = attr.xmlns;
+							} else {
+								xmlns[name.substr(6)] = attr[name];
+							}
+						}
+					});
+				}
+			} else {
+				all = attr;
+				return getAttributeObject.call(this, all);
+			}
+		};
+
+		this.getTagNames = function Badgerfish$getTagNames(childAxis) {
+			var x = properties.getPrivate(this);
+			var root = this.getDocumentElement();
+			if (childAxis) {
+				if (!x.childTagNames) {
+					if (x.source === x.node) {
+						throw new Error("not implemented");
+					} else {
+						var xmlns = properties.getPrivate(this.getDocumentElement()).object['@xmlns'];
+						x.childTagNames = Object.keys(x.object).filter(function(name) {
+							return name.charAt(0) !== '@' && name !== "$";
+						}).map(function(tagname) {
+							var tagName, part = tagname.split(":");
+							switch (part.length) {
+							case 1:
+								tagName = new TagName(xmlns ? xmlns.$ : undefined, part[0]);
+								break;
+							case 2:
+								tagName = new TagName(xmlns[part[0]], part[1], part[0]);
+								break;
+							default:
+								throw new Exception("invalid tagname");
+							}
+							tagName.attach(root);
+							return tagName;
+						});						
+					}
+				}
+				return x.childTagNames;
+			} else {
+				throw new Error("not implemented");
+			}
 		};
 
 		this.toNode = function Badgerfish$toNode(depth) {
@@ -295,36 +462,36 @@ define([ "./Exception" ], function(classException) {
 			var x = properties.getPrivate(this);
 			if (x.source === x.node)
 				return x.node;
-			if (x.node.hasAttributes() || x.node.hasChildNodes()) {
-				throw new Error("Badgerfish$synchronizeNode: target not empty");
-			}
-			var tagnames = Object.keys(x.source).filter(function(name) {
-				if (name.charAt(0) === '@') {
-					if (name === '@xmlns') {
-						Object.keys(x.source[name]).forEach(function(prefix) {
-							if (prefix === '$') {
-								x.node.setAttribute("xmlns", x.source[name].$);
-							} else {
-								x.node.setAttribute([ name.slice(1), prefix ].join(":"), x.source[name][prefix])
-							}
-						});
-					} else {
-						x.node.setAttribute(name.slice(1), x.source[name]);
-					}
-					return false;
-				}
-				return true;
-			});
+			var attr = this.attr(true);
+			x.source = x.node;
+			this.attr(attr, true);
+			x.source = x.object;
+			this.getText();
 			if (depth--) {
-				tagnames.forEach(function(tagname) {
-					var elements = x.source[tagname];
-					if (!(elements instanceof Array)) {
-						elements = [ elements ];
+				this.getTagNames(true).forEach(function(tagname) {
+					var i, y, name = tagname.getTagName(), objects = x.source[name];
+					if (!(objects instanceof Array)) {
+						objects = [ objects ];
 					}
-					self.createChildren(tagname, elements.length).forEach(function(badgerfish, i) {
-						badgerfish.assign(elements[i]);
-						badgerfish.toNode(depth);
-					});
+					var children = x.children[name];
+					if (!children) {
+						children = x.children[name] = [];
+					}
+					for (i = 0; i < children.length; ++i) {
+						if (properties.getPrivate(children[i]).object === objects[i]) {
+							children[i].toNode(depth);
+						} else {
+							throw new Exception("not implemented");
+						}
+					}
+					for (i = children.length; i < objects.length; ++i) {
+						var bfish = new Badgerfish(objects[i], self, i, tagname);
+						children.push(bfish);
+						bfish.toNode(depth);
+					}
+					for (i = objects.length; i < children.length; ++i) {
+						children[i].destroy();
+					}
 				});
 			}
 			return x.node;
@@ -344,11 +511,74 @@ define([ "./Exception" ], function(classException) {
 			return xmlSerializer.serializeToString(this.toNode());
 		};
 
-		this.toJSON = function Badgerfish$toJSON() {
+		this.toJSON = function Badgerfish$toJSON(depth) {
+			if (isNaN(depth))
+				depth = Infinity;
+			var self = this, root = this.getDocumentElement();
 			var x = properties.getPrivate(this);
-			if (!x.source)
-				return null;
-			return synchronizeJSON.call(this, x.namespace, x.node, Infinity);
+			if (x.source === x.object)
+				return x.object;
+			var attr = this.attr(root === this);
+			x.source = x.object;
+			this.attr(attr, true);
+			x.source = x.node;
+			this.getText();
+			if (depth--) {
+				var child = x.node.children;
+				var byTagname = {};
+				for (var i = 0; i < child.length; ++i) {
+					var tagName = new TagName(child[i].namespaceURI, child[i].localName);
+					tagName.attach(root);
+					var tagname = tagName.getTagName();
+					if (!byTagname[tagname])
+						byTagname[tagname] = [];
+					byTagname[tagname].push(child[i]);
+				}
+				Object.keys(byTagname).forEach(function(tagname) {
+					var childNode = byTagname[tagname];
+					var object = x.object[tagname];
+					if (!object) {
+						object = [];
+					}
+					if (!(object instanceof Array)) {
+						object = [ object ];
+					}
+					var children = x.children[tagname];
+					if (!children) {
+						children = x.children[tagname] = [];
+					}
+					DEBUG && expect(children.length).toBe(object.length);
+					for (i = 0; i < children.length; ++i) {
+						if (properties.getPrivate(children[i]).node === childNode[i]) {
+							children[i].toJSON(depth);
+						} else {
+							throw new Exception("not implemented");
+						}
+					}
+					for (i = children.length; i < childNode.length; ++i) {
+						var bfish = new Badgerfish(childNode[i], self, i);
+						var y = properties.getPrivate(bfish);
+						y.object = {};
+						object.push(y.object)
+						children.push(bfish);
+						bfish.toJSON(depth);
+					}
+					for (i = childNode.length; i < children.length; ++i) {
+						children[i].destroy();
+					}
+					if (object.length === 1) {
+						x.object[tagname] = object[0];
+					} else {
+						DEBUG && expect(object.length).toBeGreaterThan(1);
+						x.object[tagname] = object;
+					}
+				});
+			}
+			return x.object;
+			// var x = properties.getPrivate(this);
+			// if (!x.source)
+			// return null;
+			// return synchronizeJSON.call(this, x.namespace, x.node, Infinity);
 		};
 
 		this.toJSONPromise = function Badgerfish$toJSONBadgerfish() {
@@ -362,6 +592,21 @@ define([ "./Exception" ], function(classException) {
 
 		this.toJSONString = function Badgerfish$toJSONString() {
 			return JSON.stringify(this.toJSON());
+		};
+
+		this.moveTo = function Badgerfish$moveTo(target) {
+			if (source.nodeType !== 1 || target.nodeType !== 1) {
+				throw new Error("Badgerfish.moveNode: invalid argument; must be a DOM element");
+			}
+			var dest = target.ownerDocument;
+			if (source.ownerDocument !== dest) {
+				if (dest.importNode) {
+					source = dest.importNode(source);
+				} else {
+					source = importNodeIE(dest, source);
+				}
+			}
+			return source;
 		};
 
 		this.toString =
@@ -498,24 +743,6 @@ define([ "./Exception" ], function(classException) {
 			x.node = x.source = element;
 		};
 
-		this.getTextContent = function Badgerfish$getTextContent() {
-			var x = properties.getPrivate(this);
-			if (x.source === x.object) {
-				return x.object.$;
-			} else {
-				return x.node.textContent;
-			}
-		};
-
-		this.getAttribute = function Badgerfish$getAttribute(name) {
-			var x = properties.getPrivate(this);
-			if (x.source === x.object) {
-				return x.object['@' + name];
-			} else {
-				return x.node.getAttribute(name);
-			}
-		};
-
 		this.nativeElementById =
 		/**
 		 * @param {string}
@@ -573,7 +800,8 @@ define([ "./Exception" ], function(classException) {
 		 * @param {TagName}
 		 *            tagName - fully qualified tag name
 		 * @param {boolean}
-		 *            [childAxis] - flag to search on child axis only instead of all descendants
+		 *            [childAxis] - flag to search on child axis only instead of
+		 *            all descendants
 		 * @returns {NodeList}
 		 */
 		function Badgerfish$nativeElementsByTagNameNS(tagName, childAxis) {
@@ -589,7 +817,7 @@ define([ "./Exception" ], function(classException) {
 				switch (childAxis) {
 				default:
 					if (tagName.ns) {
-						return x.node.getElementsByTagNameNS(tagName.ns, tagName.local);						
+						return x.node.getElementsByTagNameNS(tagName.ns, tagName.local);
 					}
 					return x.node.getElementsByTagName(tagName.local);
 				}
@@ -633,7 +861,7 @@ define([ "./Exception" ], function(classException) {
 			DEBUG && expect(step.axis).not.toBe(Badgerfish.Axis.DESCENDANT);
 			// TODO: support for other axis than child::
 			DEBUG && expect(step.axis).toBe(Badgerfish.Axis.CHILD);
-			return x.cache[tagname];			
+			return x.cache[tagname];
 		};
 	}
 

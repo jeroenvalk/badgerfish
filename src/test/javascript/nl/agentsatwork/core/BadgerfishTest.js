@@ -15,9 +15,9 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, expect, DOMParser */
+/* global define, expect, Modernizr, DOMParser */
 define(
-		[ "javascript/nl/agentsatwork/testing/AsyncJasmineTestCase", "javascript/nl/agentsatwork/core/ElementNode" ],
+		[ "javascript/nl/agentsatwork/testing/AsyncJasmineTestCase", "javascript/nl/agentsatwork/core/Badgerfish" ],
 		function(classAsyncJasmineTestCase, classBadgerfish) {
 			function class_BadgerfishTest(properties) {
 				properties.extends([ classAsyncJasmineTestCase ]);
@@ -25,6 +25,7 @@ define(
 				var Badgerfish = properties.import([ classBadgerfish ]);
 
 				var domParser = new DOMParser();
+				var xmlSerializer = new XMLSerializer();
 
 				this.constructor = function BadgerfishTest() {
 					properties.getPrototype(1).constructor.call(this);
@@ -33,92 +34,229 @@ define(
 
 				this.setup = function BadgerfishTest$setup(done) {
 					var x = properties.getPrivate(this);
-					x.xml = domParser
-							.parseFromString(
-									'<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob>david</bob><charlie:edgar>frank</charlie:edgar></alice>',
-									'application/xml').documentElement;
+					x.keys = [ "ning", "cd", "cdcatalog" ];
 					x.json = {
-						alice : {
-							'@xmlns' : {
-								$ : 'http://some-namespace',
-								charlie : 'http://some-other-namespace'
-							},
-							bob : {
-								$ : 'david'
-							},
-							'charlie:edgar' : {
-								$ : 'frank'
+						ning : {
+							alice : {
+								'@xmlns' : {
+									$ : 'http://some-namespace',
+									charlie : 'http://some-other-namespace'
+								},
+								bob : {
+									$ : 'david'
+								},
+								'charlie:edgar' : {
+									$ : 'frank'
+								}
+							}
+						},
+						cd : {
+							cd : {
+								'@require' : 'javascript/Control',
+								'@chain' : 'Control',
+								title : {
+									$ : 'Cold fact'
+								},
+								artist : {
+									$ : 'Sixto Rodriguez'
+								},
+								country : {
+									$ : 'USA'
+								},
+								company : {
+									$ : 'Searching for sugerman'
+								},
+								price : {
+									$ : '10.90'
+								},
+								year : {
+									$ : '1985'
+								}
 							}
 						}
+
 					};
+					Promise
+							.all([ Modernizr.xhrForRef('/base/src/test/templates/cd.xml'), Modernizr.xhrForRef('/base/src/test/templates/cdcatalog.xml') ])
+							.then(
+									function(xhr) {
+										x.xml = {
+											ning : domParser
+													.parseFromString(
+															'<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob>david</bob><charlie:edgar>frank</charlie:edgar></alice>',
+															'application/xml').documentElement,
+											cd : xhr[0].responseXML.documentElement,
+											cdcatalog : xhr[1].responseXML.documentElement
+										};
+										done();
+									});
+				};
+
+				this.testConstructor = function Badgerfish$testConstructor(done) {
+					var x = properties.getPrivate(this);
+					x.keys.forEach(function(key) {
+						[ x.json[key], x.xml[key] ].forEach(function(entity) {
+							if (entity) {
+								var bfish = new Badgerfish(entity);
+								expect(bfish.constructor).toBe(Badgerfish);
+								// expect(new Badgerfish(entity,
+								// bfish)).toThrowError("Badgerfish: constructor
+								// requires exactly one argument");
+							}
+						});
+					});
+					[ undefined, 0, 1, true, false ].forEach(function(entity) {
+						expect(function() {
+							var bfish = new Badgerfish(entity);
+							expect(true).toBe(bfish);
+						}).toThrowError("Badgerfish: object or XML node required");
+					});
+					[ null, {}, {
+						a : 1,
+						b : 1
+					} ].forEach(function(entity) {
+						expect(function() {
+							var bfish = new Badgerfish(entity);
+							expect(true).toBe(bfish);
+						}).toThrowError("Badgerfish: exactly one property expected on document element");
+					});
+					done();
+				};
+
+				this.testGetText = function Badgerfish$testGetText(done) {
+					var x = properties.getPrivate(this);
+					[ new Badgerfish(x.json.ning), new Badgerfish(x.xml.ning) ].forEach(function(bfish) {
+						expect(bfish.getText()).toBeUndefined();
+					});
+					done();
+				};
+				
+				this.testAttr = function Badgerfish$testAttr(done) {
+					var x = properties.getPrivate(this);
+					[ new Badgerfish(x.json.ning), new Badgerfish(x.xml.ning) ].forEach(function(bfish) {
+						expect(bfish.attr()).toEqual({});
+						expect(bfish.attr(true)).toEqual({
+							xmlns : 'http://some-namespace',
+							'xmlns:charlie' : 'http://some-other-namespace'
+						});
+					});
+					[ new Badgerfish(x.json.cd), new Badgerfish(x.xml.cd) ].forEach(function(bfish) {
+						[ bfish.attr(), bfish.attr(true) ].forEach(function(attr) {
+							expect(attr).toEqual({
+								require : 'javascript/Control',
+								chain : 'Control',
+							});
+						});
+					});
+					done();
+				};
+
+				this.xtestGetTagNames = function Badgerfish$testGetTagNames(done) {
+					var x = properties.getPrivate(this);
+					[ new Badgerfish(x.json.ning), new Badgerfish(x.xml.ning) ].forEach(function(bfish) {
+						[ true ].forEach(function(childAxis) {
+							expect(bfish.getTagNames(childAxis).map(function(tagName) {
+								var result = {
+									ns : tagName.ns,
+									local : tagName.local
+								};
+								if (tagName.getPrefix())
+									result.prefix = tagName.getPrefix();
+								return result;
+							})).toEqual([ {
+								ns : "http://some-namespace",
+								local : "bob",
+								prefix: "$"
+							}, {
+								ns : "http://some-other-namespace",
+								local : "edgar",
+								prefix : "charlie"
+							} ]);
+
+						});
+					});
+					[ new Badgerfish(x.json.cd), new Badgerfish(x.xml.cd) ].forEach(function(bfish) {
+						[ true ].forEach(function(childAxis) {
+							expect(bfish.getTagNames(childAxis).map(function(tagName) {
+								var result = {
+									ns : tagName.ns,
+									local : tagName.local
+								};
+								if (tagName.getPrefix())
+									result.prefix = tagName.getPrefix();
+								return result;
+							})).toEqual([ {
+								local : "title"
+							}, {
+								local : "artist"
+							}, {
+								local : "country"
+							}, {
+								local : "company"
+							}, {
+								local : "price"
+							}, {
+								local : "year"
+							} ]);
+						});
+					});
 					done();
 				};
 
 				this.testToNode = function Badgerfish$testToNode(done) {
 					var x = properties.getPrivate(this);
-					var bfish = new Badgerfish(x.json);
-					var node = bfish.toNode(0);
-					expect(node.tagName).toBe("alice");
-					expect(node.getAttribute('xmlns')).toBe("http://some-namespace");
-					expect(node.getAttribute('xmlns:charlie')).toBe("http://some-other-namespace");
-					expect(node.childNodes.length).toBe(0);
+					Object.keys(x.json).forEach(
+							function(key) {
+								var json = x.json[key];
+								var root = json[Object.keys(json)[0]];
+								var xmlns = root['@xmlns'];
+								var bfish = new Badgerfish(json);
+								var node = bfish.toNode(0);
+								expect(node.childNodes.length).toBe(0);
+								var xmlnsNames = xmlns ? Object.keys(xmlns) : [];
+								var attrNames = Object.keys(root).filter(function(attr) {
+									return attr.charAt(0) === '@' && attr !== '@xmlns';
+								});
+								expect(node.attributes.length).toBe(xmlnsNames.length + attrNames.length);
+								xmlnsNames.forEach(function(prefix) {
+									if (prefix === '$') {
+										expect(node.getAttribute('xmlns')).toBe(xmlns[prefix]);
+									} else {
+										expect(node.getAttribute('xmlns:' + prefix)).toBe(xmlns[prefix]);
+									}
+								});
+								attrNames.forEach(function(attr) {
+									expect(node.getAttribute(attr.substr(1))).toBe(root[attr]);
+								});
 
-					// var result = bfish.toNode();
-					// expect(new Badgerfish(result).toJSON()).toEqual(x.json);
-					done();
-				};
-
-				this.testAssign = function BadgerfishTest$testAssign(done) {
-					var x = properties.getPrivate(this);
-					var source = new Badgerfish(x.json);
-					var target = new Badgerfish({
-						dummy : {}
-					});
-					expect(source.toJSON()).toEqual(x.json.alice);
-					target.assign(source);
-					expect(target.toJSON()).toEqual(x.json.alice);
-					expect(source.toJSON()).toBeNull();
+								node = bfish.toNode();
+								expect(
+										new Badgerfish(domParser.parseFromString(xmlSerializer.serializeToString(node), "application/xml").documentElement)
+												.toJSON()).toEqual(json[bfish.getTagName()]);
+							});
 					done();
 				};
 
 				this.testToJSON = function BadgerfishTest$testToJSON(done) {
-					var parent = new Badgerfish({
-						'xi:include' : {
-							'@xmlns' : {
-								xi : 'http://www.w3.org/2001/XInclude'
-							},
-							'@href' : '/base/src/test/templates/cd.xml'
-						}
-					});
-					parent.require().then(function(bfish) {
-						expect(bfish.toJSON()).toEqual({
-							'@require' : 'javascript/Control',
-							'@chain' : 'Control',
-							title : {
-								$ : 'Cold fact'
-							},
-							artist : {
-								$ : 'Sixto Rodriguez'
-							},
-							country : {
-								$ : 'USA'
-							},
-							company : {
-								$ : 'Searching for sugerman'
-							},
-							price : {
-								$ : '10.90'
-							},
-							year : {
-								$ : '1985'
-							}
-						});
-						expect(bfish.getParent()).toBe(parent);
-						done();
-					});
+					var x = properties.getPrivate(this);
+					Object.keys(x.json).forEach(
+							function(key) {
+								var json = x.json[key];
+								var root = json[Object.keys(json)[0]];
+								var xmlns = root['@xmlns'];
+								var bfish = new Badgerfish(x.xml[key]);
+								var obj = bfish.toJSON(0);
+								expect(Object.keys(obj).filter(function(key) {
+									return key.charAt(0) !== '@';
+								})).toEqual([]);
+								expect(obj['@xmlns']).toEqual(xmlns);
+								obj = bfish.toJSON();
+								expect(obj).toEqual(root);
+							});
+					done();
 				};
 
-				this.testNativeElementsByTagName = function BadgerfishTest$testNativeElementsByTagName(done) {
+				this.xtestNativeElementsByTagName = function BadgerfishTest$testNativeElementsByTagName(done) {
 					var x = properties.getPrivate(this);
 					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
 						expect(bfish.nativeElementsByTagName("alice").length).toBe(0);
@@ -136,7 +274,7 @@ define(
 					done();
 				};
 
-				this.testGetElementsByTagName = function BadgerfishTest$testGetElementsByTagName(done) {
+				this.xtestGetElementsByTagName = function BadgerfishTest$testGetElementsByTagName(done) {
 					var x = properties.getPrivate(this);
 					[ new Badgerfish(x.xml), new Badgerfish(x.json) ].forEach(function(bfish) {
 						expect(bfish.getElementsByTagName("bob").length).toBe(1);
@@ -150,7 +288,6 @@ define(
 					});
 					done();
 				};
-
 			}
 			return class_BadgerfishTest;
 		});
