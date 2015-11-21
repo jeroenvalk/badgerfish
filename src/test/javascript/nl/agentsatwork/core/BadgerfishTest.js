@@ -109,7 +109,7 @@ define(
 						expect(function() {
 							var bfish = new Badgerfish(entity);
 							expect(true).toBe(bfish);
-						}).toThrowError("Badgerfish: object or XML node required");
+						}).toThrowError("Badgerfish: JSON or XML node required");
 					});
 					[ null, {}, {
 						a : 1,

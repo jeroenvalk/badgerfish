@@ -87,12 +87,15 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 		 * 
 		 * @constructor
 		 */
-		function Badgerfish(entity, parent, index, tagName) {
-			var y, source, node, object;
+		function Badgerfish(entity, parent, index) {
+			var y, source, node, object, tagName;
 			if (!entity) {
 				throw new Exception("argument 'entity' required");
 			}
-			if (entity.constructor === Object) {
+			if (entity.constructor === Array && entity.length === 2 && entity[0] instanceof TagName) {
+				tagName = entity[0];
+				source = object = entity = entity[1];
+			} else if (entity.constructor === Object) {
 				if (parent) {
 					y = properties.getPrivate(parent);
 					node = tagName.createElement();
@@ -117,7 +120,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				}
 			} else {
 				if (!entity.ownerDocument) {
-					throw new Exception("object or XML node required");
+					throw new Exception("JSON or XML node required");
 				}
 				DEBUG && expect(entity.ownerDocument).toBeDefined();
 				source = node = entity;
@@ -144,22 +147,17 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 								throw new Error("Badgerfish: integrity error");
 							}
 						}
-					} else {
-						object = {};
 					}
-				} else {
-					if (entity.ownerDocument.documentElement !== entity)
-						throw new Error("Badgerfish: root node must be on a documentElement");
-					object = {};
 				}
 			}
-			if (node.nodeType !== 1)
+			if (node && node.nodeType !== 1)
 				throw new Error('Badgerfish: only elements can be decorated');
 			var x = {
-				root : node.ownerDocument.documentElement === node ? this : y.root,
+				root : node ? (node.ownerDocument.documentElement === node ? this : y.root) : undefined,
+				tagName : tagName,
 				source : source,
 				node : node,
-				object : object ? object : {},
+				object : object,
 				children : {},
 				cache : {}
 			};
@@ -168,7 +166,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				x.badgerfish = [];
 				this.decorateRoot();
 			}
-			this.decorateNode();
+			if (node) this.decorateNode();
 		};
 
 		this.destroy = function Badgerfish$destroy() {
@@ -179,7 +177,8 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 		};
 
 		this.getDocumentElement = function Badgerfish$getDocumentElement() {
-			return properties.getPrivate(this).root;
+			var x = properties.getPrivate(this);
+			return x.root ? x.root : x.parent.getDocumentElement();
 		};
 
 		this.getTagName = function Badgerfish$getTagName() {
@@ -342,14 +341,9 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			var result;
 			if (x.source === x.object) {
 				result = x.object.$;
-				if (result) {
-					if (x.children && x.children.length)
-						throw new Exception("mixed nodes not supported");
-					x.node.textContent = result;
-				}
 			} else {
 				if (!x.node.childElementCount) {
-					result = x.object.$ = x.node.textContent;
+					result = x.node.textContent;
 				}
 			}
 			return result;
@@ -446,10 +440,48 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 							}
 							tagName.attach(root);
 							return tagName;
-						});						
+						});
 					}
 				}
 				return x.childTagNames;
+			} else {
+				throw new Error("not implemented");
+			}
+		};
+
+		this.expandChildrenByTagName = function Badgerfish$expandChildrenByTagName(tagName) {
+			var x = properties.getPrivate(this);
+			var tagname = tagName.getTagName();
+			var i, bfish, children = x.children[tagname];
+			if (!children) {
+				children = x.children[tagname] = [];
+			}
+			if (x.source === x.object) {
+				var childObjects = x.object[tagname];
+				if (childObjects instanceof Array) {
+					for (i = children.length; i < childObjects.length; ++i) {
+						children[i] = new Badgerfish([ tagName, childObjects[i] ]);
+					}
+					for (i = 0; i < childObjects.length; ++i) {
+						properties.getPrivate(bfish).parent = this;
+						properties.getPrivate(bfish).node = null;
+					}
+					for (i = childObjects.length; i < children.length; ++i) {
+						children[i].destroy();
+					}
+					children.length = childObjects.length;
+				} else {
+					if (!children.length) {
+						bfish = children[0] = new Badgerfish([ tagName, childObjects ]);
+					} else {
+						bfish = children[0];
+					}
+					properties.getPrivate(bfish).parent = this;
+					for (i = 1; i < children.length; ++i) {
+						children[i].destroy();
+					}
+					children.length = 1;
+				}
 			} else {
 				throw new Error("not implemented");
 			}
@@ -462,13 +494,39 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			var x = properties.getPrivate(this);
 			if (x.source === x.node)
 				return x.node;
+			
+			// initialize
+			if (!x.node) {
+				if (x.parent) {
+					var y = properties.getPrivate(x.parent);
+					x.node = x.tagName.createElement();
+					y.node.appendChild(x.node);
+				}
+			}
+			
+			// copy attributes
 			var attr = this.attr(true);
 			x.source = x.node;
 			this.attr(attr, true);
 			x.source = x.object;
-			this.getText();
+			
+			// copy text content
+			var text = this.getText();
+			if (typeof text === "string") {
+				if (x.children && x.children.length)
+					throw new Exception("mixed nodes not supported");
+				x.node.textContent = text;
+			}
+			
+			// recursively handle child elements
 			if (depth--) {
 				this.getTagNames(true).forEach(function(tagname) {
+					self.expandChildrenByTagName(tagname);
+					var children = x.children[tagname.getTagName()];
+					for (var i = 0; i< children.length; ++i) {
+						children[i].toNode(depth);
+					}
+					return;
 					var i, y, name = tagname.getTagName(), objects = x.source[name];
 					if (!(objects instanceof Array)) {
 						objects = [ objects ];
@@ -485,7 +543,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 						}
 					}
 					for (i = children.length; i < objects.length; ++i) {
-						var bfish = new Badgerfish(objects[i], self, i, tagname);
+						var bfish = new Badgerfish([ tagname, objects[i] ], self, i);
 						children.push(bfish);
 						bfish.toNode(depth);
 					}
@@ -518,11 +576,24 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			var x = properties.getPrivate(this);
 			if (x.source === x.object)
 				return x.object;
+
+			// initialize
+			if (!x.object)
+				x.object = {};
+
+			// copy attributes
 			var attr = this.attr(root === this);
 			x.source = x.object;
 			this.attr(attr, true);
 			x.source = x.node;
-			this.getText();
+
+			// copy text content
+			var text = this.getText();
+			if (typeof text === "string") {
+				x.object.$ = this.getText();
+			}
+
+			// recursively handle child elements
 			if (depth--) {
 				var child = x.node.children;
 				var byTagname = {};
@@ -834,34 +905,39 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 		this.getElementsByTagName = function Badgerfish$getElementsByTagName(tagName, childAxis) {
 			var tagname = tagName.getTagName();
 			var x = properties.getPrivate(this);
-			if (!childAxis || !x.cache[tagname]) {
-				x.cache[tagname] = [];
-				var aux = this.nativeElementsByTagNameNS(tagName, childAxis);
-				var result = new Array(aux.length);
-				for (var i = 0; i < aux.length; ++i) {
-					var node = aux[i];
-					var parent = Badgerfish.getBadgerfishByNode(node.parentNode);
-					if (!parent)
-						parent = new (this.constructor)(node.parentNode, x.root, -1);
-
-					var cache = properties.getPrivate(parent).cache;
-					if (!cache[tagname]) {
-						cache = cache[tagname] = [];
-					} else {
-						cache = cache[tagname];
-					}
-					result[i] = Badgerfish.getBadgerfishByNode(node);
-					if (!result[i])
-						result[i] = new (this.constructor)(node, parent, i);
-					cache.push(result[i]);
+			if (false && x.source === x.object) {
+				if (childAxis) {
+					throw new Error("not implemented");
+				} else {
+					throw new Error("not implemented");
 				}
-				if (!childAxis)
-					return result;
+			} else {
+				if (!childAxis || !x.cache[tagname]) {
+					x.cache[tagname] = [];
+					var aux = this.nativeElementsByTagNameNS(tagName, childAxis);
+					var result = new Array(aux.length);
+					for (var i = 0; i < aux.length; ++i) {
+						var node = aux[i];
+						var parent = Badgerfish.getBadgerfishByNode(node.parentNode);
+						if (!parent)
+							parent = new (this.constructor)(node.parentNode, x.root, -1);
+
+						var cache = properties.getPrivate(parent).cache;
+						if (!cache[tagname]) {
+							cache = cache[tagname] = [];
+						} else {
+							cache = cache[tagname];
+						}
+						result[i] = Badgerfish.getBadgerfishByNode(node);
+						if (!result[i])
+							result[i] = new (this.constructor)(node, parent, i);
+						cache.push(result[i]);
+					}
+					if (!childAxis)
+						return result;
+				}
 			}
-			DEBUG && expect(step.axis).not.toBe(Badgerfish.Axis.DESCENDANT);
-			// TODO: support for other axis than child::
-			DEBUG && expect(step.axis).toBe(Badgerfish.Axis.CHILD);
-			return x.cache[tagname];
+			return x.children[tagname];
 		};
 	}
 
