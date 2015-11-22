@@ -48,7 +48,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				tagName = entity[0];
 				source = object = entity = entity[1];
 			} else if (entity.constructor === Object) {
-				if (parent) {
+				if (parent && parent instanceof Badgerfish) {
 					y = properties.getPrivate(parent);
 					node = tagName.createElement();
 					y.node.appendChild(node);
@@ -76,11 +76,9 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				}
 				DEBUG && expect(entity.ownerDocument).toBeDefined();
 				source = node = entity;
-				if (parent) {
+				if (parent && parent instanceof Badgerfish) {
 					if (entity.constructor === Object)
 						throw new Error("Badgerfish: descendants must be created from a node");
-					if (!(parent instanceof Badgerfish))
-						throw new Error("Badgerfish: parent must be instance of Badgerfish");
 					if (typeof index !== "number")
 						throw new Error("Badgerfish: index must be a number");
 					y = properties.getPrivate(parent);
@@ -118,7 +116,8 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				x.badgerfish = [];
 				this.decorateRoot();
 			}
-			if (node) this.decorateNode();
+			if (node)
+				this.decorateNode();
 		};
 
 		this.destroy = function Badgerfish$destroy() {
@@ -446,7 +445,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			var x = properties.getPrivate(this);
 			if (x.source === x.node)
 				return x.node;
-			
+
 			// initialize
 			if (!x.node) {
 				if (x.parent) {
@@ -455,13 +454,13 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 					y.node.appendChild(x.node);
 				}
 			}
-			
+
 			// copy attributes
 			var attr = this.attr(true);
 			x.source = x.node;
 			this.attr(attr, true);
 			x.source = x.object;
-			
+
 			// copy text content
 			var text = this.getText();
 			if (typeof text === "string") {
@@ -469,13 +468,13 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 					throw new Exception("mixed nodes not supported");
 				x.node.textContent = text;
 			}
-			
+
 			// recursively handle child elements
 			if (depth--) {
 				this.getTagNames(true).forEach(function(tagname) {
 					self.expandChildrenByTagName(tagname);
 					var children = x.children[tagname.getTagName()];
-					for (var i = 0; i< children.length; ++i) {
+					for (var i = 0; i < children.length; ++i) {
 						children[i].toNode(depth);
 					}
 				});
