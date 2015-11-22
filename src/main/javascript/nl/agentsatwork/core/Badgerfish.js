@@ -25,54 +25,6 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 		var xmlSerializer = new XMLSerializer();
 		var badgerfish;
 
-		var xmlToBfish = function Badgerfish$xmlToBfish(node) {
-			var i, result = {}, text = [];
-			var attr = node.attributes;
-			var child = node.childNodes;
-			for (i = 0; i < attr.length; ++i) {
-				result['@' + attr[i].name] = attr[i].value;
-			}
-			for (i = 0; i < child.length; ++i) {
-				switch (child[i].nodeType) {
-				case 1:
-					text = null;
-					var name = child[i].localName;
-					if (result[name] instanceof Array) {
-						result[name].push(xmlToBfish(child[i]));
-					} else {
-						if (!result[name]) {
-							result[name] = xmlToBfish(child[i]);
-						} else {
-							result[name] = [ result[name], xmlToBfish(child[i]) ];
-						}
-					}
-					break;
-				case 3:
-					if (text instanceof Array) {
-						text.push(child[i].textContent);
-					}
-					break;
-				}
-			}
-			if (text) {
-				result.$ = text.join("");
-			}
-			return result;
-		};
-
-		var synchronizeJSON = function Badgerfish$synchronizeJSON(namespace, node, depth) {
-			var x = properties.getPrivate(this);
-			var source = x.source;
-			if (!(depth--) || source !== node) {
-				return source;
-			} else {
-				if (x.object) {
-					throw new Error("Badgerfish$synchronizeJSON: target not empty");
-				}
-				return (x.object = xmlToBfish(node));
-			}
-		};
-
 		var Badgerfish = this.constructor =
 		/**
 		 * @param {Node|Object}
@@ -526,30 +478,6 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 					for (var i = 0; i< children.length; ++i) {
 						children[i].toNode(depth);
 					}
-					return;
-					var i, y, name = tagname.getTagName(), objects = x.source[name];
-					if (!(objects instanceof Array)) {
-						objects = [ objects ];
-					}
-					var children = x.children[name];
-					if (!children) {
-						children = x.children[name] = [];
-					}
-					for (i = 0; i < children.length; ++i) {
-						if (properties.getPrivate(children[i]).object === objects[i]) {
-							children[i].toNode(depth);
-						} else {
-							throw new Exception("not implemented");
-						}
-					}
-					for (i = children.length; i < objects.length; ++i) {
-						var bfish = new Badgerfish([ tagname, objects[i] ], self, i);
-						children.push(bfish);
-						bfish.toNode(depth);
-					}
-					for (i = objects.length; i < children.length; ++i) {
-						children[i].destroy();
-					}
 				});
 			}
 			return x.node;
@@ -630,7 +558,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 						var bfish = new Badgerfish(childNode[i], self, i);
 						var y = properties.getPrivate(bfish);
 						y.object = {};
-						object.push(y.object)
+						object.push(y.object);
 						children.push(bfish);
 						bfish.toJSON(depth);
 					}
@@ -646,10 +574,6 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				});
 			}
 			return x.object;
-			// var x = properties.getPrivate(this);
-			// if (!x.source)
-			// return null;
-			// return synchronizeJSON.call(this, x.namespace, x.node, Infinity);
 		};
 
 		this.toJSONPromise = function Badgerfish$toJSONBadgerfish() {
@@ -663,21 +587,6 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 
 		this.toJSONString = function Badgerfish$toJSONString() {
 			return JSON.stringify(this.toJSON());
-		};
-
-		this.moveTo = function Badgerfish$moveTo(target) {
-			if (source.nodeType !== 1 || target.nodeType !== 1) {
-				throw new Error("Badgerfish.moveNode: invalid argument; must be a DOM element");
-			}
-			var dest = target.ownerDocument;
-			if (source.ownerDocument !== dest) {
-				if (dest.importNode) {
-					source = dest.importNode(source);
-				} else {
-					source = importNodeIE(dest, source);
-				}
-			}
-			return source;
 		};
 
 		this.toString =
