@@ -103,8 +103,9 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			if (node && node.nodeType !== 1)
 				throw new Error('Badgerfish: only elements can be decorated');
 			var x = {
-				root : node ? (node.ownerDocument.documentElement === node ? this : y.root) : undefined,
+				root : node ? (node.ownerDocument.documentElement === node ? this : (y ? y.root : undefined)) : undefined,
 				tagName : tagName,
+				schema : parent,
 				source : source,
 				node : node,
 				object : object,
@@ -116,8 +117,10 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				x.badgerfish = [];
 				this.decorateRoot();
 			}
-			if (node)
-				this.decorateNode();
+			// if (node && x.root)
+			// this.decorateNode();
+			if (!x.source)
+				throw new Error();
 		};
 
 		this.destroy = function Badgerfish$destroy() {
@@ -134,6 +137,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 
 		this.getTagName = function Badgerfish$getTagName() {
 			var x = properties.getPrivate(this);
+			// return x.schema.getTagName();
 			return x.node.ownerDocument === GLOBAL.document ? x.node.localName : x.node.tagName;
 		};
 
@@ -411,9 +415,10 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				var childObjects = x.object[tagname];
 				if (childObjects instanceof Array) {
 					for (i = children.length; i < childObjects.length; ++i) {
-						children[i] = new Badgerfish([ tagName, childObjects[i] ]);
+						children[i] = new this.constructor([ tagName, childObjects[i] ]);
 					}
 					for (i = 0; i < childObjects.length; ++i) {
+						bfish = children[i];
 						properties.getPrivate(bfish).parent = this;
 						properties.getPrivate(bfish).node = null;
 					}
@@ -422,19 +427,39 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 					}
 					children.length = childObjects.length;
 				} else {
-					if (!children.length) {
-						bfish = children[0] = new Badgerfish([ tagName, childObjects ]);
-					} else {
-						bfish = children[0];
+					if (childObjects) {
+						if (!children.length) {
+							bfish = children[0] = new this.constructor([ tagName, childObjects ]);
+						} else {
+							bfish = children[0];
+						}
+						properties.getPrivate(bfish).parent = this;
+						for (i = 1; i < children.length; ++i) {
+							children[i].destroy();
+						}
+						children.length = 1;
 					}
-					properties.getPrivate(bfish).parent = this;
-					for (i = 1; i < children.length; ++i) {
-						children[i].destroy();
-					}
-					children.length = 1;
 				}
 			} else {
-				throw new Error("not implemented");
+				var childNodes = [], childNodeList = this.nativeElementsByTagNameNS(tagName, true);
+				for (i = 0; i < childNodeList.length; ++i) {
+					if (childNodeList[i].parentNode === x.node) {
+						childNodes.push(childNodeList[i]);
+					}
+				}
+				for (i = children.length; i < childNodes.length; ++i) {
+					children[i] = new this.constructor(childNodes[i]);
+				}
+				for (i = 0; i < childNodes.length; ++i) {
+					bfish = children[i];
+					properties.getPrivate(bfish).parent = this;
+					properties.getPrivate(bfish).root = x.root;
+					properties.getPrivate(bfish).object = null;
+				}
+				for (i = childNodes.length; i < children.length; ++i) {
+					children[i].destroy();
+				}
+				children.length = childNodes.length;
 			}
 		};
 
@@ -746,34 +771,6 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			}
 		};
 
-		this.xnativeElementsByTagName =
-		/**
-		 * @param {string}
-		 *            tagname
-		 * @returns {NodeList}
-		 */
-		function Badgerfish$xnativeElementsByTagName(tagname) {
-			var x = properties.getPrivate(this);
-			var tag = this.parseTagname(tagname);
-			if (this.isHTMLDocument()) {
-				return x.node.getElementsByTagName(tag.tagname);
-			}
-			if (x.source === x.node) {
-				try {
-					return x.node.getElementsByTagNameNS(tag.ns, tag.local);
-				} catch (e) {
-					return x.node.getElementsByTagName(tag.tagname);
-				}
-			} else {
-				var children = x.source[tag.tagname];
-				if (children) {
-					return this.createChildren(tag.tagname, children instanceof Array ? children.length : 1);
-				} else {
-					return [];
-				}
-			}
-		};
-
 		this.nativeElementsByTagNameNS =
 		/**
 		 * @param {TagName}
@@ -813,38 +810,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 		this.getElementsByTagName = function Badgerfish$getElementsByTagName(tagName, childAxis) {
 			var tagname = tagName.getTagName();
 			var x = properties.getPrivate(this);
-			if (false && x.source === x.object) {
-				if (childAxis) {
-					throw new Error("not implemented");
-				} else {
-					throw new Error("not implemented");
-				}
-			} else {
-				if (!childAxis || !x.cache[tagname]) {
-					x.cache[tagname] = [];
-					var aux = this.nativeElementsByTagNameNS(tagName, childAxis);
-					var result = new Array(aux.length);
-					for (var i = 0; i < aux.length; ++i) {
-						var node = aux[i];
-						var parent = Badgerfish.getBadgerfishByNode(node.parentNode);
-						if (!parent)
-							parent = new (this.constructor)(node.parentNode, x.root, -1);
-
-						var cache = properties.getPrivate(parent).cache;
-						if (!cache[tagname]) {
-							cache = cache[tagname] = [];
-						} else {
-							cache = cache[tagname];
-						}
-						result[i] = Badgerfish.getBadgerfishByNode(node);
-						if (!result[i])
-							result[i] = new (this.constructor)(node, parent, i);
-						cache.push(result[i]);
-					}
-					if (!childAxis)
-						return result;
-				}
-			}
+			this.expandChildrenByTagName(tagName);
 			return x.children[tagname];
 		};
 	}

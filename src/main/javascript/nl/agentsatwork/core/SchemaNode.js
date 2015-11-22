@@ -39,14 +39,23 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			});
 		};
 
-		this.getChildSchema = function Schema$getChildSchema(tagName) {
+		this.getRootSchema = function SchemaNode$getRootSchema() {
+			var parent = properties.getPrivate(this).parent;
+			return parent ? parent.getRootSchema() : this;
+		};
+		
+		this.getTagName = function SchemaNode$getTagName() {
+			return properties.getPrivate(this).tagName;
+		};
+		
+		this.getChildSchema = function SchemaNode$getChildSchema(tagName) {
 			var result = properties.getPrivate(this).child[tagName.toString()];
 			if (!result)
 				throw new Exception("schema violation");
 			return result;
 		};
 
-		this.addSchemaByChildNode = function Schema$addSchemaByChildNode(child) {
+		this.addSchemaByChildNode = function SchemaNode$addSchemaByChildNode(child) {
 			var x = properties.getPrivate(this);
 			var tagname = [ child.namespaceURI, child.localName ].join(":");
 			if (!x.tagNames[tagname]) {
@@ -62,6 +71,10 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			for (var i = 0; i < child.length; ++i) {
 				this.addSchemaByChildNode(child[i]);
 			}
+		};
+		
+		this.allowJSON = function Schema$allowJSON(json) {
+			
 		};
 	}
 

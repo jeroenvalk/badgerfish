@@ -77,12 +77,16 @@ define([ "./Badgerfish", "./TagName", "./Exception" ], function(classBadgerfish,
 			}
 			var x = {};
 			properties.setPrivate(this, x);
-			if (this === this.getDocumentElement()) {
-				x.baseUrl = '/';
-				x.parent = parent;
-				x.namespace = {};
-				x.prefix = {};
-				x.includes = [];
+			try {
+				if (this === this.getDocumentElement()) {
+					x.baseUrl = '/';
+					x.parent = parent;
+					x.namespace = {};
+					x.prefix = {};
+					x.includes = [];
+				}				
+			} catch(e) {
+				// nothing
 			}
 			this.registerNamespaces(xmlns);
 		};
