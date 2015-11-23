@@ -102,26 +102,28 @@ define(
 					x.keys.forEach(function(key) {
 						[ x.json[key], x.xml[key] ].forEach(function(entity) {
 							if (entity) {
-								var bfish = newBadgerfish(entity);
+								var schema = Schema.generateFromEntity(entity);
+								var bfish = new Badgerfish(entity, schema);
 								expect(bfish.constructor).toBe(Badgerfish);
-								// expect(new Badgerfish(entity,
-								// bfish)).toThrowError("Badgerfish: constructor
-								// requires exactly one argument");
 							}
 						});
 					});
-					[ undefined, 0, 1, true, false ].forEach(function(entity) {
+					[ undefined, null, 0, 1, true, false ].forEach(function(entity) {
 						expect(function() {
-							var bfish = newBadgerfish(entity);
+							var bfish = new Badgerfish(entity, new Schema({
+								alice : []
+							}));
 							expect(true).toBe(bfish);
 						}).toThrowError("Badgerfish: JSON or XML node required");
 					});
-					[ null, {}, {
+					[ {}, {
 						a : 1,
 						b : 1
 					} ].forEach(function(entity) {
 						expect(function() {
-							var bfish = newBadgerfish(entity);
+							var bfish = new Badgerfish(entity, new Schema({
+								alice : []
+							}));
 							expect(true).toBe(bfish);
 						}).toThrowError("Badgerfish: exactly one property expected on document element");
 					});

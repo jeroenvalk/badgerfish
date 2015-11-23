@@ -16,11 +16,13 @@
  */
 
 /* global define, XMLHttpRequest */
-define([ "./Badgerfish", "./TagName", "./Exception" ], function(classBadgerfish, classTagName, classException) {
+define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(classBadgerfish, classSchema, classTagName, classException) {
 	function class_Element(properties) {
+		properties.extends([ classBadgerfish ]);
+
 		var Exception = properties.import([ classException ]);
 		var TagName = properties.import([ classTagName ]);
-		properties.extends([ classBadgerfish ]);
+		var Schema = properties.import([ classSchema ]);
 
 		var Badgerfish = properties.import([ classBadgerfish ]);
 
@@ -54,9 +56,13 @@ define([ "./Badgerfish", "./TagName", "./Exception" ], function(classBadgerfish,
 
 		var Element = this.constructor =
 		/**
+		 * @param {Object|Node}
+		 *            entity - JSON entity or XML node
+		 * @param {SchemaNode}
+		 *            schema - for validation
 		 */
-		function Element(entity, parent, index) {
-			properties.getPrototype(1).constructor.call(this, entity, parent, index);
+		function Element(entity, schema) {
+			properties.getPrototype(1).constructor.call(this, entity, schema ? schema : Schema.generateFromEntity(entity));
 			var xmlns = {};
 			if (entity.constructor === Object) {
 				xmlns = entity[this.getTagName()]['@xmlns'];
@@ -84,8 +90,8 @@ define([ "./Badgerfish", "./TagName", "./Exception" ], function(classBadgerfish,
 					x.namespace = {};
 					x.prefix = {};
 					x.includes = [];
-				}				
-			} catch(e) {
+				}
+			} catch (e) {
 				// nothing
 			}
 			this.registerNamespaces(xmlns);
@@ -332,7 +338,8 @@ define([ "./Badgerfish", "./TagName", "./Exception" ], function(classBadgerfish,
 						if (!responseXML) {
 							responseXML = domParser.parseFromString(xhr.responseText, "application/xml");
 						}
-						x.include = new Element(responseXML.documentElement, self, NaN);
+						x.include = new Element(responseXML.documentElement);
+						properties.getPrivate(x.include).parent = self;
 						properties.getPrivate(x.include).baseUrl = href.substr(0, href.lastIndexOf('/') + 1);
 						return x.include;
 					}

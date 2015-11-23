@@ -17,9 +17,10 @@
 
 /* globals define, DEBUG, expect, DOMParser, XMLSerializer */
 /* jshint -W030 */
-define([ "./Exception", "./TagName" ], function(classException, classTagName) {
+define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, classSchemaNode, classTagName) {
 	function class_Badgerfish(properties) {
 		var Exception = properties.import([ classException ]);
+		var SchemaNode = properties.import([ classSchemaNode ]);
 		var TagName = properties.import([ classTagName ]);
 		var domParser = new DOMParser();
 		var xmlSerializer = new XMLSerializer();
@@ -29,83 +30,46 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 		/**
 		 * @param {Node|Object}
 		 *            entity - XML node or JSON object
-		 * @param {Badgerfish}
-		 *            [parent] - parent that maintains the XML node
-		 * @param {number}
-		 *            [index] - index at which the entity occurs under the
-		 *            tagname
-		 * @param {TagName}
-		 *            [tagname] - tagname for JSON objects
-		 * 
+		 * @param {SchemaNode}
+		 *            schema - schema to validate entity
 		 * @constructor
 		 */
-		function Badgerfish(entity, parent, index) {
+		function Badgerfish(entity, schema) { 
+			if (arguments.length < 2) 
+				throw new Exception("missing argument in function call");
+			if (!(entity instanceof Object))
+				throw new Exception("JSON or XML node required");
+			if (!(schema instanceof SchemaNode))
+				throw new Exception("type error");
 			var y, source, node, object, tagName;
-			if (!entity) {
-				throw new Exception("argument 'entity' required");
-			}
-			if (entity.constructor === Array && entity.length === 2 && entity[0] instanceof TagName) {
+			if (entity instanceof Array && entity.length === 2 && entity[0] instanceof TagName) {
 				tagName = entity[0];
 				source = object = entity = entity[1];
-			} else if (entity.constructor === Object) {
-				if (parent && parent instanceof Badgerfish) {
-					y = properties.getPrivate(parent);
-					node = tagName.createElement();
-					y.node.appendChild(node);
-					source = object = entity;
-				} else {
-					var tagname;
-					for ( var prop in entity) {
-						if (tagname)
-							throw new Error("Badgerfish: multiple properties not allowed on entity");
-						tagname = prop;
-					}
-					if (!tagname)
-						throw new Error("Badgerfish: empty entity");
-					source = object = entity[tagname];
-					if (object instanceof Array) {
-						if (object.length !== 1)
-							throw new Error("Badgerfish: cardinality of entity must be one");
-						object = object[0];
-					}
-					node = domParser.parseFromString([ "<", tagname, "/>" ].join(""), 'text/xml').documentElement;
-				}
-			} else {
-				if (!entity.ownerDocument) {
-					throw new Exception("JSON or XML node required");
-				}
-				DEBUG && expect(entity.ownerDocument).toBeDefined();
+			} else if (entity.ownerDocument && entity.ownerDocument.documentElement) {
 				source = node = entity;
-				if (parent && parent instanceof Badgerfish) {
-					if (entity.constructor === Object)
-						throw new Error("Badgerfish: descendants must be created from a node");
-					if (typeof index !== "number")
-						throw new Error("Badgerfish: index must be a number");
-					y = properties.getPrivate(parent);
-					if (y.source === y.object) {
-						if (node.ownerDocument.documentElement !== node) {
-							if (isNaN(index) || index < 0)
-								throw new Error("Badgerfish: invalid index");
-							source = node.tagName;
-							if (y.source.hasOwnProperty(source)) {
-								object = y.source[source];
-								if (object instanceof Array) {
-									object = object[index];
-								}
-								source = object;
-							} else {
-								throw new Error("Badgerfish: integrity error");
-							}
-						}
-					}
+			} else {
+				var tagname;
+				for ( var prop in entity) {
+					if (tagname)
+						throw new Exception("exactly one property expected on document element");
+					tagname = prop;
 				}
+				if (!tagname)
+					throw new Exception("exactly one property expected on document element");
+				source = object = entity[tagname];
+				if (object instanceof Array) {
+					if (object.length !== 1)
+						throw new Error("Badgerfish: cardinality of entity must be one");
+					object = object[0];
+				}
+				node = domParser.parseFromString([ "<", tagname, "/>" ].join(""), 'text/xml').documentElement;
 			}
 			if (node && node.nodeType !== 1)
 				throw new Error('Badgerfish: only elements can be decorated');
 			var x = {
 				root : node ? (node.ownerDocument.documentElement === node ? this : (y ? y.root : undefined)) : undefined,
 				tagName : tagName,
-				schema : parent,
+				schema : schema,
 				source : source,
 				node : node,
 				object : object,
@@ -415,7 +379,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				var childObjects = x.object[tagname];
 				if (childObjects instanceof Array) {
 					for (i = children.length; i < childObjects.length; ++i) {
-						children[i] = new this.constructor([ tagName, childObjects[i] ]);
+						children[i] = new this.constructor([ tagName, childObjects[i] ], x.schema);
 					}
 					for (i = 0; i < childObjects.length; ++i) {
 						bfish = children[i];
@@ -429,7 +393,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				} else {
 					if (childObjects) {
 						if (!children.length) {
-							bfish = children[0] = new this.constructor([ tagName, childObjects ]);
+							bfish = children[0] = new this.constructor([ tagName, childObjects ], x.schema);
 						} else {
 							bfish = children[0];
 						}
@@ -448,7 +412,7 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 					}
 				}
 				for (i = children.length; i < childNodes.length; ++i) {
-					children[i] = new this.constructor(childNodes[i]);
+					children[i] = new this.constructor(childNodes[i], x.schema);
 				}
 				for (i = 0; i < childNodes.length; ++i) {
 					bfish = children[i];
@@ -545,6 +509,8 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 				x.object.$ = this.getText();
 			}
 
+			// x.schema.allowNode(x.node);
+
 			// recursively handle child elements
 			if (depth--) {
 				var child = x.node.children;
@@ -579,8 +545,9 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 						}
 					}
 					for (i = children.length; i < childNode.length; ++i) {
-						var bfish = new Badgerfish(childNode[i], self, i);
+						var bfish = new Badgerfish(childNode[i], x.schema);
 						var y = properties.getPrivate(bfish);
+						y.parent = self;
 						y.object = {};
 						object.push(y.object);
 						children.push(bfish);
