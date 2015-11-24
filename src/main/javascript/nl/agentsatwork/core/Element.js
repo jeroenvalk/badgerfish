@@ -139,7 +139,7 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 				return {
 					tagname : tagname,
 					local : tagname,
-					ns : y.namespace.$
+					ns : y.namespace ? y.namespace.$ : undefined
 				};
 			var prefix = tagname.substr(0, index);
 			var local = tagname.substr(++index);
