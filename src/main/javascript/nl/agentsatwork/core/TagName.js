@@ -22,37 +22,46 @@ define([ "./Exception" ], function(classException) {
 
 		this.constructor =
 		/**
+		 * @param {Schema}
+		 *            schema - root schema defining the namespaces
+		 * @param {number}
+		 *            index - index of the namespace
+		 * @param {string}
+		 *            localName - local name
 		 */
-		function TagName(ns, local, prefix) {
-			this.ns = ns;
-			this.local = local;
+		function TagName(schema, index, localName) {
+			if (!(schema instanceof Object))
+				throw new Exception("type error");
 			properties.setPrivate(this, {
-				prefix : prefix
+				schema : schema,
+				index : index,
+				local : localName
 			});
 		};
 
 		this.getPrefix = function TagName$getPrefix() {
-			return properties.getPrivate(this).prefix;
-		};
-
-		this.getTagName = function TagName$getTagName() {
-			var prefix = this.getPrefix();
-			return !prefix || prefix === "$" ? this.local : [ prefix, this.local ].join(":");
-		};
-
-		this.attach = function TagName$attach(bfish) {
 			var x = properties.getPrivate(this);
-			if (this.ns)
-				x.prefix = bfish.getPrefixOfNS(this.ns);
-			x.bfish = bfish;
+			return x.schema.getPrefix(x.index);
 		};
 
-		this.createElement = function TagName$createElement() {
-			var bfish = properties.getPrivate(this).bfish;
-			if (!bfish)
-				throw new Exception("must be attached to create elements");
-			var doc = bfish.toNode(0).ownerDocument;
-			return this.ns ? doc.createElementNS(this.ns, this.local) : doc.createElement(this.local);
+		this.getNamespaceURI = function TagName$getNamespaceURI() {
+			var x = properties.getPrivate(this);
+			return x.schema.getNamespaceURI(x.index);
+		};
+		
+		this.getTagName = function TagName$getTagName() {
+			var x = properties.getPrivate(this);
+			var prefix = x.schema.getPrefix(x.index);
+			return !prefix || prefix === "$" ? x.local : [ prefix, x.local ].join(":");
+		};
+
+		this.getLocalName = function TagName$getLocalName() {
+			return properties.getPrivate(this).local;
+		};
+		
+		this.createElement = function TagName$createElement(ownerDocument) {
+			var x = properties.getPrivate(this);
+			return isNaN(x.index) ? ownerDocument.createElement(x.local) : ownerDocument.createElementNS(this.getNamespaceURI(), x.local);
 		};
 	}
 

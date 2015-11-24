@@ -47,9 +47,25 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 				namespaceURI : namespaceURI,
 				indexOf : indexOf
 			});
-			properties.getPrototype(1).constructor.call(this, new TagName(this, tagname));
+			properties.getPrototype(1).constructor.call(this, new TagName(this, tagname), prefixes.length);
 		};
 
+		this.indexOfPrefix = function Schema$indexOfPrefix(prefix) {
+			if (!prefix) {
+				throw new Exception("missing argument in function call");
+			}
+			var x = properties.getPrivate(this), index;
+			index = x.indexOf[prefix];
+			if (x.prefix[index] !== prefix) {
+				return -1;
+			}
+			return index;			
+		};
+		
+		this.getPrefix = function Schema$getPrefix(index) {
+			return properties.getPrivate(this).prefix[index];
+		};
+		
 		this.indexOfNamespaceURI = function Schema$indexOfNamespaceURI(namespaceURI) {
 			if (!namespaceURI) {
 				throw new Exception("missing argument in function call");
@@ -60,6 +76,10 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 				return -1;
 			}
 			return index;
+		};
+		
+		this.getNamespaceURI = function Schema$getNamespaceURI(index) {
+			return properties.getPrivate(this).namespaceURI[index];
 		};
 		
 		this.createTagName = function Schema$createTagName(tagname) {
@@ -76,14 +96,14 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 				index = indexOf[split.shift()];
 				break;
 			}
-			return new TagName(index, split[0]);
+			return new TagName(this, index, split[0]);
 		};
 		
 		this.createTagNameNS = function Schema$createTagNameNS(namespaceURI, localName) {
-			if (!namespaceURI || !localName) {
+			if (!localName) {
 				throw new Exception("missing argument in function call");
 			}
-			return new TagName(this.indexOfNamespaceURI(namespaceURI), localName);
+			return new TagName(this, namespaceURI ? this.indexOfNamespaceURI(namespaceURI) : -1, localName);
 		};
 	}
 

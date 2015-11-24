@@ -222,7 +222,7 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 			case '@':
 				throw new Error("Badgerfish.getElementsByTagName: invalid step: " + step.tagname);
 			}
-			return properties.getPrototype(1).getElementsByTagName.call(this, new TagName(step.ns, step.local, step.prefix), step.axis);
+			return properties.getPrototype(1).getElementsByTagName.call(this, step.prefix ? [ step.prefix, step.local ].join(":") : step.local, step.axis);
 		};
 
 		this.getElementByTagName =

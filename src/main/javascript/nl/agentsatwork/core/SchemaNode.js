@@ -30,24 +30,28 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 		 * @param {SchemaNode}
 		 *            parent - parent schema node
 		 */
-		function SchemaNode(tagName, parent) {
-			properties.setPrivate(this, {
+		function SchemaNode(tagName, parent, n) {
+			var child = new Array(n);
+			for (var i = 0; i < n; ++i) {
+				child[i] = {};
+			}
+			var x = {
 				tagName : tagName,
 				parent : parent,
-				tagNames : {},
-				child : {}
-			});
+				child : child
+			};
+			properties.setPrivate(this, x);
 		};
 
 		this.getRootSchema = function SchemaNode$getRootSchema() {
 			var parent = properties.getPrivate(this).parent;
 			return parent ? parent.getRootSchema() : this;
 		};
-		
+
 		this.getTagName = function SchemaNode$getTagName() {
 			return properties.getPrivate(this).tagName;
 		};
-		
+
 		this.getChildSchema = function SchemaNode$getChildSchema(tagName) {
 			var result = properties.getPrivate(this).child[tagName.toString()];
 			if (!result)
@@ -55,26 +59,45 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			return result;
 		};
 
-		this.addSchemaByChildNode = function SchemaNode$addSchemaByChildNode(child) {
+		this.addChildSchemaByTagName = function SchemaNode$addChildSchemaByTagName(tagName) {
 			var x = properties.getPrivate(this);
-			var tagname = [ child.namespaceURI, child.localName ].join(":");
-			if (!x.tagNames[tagname]) {
-				var tagName = x.tagNames[tagname] = new TagName(child.namespaceURI, child.localName);
-				x.child[tagname] = new SchemaNode(tagName, this);
+			var child = x.child[tagName.getIndex()];
+			var localName = tagName.getLocalName();
+			if (!child[localName]) {
+				child[localName] = new SchemaNode(tagName, this);
+				if (x.parent)
+					x.parent.addDescendant(tagName);
+			}			
+			return child[localName];
+		};
+		
+		this.addChildSchemaByNode = function SchemaNode$addChildSchemaByNode(node) {
+			var x = properties.getPrivate(this);
+			var root = this.getRootSchema();
+			var index = root.indexOfNamespaceURI(node.namespaceURI);
+			var child = x.child[index];
+			if (!child[node.localName]) {
+				var tagName = new TagName(root, index, node.localName);
+				child[node.localName] = new SchemaNode(tagName, this);
 				if (x.parent)
 					x.parent.addDescendant(tagName);
 			}
+			return child[node.localName];
 		};
 
 		this.allowNode = function Schema$allowNode(node) {
 			var child = node.children;
 			for (var i = 0; i < child.length; ++i) {
-				this.addSchemaByChildNode(child[i]);
+				this.addChildSchemaByNode(child[i]);
 			}
 		};
-		
+
 		this.allowJSON = function Schema$allowJSON(json) {
-			
+			Object.keys(json).filter(function(prop) {
+				return prop.charAt(0) !== '@';
+			}).forEach(function(tagname) {
+				this.addChildSchemaByTagName(this.getRootSchema().createTagName(tagname));
+			});
 		};
 	}
 

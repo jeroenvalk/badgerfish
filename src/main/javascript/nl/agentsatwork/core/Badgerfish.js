@@ -346,19 +346,7 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 						x.childTagNames = Object.keys(x.object).filter(function(name) {
 							return name.charAt(0) !== '@' && name !== "$";
 						}).map(function(tagname) {
-							var tagName, part = tagname.split(":");
-							switch (part.length) {
-							case 1:
-								tagName = new TagName(xmlns ? xmlns.$ : undefined, part[0]);
-								break;
-							case 2:
-								tagName = new TagName(xmlns[part[0]], part[1], part[0]);
-								break;
-							default:
-								throw new Exception("invalid tagname");
-							}
-							tagName.attach(root);
-							return tagName;
+							return x.schema.createTagName(tagname);
 						});
 					}
 				}
@@ -439,7 +427,7 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 			if (!x.node) {
 				if (x.parent) {
 					var y = properties.getPrivate(x.parent);
-					x.node = x.tagName.createElement();
+					x.node = x.tagName.createElement(y.node.ownerDocument);
 					y.node.appendChild(x.node);
 				}
 			}
@@ -516,8 +504,7 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 				var child = x.node.children;
 				var byTagname = {};
 				for (var i = 0; i < child.length; ++i) {
-					var tagName = new TagName(child[i].namespaceURI, child[i].localName);
-					tagName.attach(root);
+					var tagName = x.schema.createTagNameNS(child[i].namespaceURI, child[i].localName);
 					var tagname = tagName.getTagName();
 					if (!byTagname[tagname])
 						byTagname[tagname] = [];
@@ -748,7 +735,7 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 		 * @returns {NodeList}
 		 */
 		function Badgerfish$nativeElementsByTagNameNS(tagName, childAxis) {
-			var tagname = tagName.getTagName();
+			var tagname = tagName.getTagName(), ns;
 			var x = properties.getPrivate(this);
 			if (x.source === x.node) {
 				if (this.isHTMLDocument()) {
@@ -759,10 +746,11 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 				}
 				switch (childAxis) {
 				default:
-					if (tagName.ns) {
-						return x.node.getElementsByTagNameNS(tagName.ns, tagName.local);
+					ns = tagName.getNamespaceURI();
+					if (ns) {
+						return x.node.getElementsByTagNameNS(ns, tagName.getLocalName());
 					}
-					return x.node.getElementsByTagName(tagName.local);
+					return x.node.getElementsByTagName(tagName.getLocalName());
 				}
 			} else {
 				var children = x.source[tagname];
@@ -774,11 +762,11 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 			}
 		};
 
-		this.getElementsByTagName = function Badgerfish$getElementsByTagName(tagName, childAxis) {
-			var tagname = tagName.getTagName();
+		this.getElementsByTagName = function Badgerfish$getElementsByTagName(tagname, childAxis) {
 			var x = properties.getPrivate(this);
+			var tagName = x.schema.createTagName(tagname);
 			this.expandChildrenByTagName(tagName);
-			return x.children[tagname];
+			return x.children[tagName.getTagName()];
 		};
 	}
 
