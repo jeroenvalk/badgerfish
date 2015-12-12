@@ -110,9 +110,7 @@ define(
 					});
 					[ undefined, null, 0, 1, true, false ].forEach(function(entity) {
 						expect(function() {
-							var bfish = new Badgerfish(entity, new Schema({
-								alice : []
-							}));
+							var bfish = new Badgerfish(entity, new Schema({}, "alice"));
 							expect(true).toBe(bfish);
 						}).toThrowError("Badgerfish: JSON or XML node required");
 					});
@@ -121,9 +119,7 @@ define(
 						b : 1
 					} ].forEach(function(entity) {
 						expect(function() {
-							var bfish = new Badgerfish(entity, new Schema({
-								alice : []
-							}));
+							var bfish = new Badgerfish(entity, new Schema({}, "alice"));
 							expect(true).toBe(bfish);
 						}).toThrowError("Badgerfish: exactly one property expected on document element");
 					});

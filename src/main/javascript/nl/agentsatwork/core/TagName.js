@@ -32,6 +32,8 @@ define([ "./Exception" ], function(classException) {
 		function TagName(schema, index, localName) {
 			if (!(schema instanceof Object))
 				throw new Exception("type error");
+			if (isNaN(index))
+				throw new Exception("type error");
 			properties.setPrivate(this, {
 				schema : schema,
 				index : index,
@@ -39,6 +41,10 @@ define([ "./Exception" ], function(classException) {
 			});
 		};
 
+		this.getIndex = function TagName$getIndex() {
+			return properties.getPrivate(this).index;
+		};
+		
 		this.getPrefix = function TagName$getPrefix() {
 			var x = properties.getPrivate(this);
 			return x.schema.getPrefix(x.index);

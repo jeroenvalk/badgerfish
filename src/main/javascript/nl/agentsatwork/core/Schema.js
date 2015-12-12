@@ -47,7 +47,7 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 				namespaceURI : namespaceURI,
 				indexOf : indexOf
 			});
-			properties.getPrototype(1).constructor.call(this, new TagName(this, tagname), prefixes.length);
+			properties.getPrototype(1).constructor.call(this, this.createTagName(tagname), null, prefixes.length + 1);
 		};
 
 		this.indexOfPrefix = function Schema$indexOfPrefix(prefix) {
@@ -59,13 +59,13 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 			if (x.prefix[index] !== prefix) {
 				return -1;
 			}
-			return index;			
+			return index;
 		};
-		
+
 		this.getPrefix = function Schema$getPrefix(index) {
 			return properties.getPrivate(this).prefix[index];
 		};
-		
+
 		this.indexOfNamespaceURI = function Schema$indexOfNamespaceURI(namespaceURI) {
 			if (!namespaceURI) {
 				throw new Exception("missing argument in function call");
@@ -77,18 +77,22 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 			}
 			return index;
 		};
+
+		this.namespaceCount = function Schema$namespaceCount() {
+			return properties.getPrivate(this).namespaceURI.length;
+		};
 		
 		this.getNamespaceURI = function Schema$getNamespaceURI(index) {
 			return properties.getPrivate(this).namespaceURI[index];
 		};
-		
+
 		this.createTagName = function Schema$createTagName(tagname) {
 			if (!tagname) {
 				throw new Exception("missing argument in function call");
 			}
 			var index, split = tagname.split(":", 2);
 			var indexOf = properties.getPrivate(this).indexOf;
-			switch(split.length) {
+			switch (split.length) {
 			case 1:
 				index = indexOf.$;
 				break;
@@ -96,9 +100,9 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 				index = indexOf[split.shift()];
 				break;
 			}
-			return new TagName(this, index, split[0]);
+			return new TagName(this, index ? index : -1, split[0]);
 		};
-		
+
 		this.createTagNameNS = function Schema$createTagNameNS(namespaceURI, localName) {
 			if (!localName) {
 				throw new Exception("missing argument in function call");
@@ -112,7 +116,7 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 	 * 
 	 */
 	function Schema$generateFromEntity(entity) {
-		var xmlns = {}, tagname;
+		var xmlns = {}, tagname = entity.localName;
 		if (!entity) {
 			throw new Exception("missing argument in function call");
 		}
@@ -122,9 +126,6 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 				if (!attr.name.lastIndexOf("xmlns", 0)) {
 					if (attr.name.length === 5) {
 						xmlns.$ = attr.value;
-						if (entity.namespaceURI === attr.value) {
-							tagname = entity.localName;
-						}
 					} else {
 						var prefix = attr.name.substr(6);
 						xmlns[prefix] = attr.value;

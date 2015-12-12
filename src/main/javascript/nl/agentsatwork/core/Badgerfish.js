@@ -342,6 +342,8 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 					if (x.source === x.node) {
 						throw new Error("not implemented");
 					} else {
+						x.schema.allowJSON(x.object);
+						
 						var xmlns = properties.getPrivate(this.getDocumentElement()).object['@xmlns'];
 						x.childTagNames = Object.keys(x.object).filter(function(name) {
 							return name.charAt(0) !== '@' && name !== "$";
