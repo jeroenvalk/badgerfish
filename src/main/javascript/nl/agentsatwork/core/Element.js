@@ -232,29 +232,30 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 		 * @returns {Badgerfish}
 		 */
 		function Element$getElementByTagName(path) {
-			path = path.split("/");
-			var result;
-			switch (path.length) {
+			if (typeof path === "string")
+				path = this.getSchemaNode().parsePath(path);
+			var result, depth = path.getDepth();
+			switch (depth) {
 			case 1:
 				break;
 			default:
 				result = this;
-				for (var i = 0; i < path.length; ++i) {
-					result = result.getElementByTagName(path[i]);
+				for (var i = 0; i < depth; ++i) {
+					result = result.getElementByTagName(path.getStep(i));
 				}
 				return result;
 			}
-			var step = this.parseStep(path[0]);
-			// TODO: use axis
-			switch (step.tagname.charAt(0)) {
-			case '@':
-				result = [ this.getAttribute(step.tagname.substr(1)) ];
+			var step = path.getStep(0);
+			switch (step.getAxis()) {
+			case step.AXIS.ATTRIBUTE:
+				result = [ this.getAttribute(step.toString().substr(11)) ];
 				break;
-			case '$':
-				result = [ this.getText() ];
+			case step.AXIS.CHILD:
+			case step.AXIS.DESCENDANT:
+				result = this.getElementsByTagName(step.toString());
 				break;
 			default:
-				result = this.getElementsByTagName(path[0]);
+				result = [ this.getText() ];
 				break;
 			}
 			switch (result.length) {

@@ -16,10 +16,11 @@
  */
 
 /* global define */
-define([ "./Exception", "./TagName" ], function(classException, classTagName) {
+define([ "./Exception", "./TagName", "./XPath" ], function(classException, classTagName, classXPath) {
 	function class_SchemaNode(properties) {
 		var Exception = properties.import([ classException ]);
 		var TagName = properties.import([ classTagName ]);
+		var XPath = properties.import([ classXPath ]);
 
 		var SchemaNode = this.constructor =
 		/**
@@ -45,6 +46,10 @@ define([ "./Exception", "./TagName" ], function(classException, classTagName) {
 			x.child = child;
 		};
 
+		this.parsePath = function SchemaNode$parsePath(path) {
+			return new XPath(this, path);
+		};
+		
 		this.getRootSchema = function SchemaNode$getRootSchema() {
 			var parent = properties.getPrivate(this).parent;
 			return parent ? parent.getRootSchema() : this;

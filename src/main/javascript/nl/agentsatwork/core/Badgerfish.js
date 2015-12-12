@@ -34,8 +34,8 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 		 *            schema - schema to validate entity
 		 * @constructor
 		 */
-		function Badgerfish(entity, schema) { 
-			if (arguments.length < 2) 
+		function Badgerfish(entity, schema) {
+			if (arguments.length < 2)
 				throw new Exception("missing argument in function call");
 			if (!(entity instanceof Object))
 				throw new Exception("JSON or XML node required");
@@ -92,6 +92,10 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 			Object.keys(x).forEach(function(prop) {
 				delete x[prop];
 			});
+		};
+
+		this.getSchemaNode = function Badgerfish$getSchemaNode() {
+			return properties.getPrivate(this).schema;
 		};
 
 		this.getDocumentElement = function Badgerfish$getDocumentElement() {
@@ -343,7 +347,7 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 						throw new Error("not implemented");
 					} else {
 						x.schema.allowJSON(x.object);
-						
+
 						var xmlns = properties.getPrivate(this.getDocumentElement()).object['@xmlns'];
 						x.childTagNames = Object.keys(x.object).filter(function(name) {
 							return name.charAt(0) !== '@' && name !== "$";
@@ -764,9 +768,10 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 			}
 		};
 
-		this.getElementsByTagName = function Badgerfish$getElementsByTagName(tagname, childAxis) {
+		this.getElementsByTagName = function Badgerfish$getElementsByTagName(tagName, childAxis) {
 			var x = properties.getPrivate(this);
-			var tagName = x.schema.createTagName(tagname);
+			if (!(tagName instanceof TagName))
+				tagName = x.schema.createTagName(tagName);
 			this.expandChildrenByTagName(tagName);
 			return x.children[tagName.getTagName()];
 		};
