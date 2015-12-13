@@ -126,6 +126,20 @@ define(
 					done();
 				};
 
+				this.testGetAttribute = function Badgerfish$testGetAttribute(done) {
+					var bfish = newBadgerfish(domParser
+							.parseFromString(
+									'<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob name="bob" david="" /><charlie:edgar name="edgar" frank="" /></alice>',
+									'application/xml').documentElement);
+					var bob = bfish.getElementsByTagName("bob")[0];
+					var edgar = bfish.getElementsByTagName("charlie:edgar")[0];
+					expect(bob.getAttribute("name")).toBe("bob");
+					expect(edgar.getAttribute("name")).toBe("edgar");
+					expect(bob.getAttribute("david")).toBe("");
+					expect(edgar.getAttribute("frank")).toBe("");
+					done();
+				};
+
 				this.testGetText = function Badgerfish$testGetText(done) {
 					var x = properties.getPrivate(this);
 					[ newBadgerfish(x.json.ning), newBadgerfish(x.xml.ning) ].forEach(function(bfish) {

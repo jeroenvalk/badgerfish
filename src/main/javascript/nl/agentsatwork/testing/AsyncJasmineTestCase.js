@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define */
+/* global define, is */
 define([ "./JasmineTestCase" ], function(classJasmineTestCase) {
 	function class_AsyncJasmineTestCase(properties) {
 		properties.extends([ classJasmineTestCase ]);
@@ -39,6 +39,18 @@ define([ "./JasmineTestCase" ], function(classJasmineTestCase) {
 					self[prop](done);
 				}
 			};
+		};
+		
+		this.continuation = function AsynJasmineTestCase$continuation(fn, done) {
+			var result = function AsyncJasmineTestCase$continuation$closure() {
+				try {
+					fn.apply(null, Array.prototype.slice.call(arguments));
+				} catch(e) {
+					console.error(e.message + '\n' + e.stack);				
+				}
+				done();
+			};
+			return result;
 		};
 	}
 	return class_AsyncJasmineTestCase;

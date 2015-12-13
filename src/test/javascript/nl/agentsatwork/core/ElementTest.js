@@ -96,7 +96,7 @@ define(
 							},
 							'@href' : '/base/src/test/templates/cdcatalog.xml'
 						}
-					}).requireXIncludes().then(function(bfish) {
+					}).requireXIncludes().then(this.continuation(function(bfish) {
 						bfish.resolveXIncludes();
 						expect(bfish.getElementByTagName("cd[@chain]").toJSON()).toEqual({
 							'@require' : 'javascript/Control',
@@ -120,8 +120,7 @@ define(
 								$ : '1985'
 							}
 						});
-						done();
-					});
+					}, done));
 				};
 
 				this.testGetElementsByTagNameNS = function ElementTest$testGetElementsByTagNameNS(done) {

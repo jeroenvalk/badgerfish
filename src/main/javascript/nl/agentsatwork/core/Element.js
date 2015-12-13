@@ -164,7 +164,7 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 				path = this.getSchemaNode().parsePath(path);
 			var self = this, i, depth = path.getDepth();
 			--depth;
-			for (i=0; i<depth; ++i)
+			for (i = 0; i < depth; ++i)
 				self = self.getElementByTagName(path.getStep(i));
 			var step = path.getStep(i);
 			switch (step.getAxis()) {
@@ -174,16 +174,23 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 			default:
 				throw new Error("Badgerfish.getElementsByTagName: invalid step: " + step.toString());
 			}
-			return properties.getPrototype(1).getElementsByTagName.call(this, step.getTagName(), step.axis);
+			var result = properties.getPrototype(1).getElementsByTagName.call(this, step.getTagName(), step.axis);
+			var predicate = step.getPredicate();
+			if (predicate) {
+				return result.filter(predicate.evaluate, predicate);
+			}
+			return result;
 		};
 
 		this.getElementByTagName =
 		/**
-		 * @param {string}
+		 * @param {string|XPath}
 		 *            path
+		 * @param {boolean}
+		 *            [allowUndefined] - returns undefined if not found
 		 * @returns {Badgerfish}
 		 */
-		function Element$getElementByTagName(path) {
+		function Element$getElementByTagName(path, allowUndefined) {
 			if (typeof path === "string")
 				path = this.getSchemaNode().parsePath(path);
 			var result, depth = path.getDepth();
@@ -204,7 +211,7 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 				break;
 			case step.AXIS.CHILD:
 			case step.AXIS.DESCENDANT:
-				result = this.getElementsByTagName(step.toString());
+				result = this.getElementsByTagName(step);
 				break;
 			default:
 				result = [ this.getText() ];
@@ -212,6 +219,8 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 			}
 			switch (result.length) {
 			case 0:
+				if (allowUndefined)
+					return undefined;
 				throw new Error("Element$getElementByTagName: not found");
 			case 1:
 				return result[0];

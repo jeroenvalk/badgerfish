@@ -16,9 +16,12 @@
  */
 
 /* global define */
-define([ "./XPath" ], function(classXPath) {
+define([ "./Exception", "./XPath", "./Predicate" ], function(classException, classXPath, classPredicate) {
 	function class_Step(properties) {
 		// properties.extends([ classXPath ]);
+
+		var Exception = properties.import([ classException ]);
+		var Predicate = properties.import([ classPredicate ]);
 
 		var AXIS = this.AXIS = {
 			ANCESTOR : -10,
@@ -51,6 +54,15 @@ define([ "./XPath" ], function(classXPath) {
 			var i = step.lastIndexOf("::", 20);
 			i = i < 0 ? 0 : i + 2;
 			var j = step.indexOf("[", i);
+			if (j < 0) {
+				j = step.length;
+			} else {
+				var k = step.length - 1;
+				if (step.charAt(k) !== ']') {
+					throw new Exception("missing closing bracket on predicate");
+				}
+				x.predicate = new Predicate(schemaNode, step.substring(j + 1, k));
+			}
 			j = j < 0 ? step.length : j;
 			var tagname = step.substring(i, j);
 			switch (tagname.charAt(0)) {
@@ -86,6 +98,10 @@ define([ "./XPath" ], function(classXPath) {
 
 		this.getTagName = function Step$getTagName() {
 			return properties.getPrivate(this).tagName;
+		};
+
+		this.getPredicate = function Step$getPredicate() {
+			return properties.getPrivate(this).predicate;
 		};
 	}
 
