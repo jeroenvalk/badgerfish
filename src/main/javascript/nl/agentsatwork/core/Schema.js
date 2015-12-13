@@ -21,6 +21,7 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 
 	function class_Schema(properties) {
 		properties.extends([ classSchemaNode ]);
+
 		var TagName = properties.import([ classTagName ]);
 
 		this.constructor =
@@ -100,7 +101,7 @@ define([ "./SchemaNode", "./Exception", "./TagName" ], function(classSchemaNode,
 				index = indexOf[split.shift()];
 				break;
 			}
-			return new TagName(this, index ? index : -1, split[0]);
+			return new TagName(this, isNaN(index) ? -1 :index, split[0]);
 		};
 
 		this.createTagNameNS = function Schema$createTagNameNS(namespaceURI, localName) {

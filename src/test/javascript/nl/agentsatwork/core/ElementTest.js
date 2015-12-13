@@ -82,29 +82,6 @@ define(
 					done();
 				};
 
-				this.testParseTagname = function Badgerfish$testParseTagname(done) {
-					var x = properties.getPrivate(this);
-					[ new Element(x.xml), new Element(x.json) ].forEach(function(bfish) {
-						expect(bfish.parseTagname("alice")).toEqual({
-							tagname : "alice",
-							local : "alice",
-							ns : "http://some-namespace"
-						});
-						expect(bfish.parseTagname("bob")).toEqual({
-							tagname : "bob",
-							local : "bob",
-							ns : "http://some-namespace"
-						});
-						expect(bfish.parseTagname("charlie:edgar")).toEqual({
-							tagname : "charlie:edgar",
-							local : "edgar",
-							prefix : "charlie",
-							ns : "http://some-other-namespace"
-						});
-					});
-					done();
-				};
-
 				this.testGetElementByTagName = function Badgerfish$testGetElementByTagName(done) {
 					var x = properties.getPrivate(this);
 					[ new Element(x.xml), new Element(x.json) ].forEach(function(bfish) {

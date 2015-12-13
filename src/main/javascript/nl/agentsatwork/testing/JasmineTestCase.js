@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, describe, it, xit */
+/* global define, describe, it, xit, is */
 /*jshint -W089 */
 define(["../core/Singleton"], function(classSingleton) {
 	function class_JasmineTestCase(properties) {
@@ -38,6 +38,9 @@ define(["../core/Singleton"], function(classSingleton) {
 		this.getTestRunner = function TestCase$getTestRunner(prop) {
 			var self = this;
 			return function() {
+				if (is.fn(self.setup)) {
+					self.setup();
+				}
 				self[prop]();
 			};
 		};

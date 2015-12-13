@@ -131,59 +131,6 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 			}
 		};
 
-		this.parseTagname = function Element$parseTagname(tagname) {
-			var x = properties.getPrivate(this);
-			var y = properties.getPrivate(this.getDocumentElement());
-			var index = tagname.lastIndexOf(":");
-			if (index < 0)
-				return {
-					tagname : tagname,
-					local : tagname,
-					ns : y.namespace ? y.namespace.$ : undefined
-				};
-			var prefix = tagname.substr(0, index);
-			var local = tagname.substr(++index);
-			var ns = y.namespace[prefix];
-			if (!ns) {
-				ns = prefix;
-				prefix = x.prefix[ns];
-				if (prefix) {
-					tagname = prefix + ":" + local;
-				} else {
-					throw new Error("Element$parseTagname: namespace not registered");
-				}
-			}
-			return {
-				tagname : tagname,
-				local : local,
-				prefix : prefix,
-				ns : ns
-			};
-		};
-
-		this.parseStep = function Element$parseStep(step) {
-			var i = step.lastIndexOf("::", 20);
-			i = i < 0 ? 0 : i + 2;
-			var j = step.indexOf("[", i);
-			j = j < 0 ? step.length : j;
-			var result = this.parseTagname(step.substring(i, j));
-			result.axis = !!i;
-			return result;
-		};
-
-		this.parsePath = function Element$parsePath(path) {
-			var self = this;
-			var step = path.split('/');
-			switch (step.length) {
-			case 1:
-				return self.parseStep(step[0]);
-			default:
-				return step.map(function(step) {
-					return self.parseStep(step);
-				});
-			}
-		};
-
 		this.baseUrl = function Element$baseUrl() {
 			return properties.getPrivate(this.getDocumentElement()).baseUrl;
 		};
@@ -213,16 +160,21 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 		 * @returns {Array<Badgerfish>}
 		 */
 		function Element$getElementsByTagName(path) {
-			var self = this, index = path.lastIndexOf("/");
-			if (index >= 0)
-				self = self.getElementByTagName(path.substr(0, index));
-			var step = self.parseStep(path.substr(++index));
-			switch (step.tagname.charAt(0)) {
-			case '$':
-			case '@':
-				throw new Error("Badgerfish.getElementsByTagName: invalid step: " + step.tagname);
+			if (typeof path === "string")
+				path = this.getSchemaNode().parsePath(path);
+			var self = this, i, depth = path.getDepth();
+			--depth;
+			for (i=0; i<depth; ++i)
+				self = self.getElementByTagName(path.getStep(i));
+			var step = path.getStep(i);
+			switch (step.getAxis()) {
+			case step.AXIS.CHILD:
+			case step.AXIS.DESCENDANT:
+				break;
+			default:
+				throw new Error("Badgerfish.getElementsByTagName: invalid step: " + step.toString());
 			}
-			return properties.getPrototype(1).getElementsByTagName.call(this, step.prefix ? [ step.prefix, step.local ].join(":") : step.local, step.axis);
+			return properties.getPrototype(1).getElementsByTagName.call(this, step.getTagName(), step.axis);
 		};
 
 		this.getElementByTagName =
