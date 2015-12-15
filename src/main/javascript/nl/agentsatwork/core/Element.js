@@ -15,44 +15,13 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, XMLHttpRequest */
-define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(classBadgerfish, classSchema, classTagName, classException) {
+/* global define */
+define([ "./Badgerfish", "./Schema", "./Exception" ], function(classBadgerfish, classSchema, classException) {
 	function class_Element(properties) {
 		properties.extends([ classBadgerfish ]);
 
 		var Exception = properties.import([ classException ]);
-		var TagName = properties.import([ classTagName ]);
 		var Schema = properties.import([ classSchema ]);
-
-		var Badgerfish = properties.import([ classBadgerfish ]);
-
-		var xhrForRef = function Element$xhrForRef(ref) {
-			return new Promise(function(done) {
-				var xhr, ext, i, j;
-				i = ref.indexOf(".");
-				if (i < 0)
-					throw new Error("Definition: missing filename extension");
-				while ((j = ref.indexOf(".", ++i)) >= 0)
-					i = j;
-				ext = ref.substr(--i);
-				xhr = new XMLHttpRequest();
-				xhr.onreadystatechange = function() {
-					if (xhr.readyState === 4 && xhr.status === 200) {
-						switch (ext) {
-						case ".xml":
-							DEBUG && expect(xhr.getResponseHeader('content-type')).toBe("application/xml");
-							break;
-						default:
-							break;
-						}
-						done(xhr);
-					}
-				};
-				xhr.open("GET", ref, true);
-				xhr.responseType = "msxml-document";
-				xhr.send();
-			});
-		};
 
 		var Element = this.constructor =
 		/**
@@ -290,7 +259,7 @@ define([ "./Badgerfish", "./Schema", "./TagName", "./Exception" ], function(clas
 				if (href.charAt(0) !== '/') {
 					href = this.baseUrl() + href;
 				}
-				return xhrForRef(href).then(function(xhr) {
+				return Modernizr.xhrForRef(href).then(function(xhr) {
 					var x = properties.getPrivate(self);
 					if (self.getElementByTagName('@parse') === 'text') {
 						x.include = xhr.responseText;
