@@ -15,7 +15,7 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global define, expect, Modernizr, DOMParser, XMLSerializer */
+/* global define, expect, Modernizr */
 define(
 		[ "javascript/nl/agentsatwork/testing/AsyncJasmineTestCase", "javascript/nl/agentsatwork/core/Schema", "javascript/nl/agentsatwork/core/Badgerfish" ],
 		function(classAsyncJasmineTestCase, classSchema, classBadgerfish) {
@@ -24,9 +24,6 @@ define(
 
 				var Badgerfish = properties.import([ classBadgerfish ]);
 				var Schema = properties.import([ classSchema ]);
-
-				var domParser = new DOMParser();
-				var xmlSerializer = new XMLSerializer();
 
 				this.constructor = function BadgerfishTest() {
 					properties.getPrototype(1).constructor.call(this);
@@ -82,10 +79,7 @@ define(
 							.then(
 									function(xhr) {
 										x.xml = {
-											ning : domParser
-													.parseFromString(
-															'<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob>david</bob><charlie:edgar>frank</charlie:edgar></alice>',
-															'application/xml').documentElement,
+											ning : Badgerfish.parseEntityFromXML('<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob>david</bob><charlie:edgar>frank</charlie:edgar></alice>'),
 											cd : xhr[0].responseXML.documentElement,
 											cdcatalog : xhr[1].responseXML.documentElement
 										};
@@ -127,10 +121,7 @@ define(
 				};
 
 				this.testGetAttribute = function Badgerfish$testGetAttribute(done) {
-					var bfish = newBadgerfish(domParser
-							.parseFromString(
-									'<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob name="bob" david="" /><charlie:edgar name="edgar" frank="" /></alice>',
-									'application/xml').documentElement);
+					var bfish = newBadgerfish(Badgerfish.parseEntityFromXML('<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob name="bob" david="" /><charlie:edgar name="edgar" frank="" /></alice>'));
 					var bob = bfish.getElementsByTagName("bob")[0];
 					var edgar = bfish.getElementsByTagName("charlie:edgar")[0];
 					expect(bob.getAttribute("name")).toBe("bob");
@@ -248,7 +239,7 @@ define(
 
 								node = bfish.toNode();
 								expect(
-										newBadgerfish(domParser.parseFromString(xmlSerializer.serializeToString(node), "application/xml").documentElement)
+										newBadgerfish(Badgerfish.parseEntityFromXML(Badgerfish.serializeEntityToString(node)))
 												.toJSON()).toEqual(json[bfish.getTagName()]);
 							});
 					done();

@@ -18,12 +18,15 @@
 /* globals define, DEBUG, expect, DOMParser, XMLSerializer */
 /* jshint -W030 */
 define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, classSchemaNode, classTagName) {
+
+	var Exception = define.classOf([ classException ]);
+	var domParser = new DOMParser();
+	var xmlSerializer = new XMLSerializer();
+
 	function class_Badgerfish(properties) {
-		var Exception = properties.import([ classException ]);
 		var SchemaNode = properties.import([ classSchemaNode ]);
 		var TagName = properties.import([ classTagName ]);
-		var domParser = new DOMParser();
-		var xmlSerializer = new XMLSerializer();
+
 		var badgerfish;
 
 		var Badgerfish = this.constructor =
@@ -62,7 +65,7 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 						throw new Error("Badgerfish: cardinality of entity must be one");
 					object = object[0];
 				}
-				node = domParser.parseFromString([ "<", tagname, "/>" ].join(""), 'text/xml').documentElement;
+				node = Badgerfish.parseEntityFromXML([ "<", tagname, "/>" ].join(""));
 			}
 			if (node && node.nodeType !== 1)
 				throw new Error('Badgerfish: only elements can be decorated');
@@ -476,7 +479,7 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 		};
 
 		this.toNodeString = function Badgerfish$toNodeString() {
-			return xmlSerializer.serializeToString(this.toNode());
+			return Badgerfish.serializeEntityToString(this.toNode());
 		};
 
 		this.toJSON = function Badgerfish$toJSON(depth) {
@@ -776,6 +779,37 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 			return x.children[tagName.getTagName()];
 		};
 	}
+
+	class_Badgerfish.parseEntityFromXML =
+	/**
+	 * @param {string}
+	 *            xmlString
+	 */
+	function Badgerfish$parseEntityFromXML(xmlString) {
+		return domParser.parseFromString(xmlString, 'text/xml').documentElement;
+	};
+
+	class_Badgerfish.parseEntityFromJSON =
+	/**
+	 * @param {string}
+	 *            jsonString
+	 */
+	function Badgerfish$parseEntityFromJSON(jsonString) {
+		return JSON.parse(jsonString);
+	};
+
+	class_Badgerfish.serializeEntityToString =
+	/**
+	 * 
+	 */
+	function Badgerfish$serializeEntityToString(entity) {
+		if (entity instanceof Object) {
+			if (entity.ownerDocument)
+				return xmlSerializer.serializeToString(entity);
+			return JSON.stringify(entity);
+		}
+		throw new Exception("invalid Entity");
+	};
 
 	return class_Badgerfish;
 });
