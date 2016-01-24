@@ -46,9 +46,11 @@ GLOBAL.require([ '/scripts/shims.js', 'jquery' ], function(definition, jQuery) {
 				Promise.all(contexts.map(function(context) {
 					return context.requireXIncludes();
 				})).then(function() {
-					contexts[0].transform();
+					contexts.forEach(function(context) {
+						context.transform();						
+					});
 					var i;
-					var elements = jQuery("*[require]", contexts[0].toNode());
+					var elements = jQuery("*[require]", html.toNode());
 					var resources = [];
 					for (i = 0; i < elements.length; ++i) {
 						resources = resources.concat(elements[i].getAttribute("require").split(/\s*,\s*/));
@@ -64,6 +66,7 @@ GLOBAL.require([ '/scripts/shims.js', 'jquery' ], function(definition, jQuery) {
 							}
 							define.register(classdef);
 						}
+						elements = jQuery("*[chain]", html.toNode());
 						for (i = 0; i < elements.length; ++i) {
 							var j;
 							var chain = elements[i].getAttribute("chain");
