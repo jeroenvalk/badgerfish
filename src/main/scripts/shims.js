@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015 dr. ir. Jeroen M. Valk
+ * Copyright © 2015-2016 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -145,7 +145,7 @@ Modernizr.ready = function Modernizr$ready(callback) {
 var _done = function Modernizr$done() {
 	if (deps.length) {
 		var currentDeps = deps.map(function(dep) {
-			return Modernizr.baseUrl + 'src/main/scripts/' + dep;
+			return Modernizr.baseUrl + 'scripts/' + dep;
 		});
 		deps.length = 0;
 		require(currentDeps, _done);
@@ -184,7 +184,7 @@ Modernizr.addTest("testing", function() {
 });
 
 if (Modernizr.karma) {
-	Modernizr.baseUrl = "/base/";
+	Modernizr.baseUrl = "/base/src/main/";
 } else {
 	Modernizr.baseUrl = "/";
 }
@@ -297,7 +297,7 @@ Modernizr.load({
 });
 
 var currentDeps = deps.map(function(dep) {
-	return Modernizr.baseUrl + 'src/main/scripts/' + dep;
+	return Modernizr.baseUrl + 'scripts/' + dep;
 });
 deps.length = 0;
 if (Modernizr.server) {
