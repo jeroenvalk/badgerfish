@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015 dr. ir. Jeroen M. Valk
+ * Copyright © 2015-2016 dr. ir. Jeroen M. Valk
  * 
  * This file is part of ComPosiX. ComPosiX is free software: you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -87,14 +87,29 @@ define(
 									});
 				};
 
+				this.getKeys = function BadgerfishTest$getKeys() {
+					var x = properties.getPrivate(this);
+					return x.keys;
+				};
+				
+				this.getJSON = function BadgerfishTest$getJSON() {
+					var x = properties.getPrivate(this);
+					return x.json;
+				};
+				
+				this.getXML = function BadgerfishTest$getXML() {
+					var x = properties.getPrivate(this);
+					return x.xml;
+				};
+				
 				var newBadgerfish = function BadgerfishTest$newBadgerfish(entity) {
 					return new Badgerfish(entity, Schema.generateFromEntity(entity));
 				};
 
 				this.testConstructor = function Badgerfish$testConstructor(done) {
-					var x = properties.getPrivate(this);
-					x.keys.forEach(function(key) {
-						[ x.json[key], x.xml[key] ].forEach(function(entity) {
+					var self = this;
+					this.getKeys().forEach(function(key) {
+						[ self.getJSON()[key], self.getXML()[key] ].forEach(function(entity) {
 							if (entity) {
 								var schema = Schema.generateFromEntity(entity);
 								var bfish = new Badgerfish(entity, schema);
@@ -121,34 +136,35 @@ define(
 				};
 
 				this.testGetAttribute = function Badgerfish$testGetAttribute(done) {
-					var bfish = newBadgerfish(Badgerfish.parseEntityFromXML('<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob name="bob" david="" /><charlie:edgar name="edgar" frank="" /></alice>'));
+					var bfish = newBadgerfish(Badgerfish.parseEntityFromXML('<alice xmlns="http://some-namespace" xmlns:charlie="http://some-other-namespace"><bob name="bob" david="" /><charlie:edgar name="edgar" frank="true" /></alice>'));
 					var bob = bfish.getElementsByTagName("bob")[0];
 					var edgar = bfish.getElementsByTagName("charlie:edgar")[0];
 					expect(bob.getAttribute("name")).toBe("bob");
 					expect(edgar.getAttribute("name")).toBe("edgar");
 					expect(bob.getAttribute("david")).toBe("");
-					expect(edgar.getAttribute("frank")).toBe("");
+					expect(edgar.getAttribute("frank")).toBe("true");
+					expect(bob.getAttribute("alice")).toBeUndefined();
 					done();
 				};
 
 				this.testGetText = function Badgerfish$testGetText(done) {
-					var x = properties.getPrivate(this);
-					[ newBadgerfish(x.json.ning), newBadgerfish(x.xml.ning) ].forEach(function(bfish) {
+					[ newBadgerfish(this.getJSON().ning), newBadgerfish(this.getXML().ning) ].forEach(function(bfish) {
+						var bob = bfish.getElementsByTagName("bob")[0];
 						expect(bfish.getText()).toBeUndefined();
+						expect(bob.getText()).toBe("david");
 					});
 					done();
 				};
 
 				this.testAttr = function Badgerfish$testAttr(done) {
-					var x = properties.getPrivate(this);
-					[ newBadgerfish(x.json.ning), newBadgerfish(x.xml.ning) ].forEach(function(bfish) {
+					[ newBadgerfish(this.getJSON().ning), newBadgerfish(this.getXML().ning) ].forEach(function(bfish) {
 						expect(bfish.attr()).toEqual({});
 						expect(bfish.attr(true)).toEqual({
 							xmlns : 'http://some-namespace',
 							'xmlns:charlie' : 'http://some-other-namespace'
 						});
 					});
-					[ newBadgerfish(x.json.cd), newBadgerfish(x.xml.cd) ].forEach(function(bfish) {
+					[ newBadgerfish(this.getJSON().cd), newBadgerfish(this.getXML().cd) ].forEach(function(bfish) {
 						[ bfish.attr(), bfish.attr(true) ].forEach(function(attr) {
 							expect(attr).toEqual({
 								require : 'javascript/Control',
@@ -160,8 +176,7 @@ define(
 				};
 
 				this.xtestGetTagNames = function Badgerfish$testGetTagNames(done) {
-					var x = properties.getPrivate(this);
-					[ newBadgerfish(x.json.ning), newBadgerfish(x.xml.ning) ].forEach(function(bfish) {
+					[ newBadgerfish(this.getJSON().ning), newBadgerfish(this.getXML().ning) ].forEach(function(bfish) {
 						[ true ].forEach(function(childAxis) {
 							expect(bfish.getTagNames(childAxis).map(function(tagName) {
 								var result = {
@@ -183,7 +198,7 @@ define(
 
 						});
 					});
-					[ newBadgerfish(x.json.cd), newBadgerfish(x.xml.cd) ].forEach(function(bfish) {
+					[ newBadgerfish(this.getJSON().cd), newBadgerfish(this.getXML().cd) ].forEach(function(bfish) {
 						[ true ].forEach(function(childAxis) {
 							expect(bfish.getTagNames(childAxis).map(function(tagName) {
 								var result = {
@@ -212,10 +227,10 @@ define(
 				};
 
 				this.testToNode = function Badgerfish$testToNode(done) {
-					var x = properties.getPrivate(this);
-					Object.keys(x.json).forEach(
+					var self = this;
+					Object.keys(this.getJSON()).forEach(
 							function(key) {
-								var json = x.json[key];
+								var json = self.getJSON()[key];
 								var root = json[Object.keys(json)[0]];
 								var xmlns = root['@xmlns'];
 								var bfish = newBadgerfish(json);
@@ -246,12 +261,12 @@ define(
 				};
 
 				this.testToJSON = function BadgerfishTest$testToJSON(done) {
-					var x = properties.getPrivate(this);
-					Object.keys(x.json).forEach(function(key) {
-						var json = x.json[key];
+					var self = this;
+					Object.keys(this.getJSON()).forEach(function(key) {
+						var json = self.getJSON()[key];
 						var root = json[Object.keys(json)[0]];
 						var xmlns = root['@xmlns'];
-						var bfish = newBadgerfish(x.xml[key]);
+						var bfish = newBadgerfish(self.getXML()[key]);
 						var obj = bfish.toJSON(0);
 						expect(Object.keys(obj).filter(function(key) {
 							return key.charAt(0) !== '@';
@@ -264,8 +279,7 @@ define(
 				};
 
 				this.xtestNativeElementsByTagName = function BadgerfishTest$testNativeElementsByTagName(done) {
-					var x = properties.getPrivate(this);
-					[ newBadgerfish(x.xml), newBadgerfish(x.json) ].forEach(function(bfish) {
+					[ newBadgerfish(this.getXML()), newBadgerfish(this.getJSON()) ].forEach(function(bfish) {
 						expect(bfish.nativeElementsByTagName("alice").length).toBe(0);
 						expect(bfish.nativeElementsByTagName("bob").length).toBe(1);
 						expect(bfish.nativeElementsByTagName("charlie:edgar").length).toBe(1);
@@ -276,14 +290,13 @@ define(
 						}
 					});
 					expect(function() {
-						bfish.nativeElementsByTagName("xi:include")
+						bfish.nativeElementsByTagName("xi:include");
 					}).toThrowError(Error);
 					done();
 				};
 
 				this.xtestGetElementsByTagName = function BadgerfishTest$testGetElementsByTagName(done) {
-					var x = properties.getPrivate(this);
-					[ newBadgerfish(x.xml), newBadgerfish(x.json) ].forEach(function(bfish) {
+					[ newBadgerfish(this.getXML()), newBadgerfish(this.getJSON()) ].forEach(function(bfish) {
 						expect(bfish.getElementsByTagName("bob").length).toBe(1);
 						expect(function() {
 							bfish.getElementsByTagName("bob/$");
