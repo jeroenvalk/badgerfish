@@ -143,7 +143,7 @@ define([ "./Badgerfish", "./Schema", "./Exception" ], function(classBadgerfish, 
 			default:
 				throw new Error("Badgerfish.getElementsByTagName: invalid step: " + step.toString());
 			}
-			var result = properties.getPrototype(1).getElementsByTagName.call(this, step.getTagName(), step.axis);
+			var result = properties.getPrototype(1).getElementsByTagName.call(self, step.getTagName(), step.axis);
 			var predicate = step.getPredicate();
 			if (predicate) {
 				return result.filter(predicate.evaluate, predicate);

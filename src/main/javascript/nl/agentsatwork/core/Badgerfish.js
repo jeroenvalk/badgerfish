@@ -277,11 +277,16 @@ define([ "./Exception", "./SchemaNode", "./TagName" ], function(classException, 
 
 		this.getAttribute = function Badgerfish$getAttribute(name) {
 			var x = properties.getPrivate(this);
+			var result;
 			if (x.source === x.object) {
-				return x.object['@' + name];
+				result = x.object['@' + name];
 			} else {
-				return x.node.getAttribute(name);
+				result = x.node.getAttribute(name);
+				if (result === null) {
+					result = undefined;
+				}
 			}
+			return result;
 		};
 
 		this.attr =

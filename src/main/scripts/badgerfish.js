@@ -42,11 +42,13 @@ GLOBAL.require([ '/scripts/shims.js', 'jquery' ], function(definition, jQuery) {
 			var html = new Badgerfish(document.documentElement);
 
 			function executeCPX(prefixes, cpx) {
-				var context = html.getElementByTagName("body/" + cpx + ":transform");
-				context.requireXIncludes().then(function() {
-					context.transform();
+				var contexts = html.getElementsByTagName("body/" + cpx + ":transform");
+				Promise.all(contexts.map(function(context) {
+					return context.requireXIncludes();
+				})).then(function() {
+					contexts[0].transform();
 					var i;
-					var elements = jQuery("*[require]", context.toNode());
+					var elements = jQuery("*[require]", contexts[0].toNode());
 					var resources = [];
 					for (i = 0; i < elements.length; ++i) {
 						resources = resources.concat(elements[i].getAttribute("require").split(/\s*,\s*/));
