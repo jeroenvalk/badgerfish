@@ -15,7 +15,10 @@
  * along with ComPosiX. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* global document, is, requirejs, define, Modernizr, DEBUG, expect */
+/*
+ * global document, is, requirejs, define, Modernizr, XMLHttpRequest, DEBUG,
+ * expect
+ */
 /* jshint -W030 */
 
 // jshint ignore: start
@@ -330,15 +333,18 @@ if (Modernizr.server) {
 Modernizr.addTestWithShim("modernizr_xhr", function() {
 	return is.fn(Modernizr.xhrForRef);
 }, function() {
-	Modernizr.xhrForRef = function Modernizr$xhrForRef(ref) {
+	Modernizr.xhrForRef = function Modernizr$xhrForRef(ref, config) {
+		if (!config)
+			config = {};
 		return new Promise(function(done) {
 			var xhr, ext, i, j;
-			i = ref.indexOf(".");
+			j = ref.indexOf("?");
+			if (j < 0)
+				j = ref.length;
+			i = ref.lastIndexOf(".", j);
 			if (i < 0)
 				throw new Error("Definition: missing filename extension");
-			while ((j = ref.indexOf(".", ++i)) >= 0)
-				i = j;
-			ext = ref.substr(--i);
+			ext = ref.substring(i, j);
 			xhr = new XMLHttpRequest();
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState === 4 && xhr.status === 200) {
@@ -346,15 +352,31 @@ Modernizr.addTestWithShim("modernizr_xhr", function() {
 					case ".xml":
 						DEBUG && expect(xhr.getResponseHeader('content-type')).toBe("application/xml");
 						break;
+					case ".json":
+						xhr = {
+							responseXML : JSON.parse(xhr.responseText)
+						};
+						break;
 					default:
 						break;
 					}
 					done(xhr);
 				}
 			};
-			xhr.open("GET", ref, true);
-			xhr.responseType = "msxml-document";
-			xhr.send();
+			switch (config.method) {
+			case "POST":
+				xhr.open("POST", ref.substr(0, j), true);
+				xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xhr.send(ref.substr(++j));
+				break;
+			case "GET":
+				/* falls through */
+			default:
+				xhr.open("GET", ref, true);
+				xhr.responseType = "msxml-document";
+				xhr.send();
+				break;
+			}
 		});
 	};
 });
